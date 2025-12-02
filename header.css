@@ -1,0 +1,51 @@
+/* ==========================================
+   GH UNIVERSAL HEADER
+========================================== */
+
+.navbar {
+    width: 100%;
+    background: #111;
+    border-bottom: 2px solid #fdff55;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+    z-index: 1000;
+}
+
+.navbar .brand {
+    font-weight: 700;
+    color: #fdff55;
+    font-size: 20px;
+    text-shadow: 0 0 8px #fdff55aa;
+}
+
+.navbar .nav-links a {
+    color: #fff;
+    margin-left: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    position: relative;
+    transition: 0.25s ease;
+}
+
+.navbar .nav-links a:hover {
+    color: #fdff55;
+    text-shadow: 0 0 12px #fdff55;
+}
+
+/* Yellow underline hover glow */
+.navbar .nav-links a::after {
+    content: "";
+    height: 2px;
+    width: 0%;
+    background: #fdff55;
+    display: block;
+    transition: width 0.25s ease;
+    margin-top: 3px;
+}
+
+.navbar .nav-links a:hover::after {
+    width: 100%;
+}

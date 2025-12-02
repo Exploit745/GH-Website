@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GH – Members</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==========================================
+       UNIVERSAL HEADER
+    ========================================== */
+    .navbar {
+      width: 100%;
+      background: #111;
+      border-bottom: 2px solid #fdff55;
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-sizing: border-box;
+      z-index: 1000;
+    }
+
+    .navbar .brand {
+      font-weight: 700;
+      color: #fdff55;
+      font-size: 20px;
+    }
+
+    .navbar .nav-links a {
+      color: #fff;
+      margin-left: 20px;
+      text-decoration: none;
+      font-weight: bold;
+      position: relative;
+      transition: 0.25s ease;
+    }
+
+    .navbar .nav-links a:hover {
+      color: #fdff55;
+      text-shadow: 0 0 10px #fdff55;
+    }
+
+    .navbar .nav-links a::after {
+      content: "";
+      height: 2px;
+      width: 0%;
+      background: #fdff55;
+      display: block;
+      transition: width 0.25s;
+      margin-top: 3px;
+    }
+
+    .navbar .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    /* ==========================================
+       LAYOUT
+    ========================================== */
+    .main-wrap {
+      display: flex;
+      height: calc(100vh - 70px);
+    }
+
+    .content {
+      padding: 25px;
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+
+    .card {
+      background: #111;
+      padding: 25px;
+      border-radius: 12px;
+      border: 2px solid #fdff55;
+      margin-bottom: 25px;
+      box-shadow: 0 0 16px #fdff5522;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      color: #fdff55;
+      text-shadow: 0 0 10px #fdff5522;
+    }
+
+    /* ==========================================
+       MEMBER PREVIEW LIST
+    ========================================== */
+    .member-item {
+      background: #151515;
+      padding: 14px;
+      border-radius: 8px;
+      border-left: 3px solid #00eaff;
+      box-shadow: 0 0 14px #00eaff33;
+      margin-bottom: 16px;
+      cursor: pointer;
+      transition: 0.25s ease;
+    }
+
+    .member-item:hover {
+      box-shadow: 0 0 22px #00eaff88;
+    }
+
+    .member-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #00eaff;
+      text-shadow: 0 0 8px #00eaff77;
+      margin-bottom: 6px;
+    }
+
+    .member-detail {
+      font-size: 14px;
+      opacity: 0.85;
+      margin-bottom: 2px;
+    }
+
+    /* ==========================================
+       MODAL
+    ========================================== */
+    .modal-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000000bb;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .modal {
+      background: #111;
+      border: 2px solid #fdff55;
+      border-radius: 12px;
+      padding: 25px;
+      width: 420px;
+      box-shadow: 0 0 25px #fdff5544, 0 0 20px #00eaff33 inset;
+    }
+
+    .modal h3 {
+      margin-top: 0;
+      color: #fdff55;
+      text-shadow: 0 0 10px #fdff55aa;
+    }
+
+    .modal p {
+      opacity: 0.9;
+      margin: 6px 0;
+    }
+
+    .modal-buttons {
+      margin-top: 18px;
+    }
+
+    .modal-btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 10px;
+      font-weight: bold;
+      transition: 0.25s ease;
+    }
+
+    .promote { background: #00eaff; color: #000; }
+    .promote:hover { box-shadow: 0 0 14px #00eaff; }
+
+    .demote { background: #ffaa3b; color: #000; }
+    .demote:hover { box-shadow: 0 0 14px #ffaa3b; }
+
+    .remove { background: #ff4747; color: #000; }
+    .remove:hover { box-shadow: 0 0 14px #ff4747; }
+
+    .close {
+      background: #555;
+      color: #fff;
+    }
+    .close:hover {
+      box-shadow: 0 0 12px #888;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- UNIVERSAL HEADER -->
+<div id="header"></div>
+<script src="header.js"></script>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="scripts/auth.js"></script>
+
+<div class="main-wrap">
+
+  <!-- UNIVERSAL DRAWER -->
+  <div id="drawer"></div>
+  <link rel="stylesheet" href="drawer.css">
+  <script src="drawer.js"></script>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="card">
+      <h2>GH Members</h2>
+      <div id="memberList">Loading members...</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modalBg" class="modal-bg">
+  <div class="modal">
+
+    <h3 id="modalName"></h3>
+    <p id="modalEmail"></p>
+    <p id="modalBirthday"></p>
+    <p id="modalJoined"></p>
+    <p id="modalRole"></p>
+
+    <div class="modal-buttons" id="modalButtons"></div>
+
+    <button class="modal-btn close" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<script>
+let isAdminUser = false;
+
+auth.onAuthStateChanged(async user => {
+  if (!user) return location.href = "login.html";
+
+  const token = await user.getIdTokenResult();
+  isAdminUser = !!token.claims.admin;
+
+  loadMembers();
+});
+
+/* ==========================
+   LOAD MEMBERS
+========================== */
+function loadMembers() {
+  db.collection("users")
+    .orderBy("name")
+    .onSnapshot(snapshot => {
+      const container = document.getElementById("memberList");
+
+      if (snapshot.empty) {
+        container.innerHTML = "<p>No members found.</p>";
+        return;
+      }
+
+      container.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        const m = doc.data();
+
+        const div = document.createElement("div");
+        div.className = "member-item";
+
+        div.innerHTML = `
+          <div class="member-name">${m.name}</div>
+          <div class="member-detail">Birthday: ${m.birthday || "N/A"}</div>
+          <div class="member-detail">Email: ${m.email}</div>
+        `;
+
+        div.onclick = () => openModal(doc.id, m);
+        container.appendChild(div);
+      });
+    });
+}
+
+/* ==========================
+   MODAL LOGIC
+========================== */
+function openModal(id, data) {
+  selectedMemberId = id;
+
+  modalName.textContent = data.name;
+  modalEmail.textContent = "Email: " + data.email;
+  modalBirthday.textContent = "Birthday: " + (data.birthday || "N/A");
+  modalJoined.textContent = "Joined: " + (data.joinDate || "N/A");
+  modalRole.textContent = "Role: " + (data.admin ? "Admin" : "Member");
+
+  const btns = document.getElementById("modalButtons");
+  btns.innerHTML = "";
+
+  if (isAdminUser) {
+    btns.innerHTML = `
+      <button class="modal-btn promote" onclick="promote('${id}')">Promote</button>
+      <button class="modal-btn demote" onclick="demote('${id}')">Demote</button>
+      <button class="modal-btn remove" onclick="removeUser('${id}')">Remove</button>
+    `;
+  }
+
+  document.getElementById("modalBg").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("modalBg").style.display = "none";
+}
+
+/* ==========================
+   ADMIN ACTIONS
+========================== */
+function promote(id) {
+  db.collection("users").doc(id).update({ admin: true });
+  closeModal();
+}
+
+function demote(id) {
+  db.collection("users").doc(id).update({ admin: false });
+  closeModal();
+}
+
+function removeUser(id) {
+  if (!confirm("Remove this user?")) return;
+  db.collection("users").doc(id).delete();
+  closeModal();
+}
+</script>
+
+</body>
+</html>

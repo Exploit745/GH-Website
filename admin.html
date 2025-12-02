@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GH – Admin Panel</title>
+
+  <!-- Universal Header + Drawer Styles -->
+  <link rel="stylesheet" href="header.css">
+  <link rel="stylesheet" href="drawer.css">
+
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    .main-wrap {
+      display: flex;
+      min-height: calc(100vh - 60px);
+      background: #000;
+    }
+
+    .content {
+      flex: 1;
+      padding: 25px;
+      box-sizing: border-box;
+      background: radial-gradient(circle at top, #111 0%, #000 55%);
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #fdff55;
+      text-shadow: 0 0 12px #fdff55aa;
+    }
+
+    .card {
+      background: #111;
+      border-radius: 12px;
+      border: 2px solid #fdff55;
+      box-shadow: 0 0 18px #fdff5525;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .card h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: #fdff55;
+      text-shadow: 0 0 8px #fdff55aa;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 4px;
+      font-weight: bold;
+      color: #00eaff;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      background: #222;
+      border-radius: 6px;
+      border: 1px solid #00eaff55;
+      color: #fff;
+      padding: 10px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #00eaff;
+      box-shadow: 0 0 8px #00eaffaa;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      background: #00eaff;
+      color: #000;
+      box-shadow: 0 0 10px #00eaff88;
+      transition: 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 14px #00eaffcc;
+    }
+
+    .btn.deny-btn {
+      background: #ff4444;
+      color: #fff;
+      box-shadow: 0 0 10px #ff444488;
+      margin-left: 8px;
+    }
+
+    .btn.deny-btn:hover {
+      box-shadow: 0 0 14px #ff4444cc;
+    }
+
+    #appStatus {
+      margin-top: 8px;
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .app-item {
+      border-left: 3px solid #fdff55;
+      padding-left: 10px;
+      margin-bottom: 16px;
+      background: #151515;
+      border-radius: 6px;
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+
+    .app-item strong {
+      color: #fdff55;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- UNIVERSAL HEADER -->
+  <div id="header"></div>
+  <script src="header.js"></script>
+
+  <div class="main-wrap">
+    <!-- UNIVERSAL DRAWER -->
+    <div id="drawer"></div>
+    <script src="drawer.js"></script>
+
+    <!-- ADMIN CONTENT -->
+    <div class="content">
+      <h1>Admin Panel</h1>
+
+      <!-- Post Announcement -->
+      <div class="card">
+        <h3>Post Announcement</h3>
+
+        <label for="annTitle">Title</label>
+        <input id="annTitle" type="text" placeholder="Short announcement title">
+
+        <label for="annMessage">Message</label>
+        <textarea id="annMessage" placeholder="What do you want to tell GH?" rows="4"></textarea>
+
+        <button class="btn" onclick="postAnnouncement()">Post</button>
+      </div>
+
+      <!-- Applications Toggle -->
+      <div class="card">
+        <h3>Applications</h3>
+        <button class="btn" onclick="toggleApplications()">Toggle Applications</button>
+        <p id="appStatus">Loading application status...</p>
+      </div>
+
+      <!-- Pending Applications -->
+      <div class="card">
+        <h3>Pending Applications</h3>
+        <div id="applicationContainer">Loading.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIREBASE + AUTH -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Firebase config (same as rest of site)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBID0q4e18Rgzoj1jdBIznAAaIqNlNSzY8",
+      authDomain: "gh-website-7603c.firebaseapp.com",
+      projectId: "gh-website-7603c",
+      storageBucket: "gh-website-7603c.firebasestorage.app",
+      messagingSenderId: "382290025026",
+      appId: "1:382290025026:web:a2c70de3fd2f42e6c96bdb"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+
+    /* ============================
+       AUTH + ADMIN GUARD
+    ============================ */
+    auth.onAuthStateChanged(async user => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      const token = await user.getIdTokenResult();
+      const isAdmin = token.claims && token.claims.admin === true;
+
+      if (!isAdmin) {
+        // Hard bounce non-admins back to dashboard
+        window.location.href = "gh_dashboard.html";
+        return;
+      }
+
+      // Once we know they’re admin, wire everything
+      watchApplicationStatus();
+      watchApplications();
+    });
+
+    /* ============================
+       APPLICATION STATUS TOGGLE
+       settings/applications.enabled
+    ============================ */
+    function watchApplicationStatus() {
+      const statusEl = document.getElementById("appStatus");
+
+      db.collection("settings").doc("applications").onSnapshot(doc => {
+        let enabled = true;
+
+        if (doc.exists && typeof doc.data().enabled === "boolean") {
+          enabled = doc.data().enabled;
+        }
+
+        if (enabled) {
+          statusEl.textContent = "Applications are OPEN.";
+          statusEl.style.color = "#00eaff";
+          statusEl.style.textShadow = "0 0 8px #00eaffaa";
+        } else {
+          statusEl.textContent = "Applications are CLOSED.";
+          statusEl.style.color = "#ff4444";
+          statusEl.style.textShadow = "0 0 8px #ff4444aa";
+        }
+      }, err => {
+        statusEl.textContent = "Error loading application status.";
+        console.error(err);
+      });
+    }
+
+    function toggleApplications() {
+      const docRef = db.collection("settings").doc("applications");
+
+      docRef.get().then(doc => {
+        const current = doc.exists && typeof doc.data().enabled === "boolean"
+          ? doc.data().enabled
+          : true;
+
+        return docRef.set({ enabled: !current }, { merge: true });
+      }).catch(err => {
+        alert("Error toggling applications: " + err.message);
+      });
+    }
+
+    /* ============================
+       POST ANNOUNCEMENT
+    ============================ */
+    function postAnnouncement() {
+      const titleEl   = document.getElementById("annTitle");
+      const messageEl = document.getElementById("annMessage");
+
+      const title   = titleEl.value.trim();
+      const message = messageEl.value.trim();
+
+      if (!title || !message) {
+        alert("Fill in both title and message.");
+        return;
+      }
+
+      db.collection("announcements").add({
+        title,
+        message,
+        timestamp: Date.now()
+      }).then(() => {
+        titleEl.value = "";
+        messageEl.value = "";
+        alert("Announcement posted.");
+      }).catch(err => {
+        alert("Error posting announcement: " + err.message);
+      });
+    }
+
+    /* ============================
+       PENDING APPLICATIONS
+       /applications where status == "pending"
+    ============================ */
+    function watchApplications() {
+      const container = document.getElementById("applicationContainer");
+      container.textContent = "Loading...";
+
+      db.collection("applications")
+        .where("status", "==", "pending")
+        .orderBy("timestamp", "desc")
+        .onSnapshot(snapshot => {
+          if (snapshot.empty) {
+            container.innerHTML = "<p>No pending applications.</p>";
+            return;
+          }
+
+          container.innerHTML = "";
+
+          snapshot.forEach(doc => {
+            const app = doc.data();
+
+            const div = document.createElement("div");
+            div.className = "app-item";
+
+            const birthday = app.birthday || "N/A";
+            const relation = app.relation || app.connection || "N/A";
+
+            div.innerHTML = `
+              <div><strong>${app.name || "Unnamed"}</strong></div>
+              <div>Email: ${app.email || "N/A"}</div>
+              <div>Birthday: ${birthday}</div>
+              <div>Relation: ${relation}</div>
+            `;
+
+            const approveBtn = document.createElement("button");
+            approveBtn.className = "btn";
+            approveBtn.textContent = "Approve";
+            approveBtn.onclick = () => approveApp(doc.id);
+
+            const denyBtn = document.createElement("button");
+            denyBtn.className = "btn deny-btn";
+            denyBtn.textContent = "Deny";
+            denyBtn.onclick = () => denyApp(doc.id);
+
+            div.appendChild(document.createElement("br"));
+            div.appendChild(approveBtn);
+            div.appendChild(denyBtn);
+
+            container.appendChild(div);
+          });
+        }, err => {
+          console.error("Error loading applications:", err);
+          container.innerHTML = "<p>Error loading applications. Check console.</p>";
+        });
+    }
+
+    // Approve: JUST flip status to approved (no /users write – avoids rule issues)
+    function approveApp(id) {
+      db.collection("applications").doc(id).update({
+        status: "approved"
+      }).then(() => {
+        alert("Application approved.");
+      }).catch(err => {
+        alert("Error approving: " + err.message);
+      });
+    }
+
+    function denyApp(id) {
+      db.collection("applications").doc(id).update({
+        status: "denied"
+      }).then(() => {
+        alert("Application denied.");
+      }).catch(err => {
+        alert("Error denying: " + err.message);
+      });
+    }
+  </script>
+</body>
+</html>
