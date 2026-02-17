@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Suggestion Box</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* GATEKEEPER */
+        body { display: none; }
+
+        /* [SUGGESTION BOX STYLES] */
+        
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 2px solid var(--gh-blue); padding-bottom: 15px; }
+        
+        .suggest-btn {
+            background: var(--gh-blue); color: #000; font-weight: 900; padding: 10px 25px;
+            border-radius: 6px; border: none; cursor: pointer; text-transform: uppercase;
+            transition: 0.2s; letter-spacing: 1px;
+        }
+        .suggest-btn:hover { box-shadow: 0 0 20px rgba(0, 234, 255, 0.4); transform: scale(1.05); background: #fff; }
+
+        /* FILTERS */
+        .filter-bar { display: flex; gap: 15px; margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .filter-opt { color: #666; cursor: pointer; font-weight: bold; font-size: 13px; text-transform: uppercase; transition: 0.2s; }
+        .filter-opt:hover { color: #fff; }
+        .filter-opt.active { color: var(--gh-blue); text-shadow: 0 0 10px rgba(0, 234, 255, 0.3); }
+
+        /* CARD LAYOUT */
+        .idea-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+
+        .idea-card {
+            background: #111; border: 1px solid #333; border-radius: 12px; padding: 20px;
+            display: flex; gap: 15px; position: relative; transition: 0.2s; overflow: hidden;
+        }
+        .idea-card:hover { transform: translateY(-3px); border-color: #555; }
+
+        /* STATUS COLORS */
+        .idea-card.status-approved { border-left: 4px solid #00ff6a; }
+        .idea-card.status-denied { border-left: 4px solid var(--gh-red); opacity: 0.6; }
+        .idea-card.status-pending { border-left: 4px solid var(--gh-blue); }
+
+        /* VOTE SECTION */
+        .vote-box { 
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            min-width: 40px; background: #1a1a1a; padding: 10px 5px; border-radius: 8px; height: fit-content;
+        }
+        .vote-arrow { cursor: pointer; font-size: 18px; color: #666; transition: 0.2s; }
+        .vote-arrow:hover { color: var(--gh-yellow); transform: translateY(-2px); }
+        .vote-arrow.voted { color: var(--gh-yellow); text-shadow: 0 0 10px var(--gh-yellow); }
+        .vote-count { font-weight: bold; font-size: 14px; margin-top: 5px; color: #fff; }
+
+        /* CONTENT SECTION */
+        .idea-content { flex-grow: 1; }
+        .idea-title { font-size: 18px; font-weight: 900; color: #fff; margin: 0 0 8px 0; line-height: 1.3; }
+        .idea-desc { color: #ccc; font-size: 13px; line-height: 1.5; margin-bottom: 15px; white-space: pre-wrap; }
+        
+        .idea-meta { font-size: 11px; color: #666; display: flex; align-items: center; gap: 10px; }
+        .meta-author { color: var(--gh-blue); font-weight: bold; }
+
+        /* STATUS BADGE */
+        .status-badge { 
+            font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 4px; 
+            text-transform: uppercase; background: #222; color: #888; border: 1px solid #444;
+        }
+        .status-approved .status-badge { background: rgba(0, 255, 106, 0.1); color: #00ff6a; border-color: #00ff6a; }
+        .status-denied .status-badge { background: rgba(255, 68, 68, 0.1); color: var(--gh-red); border-color: var(--gh-red); }
+        .status-pending .status-badge { background: rgba(0, 234, 255, 0.1); color: var(--gh-blue); border-color: var(--gh-blue); }
+
+        /* ADMIN CONTROLS */
+        .admin-panel { 
+            margin-top: 15px; padding-top: 10px; border-top: 1px dashed #333; 
+            display: flex; gap: 5px; justify-content: flex-end;
+        }
+        .adm-btn { font-size: 10px; padding: 4px 8px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        .btn-approve { background: #00ff6a; color: #000; }
+        .btn-deny { background: var(--gh-red); color: #fff; }
+        .btn-reset { background: #333; color: #ccc; }
+
+        /* DELETE BUTTON */
+        .del-btn { 
+            position: absolute; top: 10px; right: 10px; color: #444; 
+            cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s;
+        }
+        .del-btn:hover { color: var(--gh-red); }
+
+        /* MODAL */
+        .gh-modal-content { border-color: var(--gh-blue) !important; box-shadow: 0 0 40px rgba(0, 234, 255, 0.2) !important; }
+
+        @media (max-width: 600px) { .idea-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title" style="margin:0; font-size:32px;">Suggestion Box</h1>
+                    <div style="color:#666; font-size:13px; margin-top:5px;">Vote on the future of GH.</div>
+                </div>
+                <button class="suggest-btn" onclick="openModal()">+ New Idea</button>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-opt active" onclick="setFilter('hot', this)">🔥 Hot</div>
+                <div class="filter-opt" onclick="setFilter('top', this)">🏆 Top</div>
+                <div class="filter-opt" onclick="setFilter('new', this)">✨ New</div>
+                <div class="filter-opt" onclick="setFilter('mine', this)">👤 Mine</div>
+            </div>
+
+            <div class="idea-grid" id="ideaGrid">
+                <div style="text-align:center; padding:50px; color:#666; grid-column:1/-1;">Loading hive mind...</div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="ideaModal" class="gh-modal">
+        <div class="gh-modal-content">
+            <h2 style="color:var(--gh-blue); margin-top:0;">Submit Feature</h2>
+            
+            <label style="color:#888; font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">TITLE</label>
+            <input type="text" id="ideaTitle" class="gh-input" placeholder="e.g. Add Pet Dragons" maxlength="50">
+            
+            <label style="color:#888; font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">DESCRIPTION</label>
+            <textarea id="ideaDesc" class="gh-input" rows="4" placeholder="How does it work? Why do we need it?" maxlength="300"></textarea>
+            
+            <button class="suggest-btn" style="width:100%; margin-top:15px;" onclick="submitIdea()">Post to Board</button>
+            <button onclick="document.getElementById('ideaModal').style.display='none'" style="width:100%; background:transparent; border:none; color:#666; margin-top:10px; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        let isAdmin = false;
+        let currentUser = null;
+        let currentFilter = 'hot';
+
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(async user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                currentUser = user;
+                
+                // Visuals
+                const container = document.getElementById("particleContainer");
+                if(container){ for(let i=0; i<20; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; p.style.animationDelay=Math.random()*10+"s"; container.appendChild(p); }}
+
+                // Admin Check
+                const token = await user.getIdTokenResult();
+                isAdmin = !!token.claims.admin;
+                if(!isAdmin) {
+                    const uDoc = await db.collection("users").doc(user.uid).get();
+                    if(uDoc.exists && uDoc.data().role === 'admin') isAdmin = true;
+                }
+
+                loadIdeas();
+            }
+        });
+
+        /* --- LOAD & RENDER --- */
+        function loadIdeas() {
+            let query = db.collection("suggestions");
+
+            // Filter Logic
+            if(currentFilter === 'new') query = query.orderBy("timestamp", "desc");
+            else if(currentFilter === 'mine') query = query.where("authorId", "==", currentUser.uid).orderBy("timestamp", "desc");
+            else query = query.orderBy("timestamp", "desc"); // Default fetch, we sort Hot/Top client side for now due to array complexity
+
+            query.onSnapshot(snap => {
+                const grid = document.getElementById("ideaGrid");
+                grid.innerHTML = "";
+                
+                if(snap.empty) { grid.innerHTML = "<div style='text-align:center; padding:50px; color:#666; grid-column:1/-1;'>No ideas yet. Brain empty.</div>"; return; }
+
+                let docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                // Client-side Sorts for Vote Counts
+                if(currentFilter === 'top' || currentFilter === 'hot') {
+                    docs.sort((a, b) => (b.upvotes?.length || 0) - (a.upvotes?.length || 0));
+                }
+
+                docs.forEach(d => {
+                    const votes = d.upvotes || [];
+                    const voteCount = votes.length;
+                    const hasVoted = votes.includes(currentUser.uid);
+                    const statusClass = `status-${d.status || 'pending'}`;
+                    const isOwner = d.authorId === currentUser.uid;
+
+                    // Admin Actions
+                    const adminActions = isAdmin ? `
+                        <div class="admin-panel">
+                            <button class="adm-btn btn-approve" onclick="setStatus('${d.id}', 'approved')">Approve</button>
+                            <button class="adm-btn btn-deny" onclick="setStatus('${d.id}', 'denied')">Deny</button>
+                            <button class="adm-btn btn-reset" onclick="setStatus('${d.id}', 'pending')">Reset</button>
+                        </div>
+                    ` : '';
+
+                    // Delete Action
+                    const deleteBtn = (isAdmin || isOwner) ? `<div class="del-btn" onclick="deleteIdea('${d.id}')">✕</div>` : '';
+
+                    grid.innerHTML += `
+                        <div class="idea-card ${statusClass}">
+                            ${deleteBtn}
+                            <div class="vote-box">
+                                <div class="vote-arrow ${hasVoted ? 'voted' : ''}" onclick="toggleVote('${d.id}')">▲</div>
+                                <div class="vote-count">${voteCount}</div>
+                            </div>
+                            <div class="idea-content">
+                                <div style="display:flex; justify-content:space-between;">
+                                    <div class="idea-title">${d.title}</div>
+                                    <div class="status-badge">${d.status || 'PENDING'}</div>
+                                </div>
+                                <div class="idea-desc">${d.description}</div>
+                                <div class="idea-meta">
+                                    <span>By <span class="meta-author">${d.authorName}</span></span>
+                                    <span>• ${new Date(d.timestamp?.seconds*1000).toLocaleDateString()}</span>
+                                </div>
+                                ${adminActions}
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        /* --- ACTIONS --- */
+        async function submitIdea() {
+            const title = document.getElementById("ideaTitle").value.trim();
+            const desc = document.getElementById("ideaDesc").value.trim();
+            if(!title || !desc) return alert("Fill in the form.");
+
+            try {
+                await db.collection("suggestions").add({
+                    title, description: desc,
+                    authorId: currentUser.uid, authorName: currentUser.displayName || "Agent",
+                    upvotes: [currentUser.uid], // Auto-upvote own idea
+                    status: 'pending',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                document.getElementById("ideaModal").style.display = "none";
+                document.getElementById("ideaTitle").value = "";
+                document.getElementById("ideaDesc").value = "";
+            } catch(e) { alert(e.message); }
+        }
+
+        async function toggleVote(id) {
+            const docRef = db.collection("suggestions").doc(id);
+            const doc = await docRef.get();
+            if(!doc.exists) return;
+
+            const votes = doc.data().upvotes || [];
+            if(votes.includes(currentUser.uid)) {
+                await docRef.update({ upvotes: firebase.firestore.FieldValue.arrayRemove(currentUser.uid) });
+            } else {
+                await docRef.update({ upvotes: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) });
+            }
+        }
+
+        async function setStatus(id, status) {
+            await db.collection("suggestions").doc(id).update({ status });
+        }
+
+        async function deleteIdea(id) {
+            if(!confirm("Delete this suggestion?")) return;
+            await db.collection("suggestions").doc(id).delete();
+        }
+
+        /* --- UI UTILS --- */
+        function openModal() { document.getElementById("ideaModal").style.display = "flex"; }
+        
+        function setFilter(type, el) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-opt').forEach(x => x.classList.remove('active'));
+            el.classList.add('active');
+            loadIdeas();
+        }
+    </script>
+</body>
+</html>

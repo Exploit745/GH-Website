@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Squads</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* GATEKEEPER */
+        body { display: none; }
+
+        /* [SQUAD SPECIFIC STYLES] */
+        
+        /* HEADER OVERRIDES */
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 2px solid var(--gh-red); padding-bottom: 15px; }
+        .create-btn {
+            background: var(--gh-red); color: #fff; border: none; padding: 10px 20px; 
+            border-radius: 6px; font-weight: 900; text-transform: uppercase; cursor: pointer;
+            transition: 0.2s; letter-spacing: 1px; display: none;
+        }
+        .create-btn:hover { box-shadow: 0 0 20px var(--gh-red); transform: scale(1.05); }
+
+        /* TEAMS GRID */
+        .teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+
+        .team-card {
+            background: #111; border: 1px solid #333; border-radius: 12px; padding: 25px;
+            position: relative; overflow: hidden; transition: 0.2s; display: flex; flex-direction: column; align-items: center; text-align: center;
+        }
+        .team-card:hover { transform: translateY(-5px); border-color: var(--gh-blue); box-shadow: 0 0 25px rgba(0, 234, 255, 0.1); }
+        
+        .team-logo { 
+            width: 80px; height: 80px; border-radius: 12px; object-fit: cover; 
+            border: 2px solid #444; margin-bottom: 15px; background: #000;
+        }
+        
+        .team-name { font-size: 20px; font-weight: 900; color: #fff; margin-bottom: 5px; text-transform: uppercase; }
+        .team-tag { font-size: 12px; color: var(--gh-yellow); font-weight: bold; background: #222200; padding: 2px 6px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #444400; }
+        
+        .team-stats { 
+            display: flex; gap: 15px; font-size: 12px; color: #888; margin-bottom: 20px; border-top: 1px solid #222; padding-top: 10px; width: 100%; justify-content: center;
+        }
+        .stat-item b { color: #fff; display: block; font-size: 14px; }
+
+        .join-btn {
+            width: 100%; padding: 10px; background: transparent; border: 1px solid #444; color: #888;
+            border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; text-transform: uppercase; font-size: 12px;
+        }
+        .join-btn:hover { border-color: var(--gh-blue); color: var(--gh-blue); background: rgba(0, 234, 255, 0.05); }
+        .join-btn.pending { cursor: not-allowed; opacity: 0.6; border-style: dashed; }
+
+        /* ADMIN DELETE BUTTON */
+        .admin-nuke-btn {
+            position: absolute; top: 10px; right: 10px; background: var(--gh-red); color: #fff;
+            width: 24px; height: 24px; border-radius: 50%; font-weight: bold; cursor: pointer;
+            display: flex; justify-content: center; align-items: center; font-size: 12px; border: 2px solid #fff;
+            z-index: 10;
+        }
+
+        /* --- SQUAD DASHBOARD --- */
+        #mySquadView { display: none; }
+        
+        .squad-hero {
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+            border: 2px solid var(--gh-red); border-radius: 12px; padding: 40px;
+            display: flex; align-items: center; gap: 30px; margin-bottom: 30px;
+            position: relative; overflow: hidden;
+        }
+        .big-logo { width: 120px; height: 120px; border-radius: 12px; border: 3px solid #333; object-fit: cover; background: #000; }
+        
+        .squad-info h1 { margin: 0; font-size: 42px; text-transform: uppercase; font-weight: 900; line-height: 1; }
+        .squad-info .tag { font-size: 18px; color: var(--gh-yellow); font-weight: bold; margin-bottom: 10px; display: inline-block; background: #222200; padding: 4px 10px; border-radius: 6px; }
+        
+        .squad-actions { margin-left: auto; display: flex; flex-direction: column; gap: 10px; }
+        .squad-btn { background: #333; color: #fff; border: 1px solid #555; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .squad-btn:hover { background: var(--gh-blue); color: #000; border-color: var(--gh-blue); }
+
+        /* DASHBOARD LAYOUT */
+        .dashboard-cols { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 20px; }
+        
+        .box-panel { background: #111; border: 1px solid #333; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; max-height: 500px; }
+        .panel-title { font-size: 16px; font-weight: bold; color: #888; margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* CHAT STYLES */
+        #chatFeed { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; margin-bottom: 15px; }
+        .chat-msg { background: #1a1a1a; padding: 8px 12px; border-radius: 8px; font-size: 13px; border-left: 2px solid #333; }
+        .chat-user { color: var(--gh-blue); font-weight: bold; font-size: 11px; margin-bottom: 2px; }
+        .chat-text { color: #ddd; line-height: 1.4; }
+        .chat-input-row { display: flex; gap: 10px; }
+        .chat-input { flex-grow: 1; background: #000; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 6px; font-size: 13px; }
+        .send-btn { background: var(--gh-blue); color: #000; border: none; padding: 0 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        /* ROSTER LIST */
+        .member-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 6px; margin-bottom: 5px; background: #161616; transition: 0.2s; }
+        .member-row:hover { background: #222; }
+        .member-info { display: flex; align-items: center; gap: 10px; }
+        .member-av { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+        .capt-badge { font-size: 10px; background: var(--gh-yellow); color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 5px; }
+        .kick-btn { color: var(--gh-red); cursor: pointer; font-size: 11px; font-weight: bold; background: rgba(255, 68, 68, 0.1); padding: 5px 10px; border-radius: 4px; }
+        .kick-btn:hover { background: var(--gh-red); color: #fff; }
+
+        /* INBOX (REQUESTS) */
+        .request-item { background: #1a1a1a; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid var(--gh-blue); }
+        .req-actions { display: flex; gap: 5px; margin-top: 8px; }
+        .req-btn { flex: 1; border: none; padding: 5px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; }
+        .req-accept { background: #00ff6a; color: #000; }
+        .req-deny { background: #333; color: #fff; }
+
+        /* MODAL OVERRIDES */
+        .gh-modal-content { border-color: var(--gh-red) !important; box-shadow: 0 0 50px rgba(255, 68, 68, 0.2) !important; }
+        .gh-input:focus { border-color: var(--gh-red) !important; }
+
+        @media (max-width: 900px) {
+            .squad-hero { flex-direction: column; text-align: center; }
+            .squad-actions { margin-left: 0; width: 100%; }
+            .dashboard-cols { grid-template-columns: 1fr; display: flex; flex-direction: column; }
+            #chatFeed { min-height: 300px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            
+            <div id="publicView">
+                <div class="page-header">
+                    <h1 class="page-title">Active Squads</h1>
+                    <button id="createBtn" class="create-btn" onclick="openCreateModal()">+ Create Squad</button>
+                </div>
+                <div id="loadingGrid" style="text-align:center; padding:50px; color:#666;">Scanning Roster...</div>
+                <div class="teams-grid" id="teamsGrid"></div>
+            </div>
+
+            <div id="mySquadView">
+                <div class="page-header">
+                    <h1 class="page-title" style="color:var(--gh-blue); text-shadow:0 0 15px var(--gh-blue);">Squad Command</h1>
+                    <button class="create-btn" style="display:block; background:#333; border:1px solid #555;" onclick="leaveTeam()">Leave Squad</button>
+                </div>
+
+                <div class="squad-hero">
+                    <img id="squadLogo" src="" class="big-logo">
+                    <div class="squad-info">
+                        <div id="squadTag" class="tag">[TAG]</div>
+                        <h1 id="squadName">Loading...</h1>
+                        <div style="margin-top:10px; font-size:14px; color:#888;">Captain: <span id="squadCapt" style="color:#fff;">...</span></div>
+                    </div>
+                    <div class="squad-actions" id="captActions" style="display:none;">
+                        <button class="squad-btn" onclick="openEditModal()">Edit Intel ✎</button>
+                    </div>
+                </div>
+
+                <div class="dashboard-cols">
+                    <div class="box-panel">
+                        <div class="panel-title">Active Roster</div>
+                        <div id="rosterList">Loading agents...</div>
+                    </div>
+
+                    <div class="box-panel">
+                        <div class="panel-title">Squad Comms</div>
+                        <div id="chatFeed">
+                            <div style="text-align:center; color:#666; margin-top:50px;">Secure channel established.</div>
+                        </div>
+                        <div class="chat-input-row">
+                            <input type="text" id="chatInput" class="chat-input" placeholder="Message squad..." onkeypress="handleEnter(event)">
+                            <button class="send-btn" onclick="sendChat()">></button>
+                        </div>
+                    </div>
+
+                    <div class="box-panel" id="inboxPanel" style="display:none;">
+                        <div class="panel-title">Join Requests</div>
+                        <div id="requestList">
+                            <div style="color:#666; font-size:13px;">No pending requests.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="createModal" class="gh-modal">
+        <div class="gh-modal-content">
+            <h2 style="color:var(--gh-red); margin-top:0;">Register New Unit</h2>
+            <label style="color:#ccc; font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">SQUAD NAME</label>
+            <input type="text" id="newTeamName" class="gh-input" placeholder="e.g. Neon Vipers">
+            <label style="color:#ccc; font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">TAG (3-4 Chars)</label>
+            <input type="text" id="newTeamTag" class="gh-input" placeholder="e.g. NV" maxlength="4" style="text-transform:uppercase;">
+            <label style="color:#ccc; font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">UPLOAD LOGO</label>
+            <input type="file" id="newTeamFile" class="gh-input" accept="image/*" style="padding:5px;">
+            <button class="create-btn" style="width:100%; margin-top:10px; display:block;" onclick="createTeam()">Register Squad</button>
+            <button onclick="closeModal('createModal')" style="width:100%; background:transparent; border:none; color:#666; margin-top:10px; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <div id="editModal" class="gh-modal">
+        <div class="gh-modal-content" style="border-color:var(--gh-blue) !important;">
+            <h2 style="color:var(--gh-blue); margin-top:0;">Update Intel</h2>
+            <label style="color:#ccc; font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">SQUAD NAME</label>
+            <input type="text" id="editTeamName" class="gh-input">
+            <label style="color:#ccc; font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">TAG</label>
+            <input type="text" id="editTeamTag" class="gh-input">
+            <label style="color:#ccc; font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">NEW LOGO (Optional)</label>
+            <input type="file" id="editTeamFile" class="gh-input" accept="image/*" style="padding:5px;">
+            <button class="squad-btn" style="width:100%; margin-top:10px; display:block;" onclick="updateTeam()">Save Changes</button>
+            <button onclick="closeModal('editModal')" style="width:100%; background:transparent; border:none; color:#666; margin-top:10px; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        let myTeamId = null;
+        let myTeamName = ""; 
+        let currentUser = null;
+        let isAdmin = false;
+
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(async user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                
+                // Initialize Visuals
+                const container = document.getElementById("particleContainer");
+                if(container) {
+                    for(let i=0; i<30; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; p.style.animationDelay=Math.random()*10+"s"; container.appendChild(p); }
+                }
+
+                currentUser = user;
+                const token = await user.getIdTokenResult();
+                isAdmin = !!token.claims.admin;
+
+                // Determine View
+                const teamQuery = await db.collection("teams").where("members", "array-contains", user.uid).limit(1).get();
+                
+                if(!teamQuery.empty) {
+                    const teamDoc = teamQuery.docs[0];
+                    myTeamId = teamDoc.id;
+                    renderMySquad(teamDoc.data());
+                    loadChat();
+                } else {
+                    document.getElementById("createBtn").style.display = "block";
+                    loadPublicTeams();
+                }
+            }
+        });
+
+        /* --- 1. PUBLIC VIEW & REQUESTS --- */
+        function loadPublicTeams() {
+            document.getElementById("publicView").style.display = "block";
+            document.getElementById("mySquadView").style.display = "none";
+
+            db.collection("teams").onSnapshot(snap => {
+                document.getElementById("loadingGrid").style.display = "none";
+                const grid = document.getElementById("teamsGrid");
+                grid.innerHTML = "";
+
+                if(snap.empty) {
+                    grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#444; padding:50px;">No active squads.</div>`;
+                    return;
+                }
+
+                snap.forEach(async doc => {
+                    const t = doc.data();
+                    const pending = await checkPending(doc.id);
+                    
+                    const btnHtml = pending 
+                        ? `<button class="join-btn pending">Request Sent</button>`
+                        : `<button class="join-btn" onclick="sendJoinRequest('${doc.id}')">Request to Join</button>`;
+
+                    const adminBtn = isAdmin ? `<div class="admin-nuke-btn" onclick="adminNukeTeam('${doc.id}')" title="Admin Delete">X</div>` : '';
+
+                    const div = document.createElement('div');
+                    div.className = 'team-card';
+                    div.innerHTML = `
+                        ${adminBtn}
+                        <img src="${t.logo || 'assets/GH_Hero.png'}" class="team-logo">
+                        <div class="team-name">${t.name}</div>
+                        <div class="team-tag">[${t.tag}]</div>
+                        <div class="team-stats"><div class="stat-item"><b>${t.members.length}</b>MEMBERS</div></div>
+                        ${btnHtml}
+                    `;
+                    grid.appendChild(div);
+                });
+            });
+        }
+
+        async function checkPending(teamId) {
+            const snap = await db.collection("team_requests").where("teamId", "==", teamId).where("userId", "==", currentUser.uid).get();
+            return !snap.empty;
+        }
+
+        async function sendJoinRequest(teamId) {
+            if(!currentUser) return alert("Login required.");
+            try {
+                const teamDoc = await db.collection("teams").doc(teamId).get();
+                if (!teamDoc.exists) return;
+                const teamData = teamDoc.data();
+
+                await db.collection("team_requests").add({
+                    teamId: teamId, userId: currentUser.uid, userName: currentUser.displayName || "Unknown",
+                    userPhoto: currentUser.photoURL || null, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await db.collection("notifications").add({
+                    uid: teamData.captainId,
+                    type: "info",
+                    title: "Recruit Pending",
+                    message: `${currentUser.displayName || "A user"} wants to join ${teamData.name}.`,
+                    link: "teams.html",
+                    read: false,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert("Request Sent to Captain.");
+                loadPublicTeams(); 
+            } catch(e) { alert(e.message); }
+        }
+
+        /* --- 2. MY SQUAD LOGIC --- */
+        async function renderMySquad(team) {
+            document.getElementById("publicView").style.display = "none";
+            document.getElementById("mySquadView").style.display = "block";
+
+            myTeamName = team.name; 
+            document.getElementById("squadName").innerText = team.name;
+            document.getElementById("squadTag").innerText = "[" + team.tag + "]";
+            document.getElementById("squadLogo").src = team.logo || "assets/GH_Hero.png";
+            document.getElementById("squadCapt").innerText = team.captainName;
+
+            document.getElementById("editTeamName").value = team.name;
+            document.getElementById("editTeamTag").value = team.tag;
+
+            const isCapt = (team.captainId === currentUser.uid);
+
+            if(isCapt) {
+                document.getElementById("captActions").style.display = "flex";
+                document.getElementById("inboxPanel").style.display = "flex"; 
+                loadRequests();
+            }
+
+            const rosterDiv = document.getElementById("rosterList");
+            rosterDiv.innerHTML = "";
+            
+            const promises = team.members.map(uid => db.collection("users").doc(uid).get());
+            const userDocs = await Promise.all(promises);
+
+            userDocs.forEach(uDoc => {
+                if(!uDoc.exists) return;
+                const uData = uDoc.data();
+                const uid = uDoc.id;
+                const isMemberCapt = (uid === team.captainId);
+                
+                rosterDiv.innerHTML += `
+                    <div class="member-row">
+                        <div class="member-info">
+                            <img src="${uData.photoURL || 'assets/GH_Hero.png'}" class="member-av">
+                            <div>${uData.name || "Agent"}</div>
+                            ${isMemberCapt ? '<span class="capt-badge">CPT</span>' : ''}
+                        </div>
+                        ${(isCapt && !isMemberCapt) ? `<span class="kick-btn" onclick="kickMember('${uid}')">KICK</span>` : ''}
+                    </div>
+                `;
+            });
+        }
+
+        /* --- 3. CHAT LOGIC --- */
+        function loadChat() {
+            db.collection("teams").doc(myTeamId).collection("chat")
+              .orderBy("timestamp", "asc").limitToLast(50)
+              .onSnapshot(snap => {
+                  const feed = document.getElementById("chatFeed");
+                  feed.innerHTML = "";
+                  if(snap.empty) { feed.innerHTML = "<div style='color:#666; font-size:12px; text-align:center;'>Start the conversation...</div>"; return; }
+                  snap.forEach(doc => {
+                      const m = doc.data();
+                      feed.innerHTML += `<div class="chat-msg"><div class="chat-user">${m.sender}</div><div class="chat-text">${m.text}</div></div>`;
+                  });
+                  feed.scrollTop = feed.scrollHeight;
+              });
+        }
+        async function sendChat() {
+            const input = document.getElementById("chatInput");
+            const text = input.value.trim();
+            if(!text) return;
+            try {
+                await db.collection("teams").doc(myTeamId).collection("chat").add({
+                    text, sender: currentUser.displayName || "Agent", uid: currentUser.uid, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                input.value = "";
+            } catch(e) {}
+        }
+        function handleEnter(e) { if(e.key === "Enter") sendChat(); }
+
+        /* --- 4. REQUESTS PROCESSING --- */
+        function loadRequests() {
+            db.collection("team_requests").where("teamId", "==", myTeamId).onSnapshot(snap => {
+                const list = document.getElementById("requestList");
+                list.innerHTML = "";
+                if(snap.empty) { list.innerHTML = "<div style='color:#666; font-size:13px;'>No pending requests.</div>"; return; }
+                snap.forEach(doc => {
+                    const r = doc.data();
+                    list.innerHTML += `
+                        <div class="request-item">
+                            <div style="font-size:13px; font-weight:bold;">${r.userName} wants to join.</div>
+                            <div class="req-actions">
+                                <button class="req-btn req-accept" onclick="processRequest('${doc.id}', '${r.userId}', true)">Accept</button>
+                                <button class="req-btn req-deny" onclick="processRequest('${doc.id}', '${r.userId}', false)">Deny</button>
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+
+        async function processRequest(reqId, userId, accepted) {
+            try {
+                if(accepted) {
+                    await db.collection("teams").doc(myTeamId).update({ members: firebase.firestore.FieldValue.arrayUnion(userId) });
+                    await db.collection("notifications").add({
+                        uid: userId, type: "success", title: "Squad Request Accepted",
+                        message: `Welcome to ${myTeamName}! Report to the squad page.`, link: "teams.html",
+                        read: false, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    await db.collection("notifications").add({
+                        uid: userId, type: "warning", title: "Squad Request Declined",
+                        message: `Your request to join ${myTeamName} was declined.`, link: "#",
+                        read: false, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                await db.collection("team_requests").doc(reqId).delete();
+                if(accepted) location.reload();
+            } catch(e) { alert(e.message); }
+        }
+
+        /* --- ACTIONS --- */
+        async function createTeam() {
+            const name = document.getElementById("newTeamName").value;
+            const tag = document.getElementById("newTeamTag").value.toUpperCase();
+            const file = document.getElementById("newTeamFile").files[0];
+            if(!name || !tag) return alert("Name and Tag required.");
+            if(!file) return alert("Logo required.");
+
+            // Uses global 'storage' from firebase-init.js
+            const ref = storage.ref(`teams/${Date.now()}_${file.name}`);
+            await ref.put(file);
+            const url = await ref.getDownloadURL();
+
+            await db.collection("teams").add({
+                name, tag, logo: url, captainId: currentUser.uid, captainName: currentUser.displayName || "Unknown",
+                members: [currentUser.uid], created: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            closeModal('createModal'); location.reload();
+        }
+
+        async function updateTeam() {
+            const name = document.getElementById("editTeamName").value;
+            const tag = document.getElementById("editTeamTag").value;
+            const file = document.getElementById("editTeamFile").files[0];
+            const updateData = { name, tag };
+            if(file) {
+                const ref = storage.ref(`teams/${Date.now()}_${file.name}`);
+                await ref.put(file); updateData.logo = await ref.getDownloadURL();
+            }
+            await db.collection("teams").doc(myTeamId).update(updateData);
+            alert("Updated."); closeModal('editModal'); location.reload();
+        }
+
+        async function kickMember(uid) {
+            if(!confirm("Kick this member?")) return;
+            await db.collection("teams").doc(myTeamId).update({ members: firebase.firestore.FieldValue.arrayRemove(uid) });
+            await db.collection("notifications").add({
+                uid: uid, type: "warning", title: "Squad Update",
+                message: `You have been removed from ${myTeamName}.`, link: "teams.html",
+                read: false, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            location.reload();
+        }
+
+        async function leaveTeam() {
+            if(!confirm("Leave team?")) return;
+            const tDoc = await db.collection("teams").doc(myTeamId).get();
+            const tData = tDoc.data();
+            if(tData.captainId === currentUser.uid) { await db.collection("teams").doc(myTeamId).delete(); } 
+            else { await db.collection("teams").doc(myTeamId).update({ members: firebase.firestore.FieldValue.arrayRemove(currentUser.uid) }); }
+            location.reload();
+        }
+
+        async function adminNukeTeam(id) {
+            if(confirm("ADMIN: Delete squad?")) await db.collection("teams").doc(id).delete();
+        }
+
+        function openCreateModal() { document.getElementById("createModal").style.display = "flex"; }
+        function openEditModal() { document.getElementById("editModal").style.display = "flex"; }
+        function closeModal(id) { document.getElementById(id).style.display = "none"; }
+    </script>
+</body>
+</html>

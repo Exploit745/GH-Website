@@ -1,372 +1,503 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GH – Admin Panel</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Admin Console</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
 
-  <!-- Universal Header + Drawer Styles -->
-  <link rel="stylesheet" href="header.css">
-  <link rel="stylesheet" href="drawer.css">
+    <style>
+        /* [ADMIN SPECIFIC STYLES] */
 
-  <style>
-    body {
-      margin: 0;
-      background: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-    }
+        /* HEADER */
+        .title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid var(--gh-red); padding-bottom: 5px; }
+        .page-title { font-size: 32px; font-weight: 700; color: var(--gh-red); margin: 0; text-shadow: 0 0 10px #ff000044; }
+        .settings-btn { background: none; border: none; font-size: 24px; cursor: pointer; transition: transform 0.2s; color: #fff; }
+        .settings-btn:hover { transform: rotate(90deg); color: var(--gh-blue); }
 
-    .main-wrap {
-      display: flex;
-      min-height: calc(100vh - 60px);
-      background: #000;
-    }
+        /* TABS */
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 10px; overflow-x: auto; }
+        .tab-btn { 
+            background: #111; border: 1px solid #333; color: #888; padding: 10px 20px; 
+            cursor: pointer; font-weight: bold; border-radius: 6px; transition: 0.2s; white-space: nowrap;
+        }
+        .tab-btn:hover { color: #fff; background: #222; }
+        .tab-btn.active { background: var(--gh-blue); color: #000; border-color: var(--gh-blue); }
 
-    .content {
-      flex: 1;
-      padding: 25px;
-      box-sizing: border-box;
-      background: radial-gradient(circle at top, #111 0%, #000 55%);
-    }
+        /* SECTIONS */
+        .admin-section { display: none; }
+        .admin-section.active { display: block; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    h1 {
-      margin-top: 0;
-      color: #fdff55;
-      text-shadow: 0 0 12px #fdff55aa;
-    }
+        /* GRID & CARDS */
+        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; }
+        .admin-card { background: #111; border: 1px solid #333; border-radius: 12px; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        .admin-card h3 { color: var(--gh-yellow); border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
+        .card-full-width { grid-column: 1 / -1; }
 
-    .card {
-      background: #111;
-      border-radius: 12px;
-      border: 2px solid #fdff55;
-      box-shadow: 0 0 18px #fdff5525;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
+        /* TOGGLES */
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #333; }
+        .toggle-btn { padding: 5px 10px; border-radius: 4px; border:none; font-weight:bold; cursor:pointer; font-size:11px; }
+        .toggle-btn.on { background: var(--gh-blue); color: #000; box-shadow: 0 0 10px var(--gh-blue); }
+        .toggle-btn.off { background: var(--gh-red); color: #fff; }
 
-    .card h3 {
-      margin-top: 0;
-      margin-bottom: 12px;
-      color: #fdff55;
-      text-shadow: 0 0 8px #fdff55aa;
-    }
+        /* LISTS (Apps, Teams, etc) */
+        .app-toolbar { display: flex; gap: 10px; margin-bottom: 15px; }
+        .app-list { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .app-item { 
+            background: #1a1a1a; padding: 12px; border-radius: 6px; border-left: 3px solid #555; 
+            cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; 
+        }
+        .app-item:hover { background: #222; padding-left: 15px; }
+        .app-item.status-pending { border-color: var(--gh-yellow); }
+        .app-item.status-approved { border-color: #00ff6a; }
+        .app-item.status-denied { border-color: var(--gh-red); opacity: 0.6; }
 
-    label {
-      display: block;
-      margin-top: 10px;
-      margin-bottom: 4px;
-      font-weight: bold;
-      color: #00eaff;
-    }
+        .app-meta { font-size: 12px; color: #888; margin-top: 4px; }
+        .status-badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+        .bg-pending { background: rgba(253, 255, 85, 0.1); color: #fdff55; }
+        .bg-approved { background: rgba(0, 255, 106, 0.1); color: #00ff6a; }
+        .bg-denied { background: rgba(255, 68, 68, 0.1); color: #ff4444; }
 
-    input[type="text"],
-    textarea {
-      width: 100%;
-      background: #222;
-      border-radius: 6px;
-      border: 1px solid #00eaff55;
-      color: #fff;
-      padding: 10px;
-      box-sizing: border-box;
-      font-size: 14px;
-    }
+        /* TEAMS ROW */
+        .team-row { display: flex; justify-content: space-between; align-items: center; background: #161616; padding: 10px; border-radius: 6px; margin-bottom: 5px; border-left: 3px solid var(--gh-red); }
+        .team-info { display: flex; gap: 10px; align-items: center; }
+        .team-logo-small { width: 30px; height: 30px; border-radius: 4px; object-fit: cover; }
 
-    input[type="text"]:focus,
-    textarea:focus {
-      outline: none;
-      border-color: #00eaff;
-      box-shadow: 0 0 8px #00eaffaa;
-    }
+        /* TICKETS */
+        .ticket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .ticket-card { background: #111; border: 1px solid #333; border-left: 4px solid var(--gh-blue); padding: 15px; border-radius: 6px; display: flex; flex-direction: column; }
+        .ticket-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 12px; color: #666; }
+        .ticket-type { color: var(--gh-blue); font-weight: bold; text-transform: uppercase; }
+        .ticket-msg { background: #080808; padding: 10px; border-radius: 4px; color: #ccc; font-size: 13px; margin-bottom: 10px; border: 1px solid #222; }
+        .ticket-actions { display: flex; gap: 10px; margin-top: auto; }
 
-    .btn {
-      display: inline-block;
-      margin-top: 12px;
-      padding: 8px 14px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-      background: #00eaff;
-      color: #000;
-      box-shadow: 0 0 10px #00eaff88;
-      transition: 0.2s ease;
-    }
+        /* MODAL */
+        .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(5px); }
+        .modal { background: #111; border: 1px solid var(--gh-blue); width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 25px; border-radius: 12px; box-shadow: 0 0 30px #000; animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal h2 { margin-top: 0; color: var(--gh-blue); border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .app-details-block { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .detail-label { color: #888; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
+        .detail-content { color: #fff; margin-bottom: 15px; font-size: 14px; line-height: 1.4; }
+        .admin-notes-area { border: 1px solid var(--gh-yellow); background: #222200; color: #fff; width:100%; box-sizing:border-box; padding:10px; margin-bottom:10px; resize: vertical; border-radius: 6px; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .close-corner { float: right; cursor: pointer; font-size: 20px; color: #fff; }
 
-    .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 0 14px #00eaffcc;
-    }
-
-    .btn.deny-btn {
-      background: #ff4444;
-      color: #fff;
-      box-shadow: 0 0 10px #ff444488;
-      margin-left: 8px;
-    }
-
-    .btn.deny-btn:hover {
-      box-shadow: 0 0 14px #ff4444cc;
-    }
-
-    #appStatus {
-      margin-top: 8px;
-      font-size: 14px;
-      opacity: 0.85;
-    }
-
-    .app-item {
-      border-left: 3px solid #fdff55;
-      padding-left: 10px;
-      margin-bottom: 16px;
-      background: #151515;
-      border-radius: 6px;
-      padding-top: 8px;
-      padding-bottom: 8px;
-    }
-
-    .app-item strong {
-      color: #fdff55;
-    }
-  </style>
+    </style>
 </head>
 <body>
+    <div id="header"></div>
 
-  <!-- UNIVERSAL HEADER -->
-  <div id="header"></div>
-  <script src="header.js"></script>
+    <div class="page-wrap">
+        <div id="drawer"></div>
+        <div class="content">
+            <div class="title-row">
+                <h1 class="page-title">Admin Console</h1>
+                <button class="settings-btn" onclick="location.href='admin_settings.html'">⚙️</button>
+            </div>
+            
+            <div id="loadingAdmin" style="text-align:center; padding:50px; color:#888;">Checking Clearance Level...</div>
+            
+            <div id="adminContent" style="display:none;">
+                
+                <div class="admin-tabs">
+                    <button class="tab-btn active" onclick="switchTab('users', this)">Users & Systems</button>
+                    <button class="tab-btn" onclick="switchTab('comms', this)">Comms & Alerts</button>
+                    <button class="tab-btn" onclick="switchTab('competitive', this)">Competitive</button>
+                    <button class="tab-btn" onclick="switchTab('tickets', this)">Support Tickets</button>
+                    <button class="tab-btn" onclick="window.location.href='shop.html'">Manage Shop ↗</button>
+                </div>
 
-  <div class="main-wrap">
-    <!-- UNIVERSAL DRAWER -->
-    <div id="drawer"></div>
+                <div id="tab-users" class="admin-section active admin-grid">
+                    <div class="admin-card">
+                        <h3>Feature Toggles</h3>
+                        <div class="toggle-row"><span>📝 Member Posting</span><button id="postsToggle" class="toggle-btn" onclick="toggleFeature('posts')">...</button></div>
+                        <div class="toggle-row"><span>📋 Applications</span><button id="appsToggle" class="toggle-btn" onclick="toggleFeature('applications')">...</button></div>
+                    </div>
+
+                    <div class="admin-card">
+                        <h3>🔍 User Database</h3>
+                        <input type="text" id="userSearch" class="gh-input" placeholder="Email or UID...">
+                        <button class="gh-btn btn-primary" onclick="lookupUser()">Search</button>
+                        <div id="userResult" style="margin-top:10px; font-size:13px; color:var(--gh-blue); display:none;"></div>
+                    </div>
+
+                    <div class="admin-card card-full-width">
+                        <h3>📝 Application Command Center <span style="font-size:12px; color:#888;" id="appCount">Loading...</span></h3>
+                        <div class="app-toolbar">
+                            <input type="text" id="appSearchInput" class="gh-input" placeholder="Search applicant..." onkeyup="filterApps()" style="margin-bottom:0; flex:2;">
+                            <select id="appSort" class="gh-select" onchange="renderApps()" style="margin-bottom:0; flex:1;">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="pending">Pending Only</option>
+                            </select>
+                            <button class="gh-btn btn-primary" onclick="loadApplications()" style="margin-top:0; width:auto; padding:0 20px;">↻</button>
+                        </div>
+                        <div class="app-list" id="applicationList"></div>
+                    </div>
+                </div>
+
+                <div id="tab-comms" class="admin-section admin-grid">
+                    
+                    <div class="admin-card">
+                        <h3>🔔 Push Notification</h3>
+                        <div style="font-size:12px; color:#888; margin-bottom:10px;">Send a real-time alert to a user's header bell.</div>
+                        
+                        <input type="text" id="pushTarget" class="gh-input" placeholder="UID (or type 'ALL')">
+                        <input type="text" id="pushTitle" class="gh-input" placeholder="Short Title (e.g. App Approved)">
+                        <textarea id="pushMsg" class="gh-input" placeholder="Message content..." rows="2"></textarea>
+                        
+                        <div style="display:flex; gap:10px;">
+                            <select id="pushType" class="gh-select" style="flex:1;">
+                                <option value="info">Info (Blue)</option>
+                                <option value="success">Success (Green)</option>
+                                <option value="warning">Warning (Yellow)</option>
+                            </select>
+                            <input type="text" id="pushLink" class="gh-input" placeholder="Link (Optional)" style="flex:2;">
+                        </div>
+
+                        <button class="gh-btn btn-primary" onclick="sendPushNotification()">Send Alert</button>
+                    </div>
+
+                    <div class="admin-card">
+                        <h3>📢 Global Broadcast</h3>
+                        <div style="font-size:12px; color:#888; margin-bottom:10px;">Sticky message on the homepage.</div>
+                        <input type="text" id="annTitle" class="gh-input" placeholder="Title">
+                        <textarea id="annMessage" class="gh-input" placeholder="Message..." rows="2"></textarea>
+                        <div style="display:flex; gap:10px; margin-bottom:15px;">
+                            <button id="annBtn" class="gh-btn btn-primary" onclick="handleAnnouncement()">Post Broadcast</button>
+                            <button id="annCancelBtn" class="gh-btn btn-danger" onclick="resetAnnForm()" style="display:none;">Cancel</button>
+                        </div>
+                        <div style="border-top:1px solid #333; padding-top:10px;">
+                            <h4 style="margin:0 0 10px 0; font-size:12px; color:#888; text-transform:uppercase;">Active Broadcasts</h4>
+                            <div id="announcementList" class="app-list" style="max-height: 200px;"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="tab-competitive" class="admin-section admin-grid">
+                    <div class="admin-card">
+                        <h3>Tournament Ops</h3>
+                        <div class="toggle-row">
+                            <span>Status:</span>
+                            <span id="tournyStatusText" style="font-weight:bold; color:#666;">...</span>
+                            <button id="tournyToggle" class="toggle-btn" onclick="toggleTournyStatus()">TOGGLE</button>
+                        </div>
+                        <p style="color:#888; font-size:13px;">Manage brackets, seeds, and prizes in the Command Center.</p>
+                        <button class="gh-btn btn-primary" onclick="window.location.href='tournaments.html'">Launch Command Center ↗</button>
+                    </div>
+
+                    <div class="admin-card">
+                        <h3>Squad Database</h3>
+                        <p style="color:#888; font-size:12px; margin-bottom:10px;">Registered Teams</p>
+                        <div id="teamList" class="app-list" style="max-height: 400px;">
+                            <div style="text-align:center; padding:20px; color:#666;">Loading Squads...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-tickets" class="admin-section">
+                    <div id="ticketContainer" class="ticket-grid">
+                        <div style="grid-column:1/-1; text-align:center; padding:40px; color:#666;">Loading tickets...</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="appModal" class="modal-bg">
+        <div class="modal">
+            <span class="close-corner" onclick="closeModal()">✕</span>
+            <h2 id="modalTitle">Application Review</h2>
+            <div class="app-details-block" id="modalContent"></div>
+            <div style="border-top: 1px solid #333; padding-top: 15px;">
+                <label class="detail-label" style="color:var(--gh-yellow);">Admin Notes (Internal)</label>
+                <textarea id="adminNotes" class="admin-notes-area" rows="3" placeholder="Add notes about this applicant..."></textarea>
+                <div class="modal-actions">
+                    <button class="gh-btn btn-success" style="background:#00ff6a; color:#000;" onclick="updateAppStatus('approved')">Approve</button>
+                    <button class="gh-btn btn-danger" style="background:var(--gh-red); color:#fff;" onclick="updateAppStatus('denied')">Deny</button>
+                    <button class="gh-btn btn-secondary" onclick="saveNotesOnly()">Save Notes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script> 
     <script src="drawer.js"></script>
 
-    <!-- ADMIN CONTENT -->
-    <div class="content">
-      <h1>Admin Panel</h1>
+    <script>
+        let currentApps = []; 
+        let currentReviewId = null;
+        let editingAnnId = null;
 
-      <!-- Post Announcement -->
-      <div class="card">
-        <h3>Post Announcement</h3>
-
-        <label for="annTitle">Title</label>
-        <input id="annTitle" type="text" placeholder="Short announcement title">
-
-        <label for="annMessage">Message</label>
-        <textarea id="annMessage" placeholder="What do you want to tell GH?" rows="4"></textarea>
-
-        <button class="btn" onclick="postAnnouncement()">Post</button>
-      </div>
-
-      <!-- Applications Toggle -->
-      <div class="card">
-        <h3>Applications</h3>
-        <button class="btn" onclick="toggleApplications()">Toggle Applications</button>
-        <p id="appStatus">Loading application status...</p>
-      </div>
-
-      <!-- Pending Applications -->
-      <div class="card">
-        <h3>Pending Applications</h3>
-        <div id="applicationContainer">Loading.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- FIREBASE + AUTH -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-  <script>
-    // Firebase config (same as rest of site)
-    const firebaseConfig = {
-      apiKey: "AIzaSyBID0q4e18Rgzoj1jdBIznAAaIqNlNSzY8",
-      authDomain: "gh-website-7603c.firebaseapp.com",
-      projectId: "gh-website-7603c",
-      storageBucket: "gh-website-7603c.firebasestorage.app",
-      messagingSenderId: "382290025026",
-      appId: "1:382290025026:web:a2c70de3fd2f42e6c96bdb"
-    };
-
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
-
-    /* ============================
-       AUTH + ADMIN GUARD
-    ============================ */
-    auth.onAuthStateChanged(async user => {
-      if (!user) {
-        window.location.href = "login.html";
-        return;
-      }
-
-      const token = await user.getIdTokenResult();
-      const isAdmin = token.claims && token.claims.admin === true;
-
-      if (!isAdmin) {
-        // Hard bounce non-admins back to dashboard
-        window.location.href = "gh_dashboard.html";
-        return;
-      }
-
-      // Once we know they’re admin, wire everything
-      watchApplicationStatus();
-      watchApplications();
-    });
-
-    /* ============================
-       APPLICATION STATUS TOGGLE
-       settings/applications.enabled
-    ============================ */
-    function watchApplicationStatus() {
-      const statusEl = document.getElementById("appStatus");
-
-      db.collection("settings").doc("applications").onSnapshot(doc => {
-        let enabled = true;
-
-        if (doc.exists && typeof doc.data().enabled === "boolean") {
-          enabled = doc.data().enabled;
-        }
-
-        if (enabled) {
-          statusEl.textContent = "Applications are OPEN.";
-          statusEl.style.color = "#00eaff";
-          statusEl.style.textShadow = "0 0 8px #00eaffaa";
-        } else {
-          statusEl.textContent = "Applications are CLOSED.";
-          statusEl.style.color = "#ff4444";
-          statusEl.style.textShadow = "0 0 8px #ff4444aa";
-        }
-      }, err => {
-        statusEl.textContent = "Error loading application status.";
-        console.error(err);
-      });
-    }
-
-    function toggleApplications() {
-      const docRef = db.collection("settings").doc("applications");
-
-      docRef.get().then(doc => {
-        const current = doc.exists && typeof doc.data().enabled === "boolean"
-          ? doc.data().enabled
-          : true;
-
-        return docRef.set({ enabled: !current }, { merge: true });
-      }).catch(err => {
-        alert("Error toggling applications: " + err.message);
-      });
-    }
-
-    /* ============================
-       POST ANNOUNCEMENT
-    ============================ */
-    function postAnnouncement() {
-      const titleEl   = document.getElementById("annTitle");
-      const messageEl = document.getElementById("annMessage");
-
-      const title   = titleEl.value.trim();
-      const message = messageEl.value.trim();
-
-      if (!title || !message) {
-        alert("Fill in both title and message.");
-        return;
-      }
-
-      db.collection("announcements").add({
-        title,
-        message,
-        timestamp: Date.now()
-      }).then(() => {
-        titleEl.value = "";
-        messageEl.value = "";
-        alert("Announcement posted.");
-      }).catch(err => {
-        alert("Error posting announcement: " + err.message);
-      });
-    }
-
-    /* ============================
-       PENDING APPLICATIONS
-       /applications where status == "pending"
-    ============================ */
-    function watchApplications() {
-      const container = document.getElementById("applicationContainer");
-      container.textContent = "Loading...";
-
-      db.collection("applications")
-        .where("status", "==", "pending")
-        .orderBy("timestamp", "desc")
-        .onSnapshot(snapshot => {
-          if (snapshot.empty) {
-            container.innerHTML = "<p>No pending applications.</p>";
-            return;
-          }
-
-          container.innerHTML = "";
-
-          snapshot.forEach(doc => {
-            const app = doc.data();
-
-            const div = document.createElement("div");
-            div.className = "app-item";
-
-            const birthday = app.birthday || "N/A";
-            const relation = app.relation || app.connection || "N/A";
-
-            div.innerHTML = `
-              <div><strong>${app.name || "Unnamed"}</strong></div>
-              <div>Email: ${app.email || "N/A"}</div>
-              <div>Birthday: ${birthday}</div>
-              <div>Relation: ${relation}</div>
-            `;
-
-            const approveBtn = document.createElement("button");
-            approveBtn.className = "btn";
-            approveBtn.textContent = "Approve";
-            approveBtn.onclick = () => approveApp(doc.id);
-
-            const denyBtn = document.createElement("button");
-            denyBtn.className = "btn deny-btn";
-            denyBtn.textContent = "Deny";
-            denyBtn.onclick = () => denyApp(doc.id);
-
-            div.appendChild(document.createElement("br"));
-            div.appendChild(approveBtn);
-            div.appendChild(denyBtn);
-
-            container.appendChild(div);
-          });
-        }, err => {
-          console.error("Error loading applications:", err);
-          container.innerHTML = "<p>Error loading applications. Check console.</p>";
+        /* INIT */
+        auth.onAuthStateChanged(async user => {
+            if (!user) return location.href = "login.html";
+            const token = await user.getIdTokenResult();
+            if (token.claims.admin) {
+                document.getElementById("loadingAdmin").style.display = "none";
+                document.getElementById("adminContent").style.display = "block"; 
+                
+                initFeatures();
+                initAnnouncements();
+                loadApplications();
+                loadTickets();
+                initCompetitive();
+            } else {
+                location.href = "gh_dashboard.html";
+            }
         });
-    }
 
-    // Approve: JUST flip status to approved (no /users write – avoids rule issues)
-    function approveApp(id) {
-      db.collection("applications").doc(id).update({
-        status: "approved"
-      }).then(() => {
-        alert("Application approved.");
-      }).catch(err => {
-        alert("Error approving: " + err.message);
-      });
-    }
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.admin-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            btn.classList.add('active');
+        }
 
-    function denyApp(id) {
-      db.collection("applications").doc(id).update({
-        status: "denied"
-      }).then(() => {
-        alert("Application denied.");
-      }).catch(err => {
-        alert("Error denying: " + err.message);
-      });
-    }
-  </script>
+        /* --- PUSH NOTIFICATION --- */
+        async function sendPushNotification() {
+            const uid = document.getElementById("pushTarget").value.trim();
+            const title = document.getElementById("pushTitle").value.trim();
+            const msg = document.getElementById("pushMsg").value.trim();
+            const type = document.getElementById("pushType").value;
+            const link = document.getElementById("pushLink").value.trim() || "#";
+
+            if (!uid || !title || !msg) return alert("Please fill in Target, Title, and Message.");
+
+            if (uid === "ALL") {
+                if(!confirm("⚠️ WARNING: sending to ALL users. Continue?")) return;
+                const usersSnap = await db.collection("users").get();
+                const batch = db.batch();
+                
+                usersSnap.forEach(doc => {
+                    const ref = db.collection("notifications").doc();
+                    batch.set(ref, {
+                        uid: doc.id, title: title, message: msg, type: type, link: link,
+                        read: false, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+                
+                await batch.commit();
+                alert(`Sent to ${usersSnap.size} users.`);
+            } else {
+                await db.collection("notifications").add({
+                    uid: uid, title: title, message: msg, type: type, link: link,
+                    read: false, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Notification Sent.");
+            }
+            document.getElementById("pushTarget").value = "";
+            document.getElementById("pushMsg").value = "";
+        }
+
+        /* --- COMPETITIVE --- */
+        function initCompetitive() { loadTeams(); loadTournyStatus(); }
+
+        function loadTeams() {
+            db.collection("teams").orderBy("created", "desc").onSnapshot(snap => {
+                const list = document.getElementById("teamList");
+                list.innerHTML = "";
+                if(snap.empty) { list.innerHTML = "<div style='text-align:center; padding:20px; color:#666;'>No teams registered.</div>"; return; }
+
+                snap.forEach(doc => {
+                    const t = doc.data();
+                    list.innerHTML += `
+                        <div class="team-row">
+                            <div class="team-info">
+                                <img src="${t.logo || 'assets/GH_Hero.png'}" class="team-logo-small">
+                                <div>
+                                    <div style="font-weight:bold; color:#fff;">${t.name} <span style="color:var(--gh-yellow); font-size:11px;">[${t.tag}]</span></div>
+                                    <div style="font-size:11px; color:#888;">Capt: ${t.captainName} • Members: ${t.members ? t.members.length : 0}</div>
+                                </div>
+                            </div>
+                            <button class="gh-btn btn-danger" style="width:auto; padding:5px 10px; font-size:10px; margin-top:0;" onclick="deleteTeam('${doc.id}')">NUKE</button>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        async function deleteTeam(id) { if(confirm("ADMIN: Permanently delete this squad?")) await db.collection("teams").doc(id).delete(); }
+
+        function loadTournyStatus() {
+            db.collection("system").doc("tournament_config").onSnapshot(doc => {
+                const statusTxt = document.getElementById("tournyStatusText");
+                const btn = document.getElementById("tournyToggle");
+                
+                if(doc.exists && doc.data().status === 'active') {
+                    statusTxt.innerText = "ACTIVE"; statusTxt.style.color = "#00ff6a";
+                    btn.innerText = "GO OFFLINE"; btn.className = "toggle-btn on";
+                } else {
+                    statusTxt.innerText = "OFFLINE"; statusTxt.style.color = "#ff4444";
+                    btn.innerText = "GO ACTIVE"; btn.className = "toggle-btn off";
+                }
+            });
+        }
+
+        async function toggleTournyStatus() {
+            const statusTxt = document.getElementById("tournyStatusText");
+            const isOnline = statusTxt.innerText === "ACTIVE";
+            await db.collection("system").doc("tournament_config").set({ status: isOnline ? "offline" : "active" }, { merge: true });
+        }
+
+        /* --- TICKETS --- */
+        function loadTickets() {
+            db.collection("support_tickets").orderBy("timestamp", "desc").limit(50).onSnapshot(snap => {
+                const container = document.getElementById("ticketContainer");
+                container.innerHTML = "";
+                if(snap.empty) { container.innerHTML = "<div style='grid-column:1/-1; text-align:center; color:#444;'>No tickets found.</div>"; return; }
+
+                snap.forEach(doc => {
+                    const t = doc.data();
+                    const isOpen = t.status === 'open';
+                    let dateStr = t.timestamp ? t.timestamp.toDate().toLocaleString() : "Unknown";
+
+                    container.innerHTML += `
+                        <div class="ticket-card" style="border-left-color: ${isOpen ? 'var(--gh-blue)' : '#333'}; opacity: ${isOpen ? '1' : '0.6'};">
+                            <div class="ticket-header"><span class="ticket-type">${t.type}</span><span>${dateStr}</span></div>
+                            <div style="font-weight:bold; margin-bottom:5px;">${t.userName}</div>
+                            <div style="font-size:12px; color:#666; margin-bottom:10px;">${t.userEmail}</div>
+                            <div class="ticket-msg">${t.message}</div>
+                            <div class="ticket-actions">
+                                ${isOpen ? `<button class="gh-btn btn-success" style="padding:5px; font-size:11px; margin-top:0;" onclick="closeTicket('${doc.id}')">MARK SOLVED</button>` : '<span style="color:#666; font-size:12px; font-weight:bold; align-self:center;">CLOSED</span>'}
+                                <button class="gh-btn btn-danger" style="padding:5px; font-size:11px; width:auto; margin-top:0;" onclick="deleteTicket('${doc.id}')">DEL</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+        async function closeTicket(id) { await db.collection("support_tickets").doc(id).update({ status: 'closed' }); }
+        async function deleteTicket(id) { if(confirm("Delete this ticket record?")) await db.collection("support_tickets").doc(id).delete(); }
+
+        /* --- FEATURES & USERS --- */
+        function initFeatures() {
+            db.collection("site_config").doc("posts").onSnapshot(doc => updateBtn("postsToggle", doc.exists ? doc.data().enabled : true));
+            db.collection("site_config").doc("applications").onSnapshot(doc => updateBtn("appsToggle", doc.exists ? doc.data().enabled : true));
+        }
+        function updateBtn(id, on) { const btn = document.getElementById(id); if(btn) { btn.innerText = on ? "ENABLED" : "DISABLED"; btn.className = on ? "toggle-btn on" : "toggle-btn off"; } }
+        function toggleFeature(feat) { const btn = document.getElementById(feat === 'posts' ? 'postsToggle' : 'appsToggle'); db.collection("site_config").doc(feat).set({ enabled: !(btn.innerText === "ENABLED") }, { merge: true }); }
+
+        async function lookupUser() {
+            const e = document.getElementById("userSearch").value;
+            const res = document.getElementById("userResult"); res.style.display="block"; res.innerText="Searching...";
+            let snap = await db.collection("users").where("email", "==", e).get();
+            if(snap.empty) { const doc = await db.collection("users").doc(e).get(); if(doc.exists) snap = [doc]; else snap = []; }
+            if(snap.length === 0 || snap.empty) res.innerText="User not found.";
+            else { snap.forEach(doc => { const d = doc.data(); res.innerHTML=`<strong>${d.name || d.username || "Unknown"}</strong><br>UID: ${doc.id}<br>Email: ${d.email}<br>Role: ${d.admin ? 'Admin' : 'Member'}<br><button class="gh-btn btn-danger" style="margin-top:5px; padding:5px;" onclick="wipe('${doc.id}')">Wipe Data</button>`; }); }
+        }
+        function wipe(uid) { if(confirm("PERMANENTLY DELETE USER DATA?")) db.collection("users").doc(uid).delete().then(()=>document.getElementById("userResult").style.display="none"); }
+
+        /* --- ANNOUNCEMENTS --- */
+        function initAnnouncements() {
+            db.collection("announcements").orderBy("timestamp", "desc").onSnapshot(snap => {
+                const list = document.getElementById("announcementList");
+                list.innerHTML = "";
+                if(snap.empty) { list.innerHTML = "<div style='color:#666; font-size:12px; padding:10px;'>No active broadcasts.</div>"; return; }
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const date = d.timestamp ? new Date(d.timestamp.seconds*1000).toLocaleDateString() : "?";
+                    const safeTitle = (d.title || "").replace(/'/g, "\\'");
+                    const safeMsg = (d.message || "").replace(/'/g, "\\'");
+                    
+                    list.innerHTML += `
+                        <div class="app-item" style="flex-direction:column; align-items:flex-start; gap:5px; border-left:3px solid var(--gh-blue);">
+                            <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                                <strong style="color:#fff; font-size:14px;">${d.title}</strong>
+                                <div style="display:flex; gap:8px;">
+                                    <button onclick="editAnn('${doc.id}', '${safeTitle}', '${safeMsg}')" style="background:none; border:none; cursor:pointer; font-size:14px;" title="Edit">✏️</button>
+                                    <button onclick="deleteAnn('${doc.id}')" style="background:none; border:none; cursor:pointer; font-size:14px;" title="Delete">🗑️</button>
+                                </div>
+                            </div>
+                            <div style="font-size:13px; color:#ccc; white-space:pre-wrap;">${d.message}</div>
+                            <div style="font-size:10px; color:#666; margin-top:5px;">Posted: ${date}</div>
+                        </div>`;
+                });
+            });
+        }
+        function handleAnnouncement() {
+            const t = document.getElementById("annTitle").value; const m = document.getElementById("annMessage").value;
+            if(!t || !m) return alert("Enter title and message.");
+            if(editingAnnId) { db.collection("announcements").doc(editingAnnId).update({ title: t, message: m, updated: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { alert("Updated."); resetAnnForm(); }); } 
+            else { db.collection("announcements").add({ title: t, message: m, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { alert("Sent."); resetAnnForm(); }); }
+        }
+        function editAnn(id, title, msg) { 
+            editingAnnId = id; 
+            document.getElementById("annTitle").value = title; 
+            document.getElementById("annMessage").value = msg; 
+            document.getElementById("annBtn").innerText = "Update"; 
+            document.getElementById("annBtn").className = "gh-btn btn-success"; 
+            document.getElementById("annCancelBtn").style.display = "block"; 
+        }
+        function deleteAnn(id) { if(confirm("Delete this broadcast?")) db.collection("announcements").doc(id).delete(); }
+        function resetAnnForm() { editingAnnId = null; document.getElementById("annTitle").value = ""; document.getElementById("annMessage").value = ""; document.getElementById("annBtn").innerText = "Post Broadcast"; document.getElementById("annBtn").className = "gh-btn btn-primary"; document.getElementById("annCancelBtn").style.display = "none"; }
+
+        /* --- APPLICATIONS --- */
+        function loadApplications() {
+            document.getElementById("applicationList").innerHTML = '<div style="padding:20px; text-align:center; color:#666;">Scanning frequency...</div>';
+            db.collection("applications").get().then(snap => {
+                currentApps = []; snap.forEach(doc => { currentApps.push({ id: doc.id, ...doc.data() }); });
+                renderApps();
+            });
+        }
+        function renderApps() {
+            const list = document.getElementById("applicationList");
+            const filter = document.getElementById("appSearchInput").value.toLowerCase();
+            const sortMode = document.getElementById("appSort").value;
+            let displayApps = currentApps.filter(a => ((a.name||"")+(a.email||"")+(a.relation||"")).toLowerCase().includes(filter));
+            if(sortMode === 'pending') displayApps = displayApps.filter(a => !a.status || a.status === 'pending');
+            else displayApps.sort((a, b) => { let tA = a.timestamp ? (a.timestamp.seconds ? a.timestamp.seconds * 1000 : a.timestamp) : 0; let tB = b.timestamp ? (b.timestamp.seconds ? b.timestamp.seconds * 1000 : b.timestamp) : 0; return sortMode === 'newest' ? tB - tA : tA - tB; });
+            document.getElementById("appCount").innerText = `${displayApps.length} Records`;
+            list.innerHTML = "";
+            if(displayApps.length === 0) { list.innerHTML = '<div style="padding:20px; text-align:center; color:#444;">No applications found.</div>'; return; }
+            displayApps.forEach(app => {
+                const status = app.status || 'pending';
+                let dateStr = app.timestamp ? new Date(app.timestamp.seconds ? app.timestamp.seconds * 1000 : app.timestamp).toLocaleDateString() : "Unknown";
+                list.innerHTML += `<div class="app-item status-${status}" onclick='openReviewModal("${app.id}")'><div><div style="font-weight:bold; color:#fff;">${app.name || "Unknown Applicant"}</div><div class="app-meta">${app.email || "No Email"} • Applied: ${dateStr}</div></div><div class="status-badge bg-${status}">${status}</div></div>`;
+            });
+        }
+        function filterApps() { renderApps(); }
+        function openReviewModal(appId) {
+            const app = currentApps.find(a => a.id === appId); if(!app) return;
+            currentReviewId = appId;
+            document.getElementById("modalTitle").innerText = `Review: ${app.name || "Applicant"}`;
+            document.getElementById("adminNotes").value = app.adminNotes || "";
+            document.getElementById("modalContent").innerHTML = `<div class="detail-label">Name</div><div class="detail-content">${app.name || "N/A"}</div><div class="detail-label">Birthday</div><div class="detail-content">${app.birthday || "N/A"}</div><div class="detail-label">Email</div><div class="detail-content">${app.email || "N/A"}</div><div class="detail-label">Connection / Relation</div><div class="detail-content">${app.relation || "N/A"}</div>`;
+            document.getElementById("appModal").style.display = "flex";
+        }
+        function closeModal() { document.getElementById("appModal").style.display = "none"; currentReviewId = null; }
+        
+        async function updateAppStatus(newStatus) {
+            if(!currentReviewId) return;
+            const notes = document.getElementById("adminNotes").value;
+            if(confirm(`Mark application as ${newStatus.toUpperCase()}?`)) {
+                await db.collection("applications").doc(currentReviewId).update({ status: newStatus, adminNotes: notes, reviewedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                const app = currentApps.find(a => a.id === currentReviewId); if(app) { app.status = newStatus; app.adminNotes = notes; } renderApps(); closeModal();
+            }
+        }
+        
+        function saveNotesOnly() {
+            if(!currentReviewId) return;
+            const notes = document.getElementById("adminNotes").value;
+            db.collection("applications").doc(currentReviewId).update({ adminNotes: notes });
+            const app = currentApps.find(a => a.id === currentReviewId); if(app) app.adminNotes = notes;
+            alert("Notes saved.");
+        }
+        
+        document.getElementById("appModal").addEventListener('click', (e) => { if(e.target.id === "appModal") closeModal(); });
+    </script>
 </body>
 </html>

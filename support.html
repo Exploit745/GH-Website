@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GH – Support Console</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="header.css">
+  <link rel="stylesheet" href="drawer.css">
+
+  <style>
+    /* GATEKEEPER */
+    body { display: none; }
+
+    /* [SUPPORT SPECIFIC STYLES] */
+
+    /* HEADER OVERRIDES */
+    .page-header { margin-bottom: 40px; }
+    .page-subtitle { color: #888; margin-top: 5px; font-size: 16px; font-style: italic; }
+
+    /* SEARCH BAR */
+    .search-container { margin-bottom: 40px; position: relative; }
+    .search-input {
+        width: 100%; background: #111; border: 1px solid #333; padding: 18px 25px; 
+        border-radius: 8px; color: #fff; font-size: 16px; box-sizing: border-box; 
+        transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .search-input:focus { border-color: var(--gh-blue); outline: none; box-shadow: 0 0 20px rgba(0, 234, 255, 0.15); }
+
+    /* QUICK HELP GRID */
+    .section-label { font-size: 18px; font-weight: bold; color: var(--gh-yellow); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; border-left: 3px solid var(--gh-yellow); padding-left: 15px; }
+    
+    .quick-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 50px; }
+    
+    .help-card {
+        background: #111; border: 1px solid #333; border-radius: 12px; padding: 25px;
+        cursor: pointer; transition: 0.2s; position: relative; overflow: hidden;
+    }
+    .help-card:hover { transform: translateY(-3px); border-color: var(--gh-blue); box-shadow: 0 0 20px rgba(0, 234, 255, 0.1); }
+    
+    .help-card h3 { margin: 0 0 10px 0; font-size: 18px; color: #fff; }
+    .help-card p { margin: 0; color: #888; font-size: 13px; line-height: 1.5; }
+    .help-icon { font-size: 24px; margin-bottom: 15px; display: block; }
+
+    /* FORM SECTION */
+    .form-container { 
+        background: #0f0f0f; border: 1px solid #222; border-radius: 12px; padding: 40px; 
+        position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .form-container::before {
+        content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+        background: linear-gradient(90deg, var(--gh-blue), transparent);
+    }
+
+    .gh-label { display: block; color: #aaa; font-size: 12px; font-weight: bold; margin-bottom: 8px; margin-top: 20px; letter-spacing: 1px; }
+    
+    .gh-select:focus, .gh-input:focus, .gh-textarea:focus { border-color: var(--gh-blue); background: #222; }
+
+    .submit-btn { 
+        margin-top: 30px; width: 100%; background: var(--gh-blue); color: #000; border: none; 
+        padding: 16px; font-weight: 900; text-transform: uppercase; cursor: pointer; border-radius: 6px; 
+        transition: 0.2s; letter-spacing: 1px; font-size: 16px;
+    }
+    .submit-btn:hover { box-shadow: 0 0 20px var(--gh-blue); transform: translateY(-2px); }
+
+    .footer-note { margin-top: 15px; color: #555; font-size: 12px; text-align: center; }
+
+    /* STATUS PILL */
+    .system-status-pill {
+        position: absolute; top: 40px; right: 40px; display: flex; align-items: center; gap: 8px;
+        background: #111; border: 1px solid #333; padding: 8px 15px; border-radius: 20px; font-size: 12px; color: #aaa;
+    }
+    .dot { width: 8px; height: 8px; background: #00ff6a; border-radius: 50%; box-shadow: 0 0 8px #00ff6a; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+    @media (max-width: 768px) {
+        .system-status-pill { position: relative; top: 0; right: 0; margin-bottom: 20px; width: fit-content; }
+        .content { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            
+            <div class="system-status-pill">
+                <div class="dot"></div> SYSTEMS NOMINAL (PROBABLY)
+            </div>
+
+            <div class="page-header">
+                <h1 class="page-title">Support Console</h1>
+                <div class="page-subtitle">Something broken? Or just bored? Start here.</div>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="helpSearch" class="search-input" placeholder="Search protocol database..." onkeyup="filterCards()">
+            </div>
+
+            <div class="section-label">Quick Fixes</div>
+            <div class="quick-grid" id="quickGrid">
+                
+                <div class="help-card" onclick="selectTopic('Account')">
+                    <span class="help-icon">🔐</span>
+                    <h3>Login Issues</h3>
+                    <p>Forgot your password? Or did your little brother delete your account?</p>
+                </div>
+
+                <div class="help-card" onclick="selectTopic('Bug')">
+                    <span class="help-icon">🐛</span>
+                    <h3>Report Glitch</h3>
+                    <p>If the site exploded, tell us how you did it.</p>
+                </div>
+
+                <div class="help-card" onclick="selectTopic('Moderation')">
+                    <span class="help-icon">🛡️</span>
+                    <h3>Ban Appeal</h3>
+                    <p>"I didn't do it, I swear." (We have logs, but try anyway.)</p>
+                </div>
+
+                <div class="help-card" onclick="selectTopic('Feature')">
+                    <span class="help-icon">💡</span>
+                    <h3>Ideas</h3>
+                    <p>Have a galaxy-brain feature idea? Pitch it.</p>
+                </div>
+
+            </div>
+
+            <div class="section-label">Secure Transmission</div>
+            <div class="form-container" id="contactForm">
+                <div style="margin-bottom:20px; color:#888; font-size:14px;">Direct line to the devs. Don't spam us or we will send the bots.</div>
+
+                <label class="gh-label">ISSUE CATEGORY</label>
+                <select id="ticketType" class="gh-select">
+                    <option value="" disabled selected>Select category...</option>
+                    <option value="Account">Account Trouble</option>
+                    <option value="Bug">Site Glitch / Bug</option>
+                    <option value="Moderation">Ban Appeal</option>
+                    <option value="Feature">Feature Request</option>
+                    <option value="Skill">Skill Issue (Generic)</option>
+                    <option value="Other">Other / Rambling</option>
+                </select>
+
+                <label class="gh-label">YOUR COMMS (EMAIL)</label>
+                <input type="email" id="ticketEmail" class="gh-input" placeholder="Retrieving email...">
+
+                <label class="gh-label">DATA PACKET (MESSAGE)</label>
+                <textarea id="ticketMsg" class="gh-textarea" rows="6" placeholder="Describe the problem. Be specific."></textarea>
+
+                <button class="submit-btn" onclick="submitTicket()">TRANSMIT SIGNAL 📡</button>
+                <div class="footer-note">Response time depends on how hard we are gaming.</div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                
+                // Initialize Visuals
+                const container = document.getElementById("particleContainer");
+                for (let i = 0; i < 30; i++) {
+                    const p = document.createElement("div"); p.classList.add("particle");
+                    p.style.left = Math.random() * 100 + "vw"; p.style.top = Math.random() * 100 + "vh";
+                    p.style.animationDelay = Math.random() * 10 + "s"; p.style.opacity = Math.random() * 0.4 + 0.1;
+                    p.style.transform = `scale(${Math.random() * 1 + 0.5})`; container.appendChild(p);
+                }
+
+                // Auto-fill Email
+                document.getElementById("ticketEmail").value = user.email;
+                document.getElementById("ticketEmail").disabled = true;
+                document.getElementById("ticketEmail").style.opacity = "0.7";
+            }
+        });
+
+        /* 3. CARD INTERACTION */
+        function selectTopic(topic) {
+            const select = document.getElementById("ticketType");
+            select.value = topic;
+            document.getElementById("contactForm").scrollIntoView({ behavior: 'smooth' });
+            select.style.borderColor = "var(--gh-blue)";
+            setTimeout(() => select.style.borderColor = "#333", 500);
+        }
+
+        /* 4. SEARCH FILTER */
+        function filterCards() {
+            const input = document.getElementById('helpSearch').value.toLowerCase();
+            const cards = document.getElementsByClassName('help-card');
+
+            for (let i = 0; i < cards.length; i++) {
+                const title = cards[i].getElementsByTagName("h3")[0].innerText.toLowerCase();
+                const text = cards[i].getElementsByTagName("p")[0].innerText.toLowerCase();
+                
+                if (title.includes(input) || text.includes(input)) {
+                    cards[i].style.display = "";
+                } else {
+                    cards[i].style.display = "none";
+                }
+            }
+        }
+
+        /* 5. SUBMIT TICKET */
+        async function submitTicket() {
+            const user = auth.currentUser;
+            if(!user) return; // Should not happen due to Gatekeeper
+
+            const type = document.getElementById("ticketType").value;
+            const msg = document.getElementById("ticketMsg").value;
+            const email = user.email;
+
+            if(!msg.trim() || !type) return alert("Forms incomplete. Protocol failed.");
+
+            const btn = document.querySelector('.submit-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "UPLOADING...";
+            btn.disabled = true;
+
+            try {
+                await db.collection("support_tickets").add({
+                    userId: user.uid,
+                    userName: user.displayName || "Unknown",
+                    userEmail: email,
+                    type: type,
+                    message: msg,
+                    status: "open", 
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert("Packet Sent. Stand by.");
+                document.getElementById("ticketMsg").value = "";
+            } catch(e) {
+                console.error(e);
+                alert("Transmission Error: " + e.message);
+            }
+            
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    </script>
+</body>
+</html>

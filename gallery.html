@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Media Archive</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* GATEKEEPER */
+        body { display: none; }
+
+        /* [GALLERY SPECIFIC STYLES] */
+
+        /* HEADER */
+        .gallery-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #222; padding-bottom: 15px; }
+        
+        .upload-btn { 
+            background: var(--gh-yellow); color: #000; border: none; padding: 10px 25px; 
+            border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; 
+            text-transform: uppercase; letter-spacing: 1px; 
+        }
+        .upload-btn:hover { box-shadow: 0 0 20px rgba(253, 255, 85, 0.4); transform: scale(1.05); }
+
+        /* MASONRY GRID */
+        .gallery-grid { column-count: 4; column-gap: 20px; }
+        @media (max-width: 1000px) { .gallery-grid { column-count: 3; } }
+        @media (max-width: 700px) { .gallery-grid { column-count: 2; } }
+        @media (max-width: 500px) { .gallery-grid { column-count: 1; } }
+
+        .gallery-item { break-inside: avoid; margin-bottom: 20px; background: #111; border: 1px solid #333; border-radius: 12px; overflow: hidden; position: relative; transition: 0.2s; }
+        .gallery-item:hover { transform: translateY(-5px); border-color: var(--gh-blue); box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
+        
+        /* MEDIA HANDLING */
+        .g-media { width: 100%; display: block; cursor: pointer; transition: 0.3s; object-fit: cover; }
+        .g-media:hover { filter: brightness(1.1); }
+        .play-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; color: rgba(255,255,255,0.8); pointer-events: none; text-shadow: 0 0 10px #000; }
+
+        .g-meta { padding: 15px; background: rgba(0,0,0,0.8); }
+        .g-author { font-size: 11px; color: var(--gh-blue); font-weight: bold; text-transform: uppercase; margin-bottom: 5px; display: block; }
+        .g-caption { font-size: 13px; color: #ccc; line-height: 1.4; margin: 0; }
+
+        /* BADGES & CONTROLS */
+        .pending-badge { position: absolute; top: 10px; left: 10px; background: var(--gh-yellow); color: #000; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; z-index: 5; pointer-events: none; }
+
+        .item-controls { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 10; }
+        .g-btn { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; font-size: 12px; color: #fff; }
+        .btn-approve { background: #00ff6a; }
+        .btn-delete { background: #ff4444; }
+
+        /* SAVE BUTTON (Grid Overlay) */
+        .grid-save-btn {
+            position: absolute; top: 10px; left: 10px; z-index: 10;
+            width: 30px; height: 30px; background: rgba(0,0,0,0.6);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #fff; transition: 0.2s; border: 1px solid #444;
+        }
+        .grid-save-btn:hover { background: #111; border-color: #fff; }
+        .grid-save-btn.active { color: var(--gh-red); border-color: var(--gh-red); background: rgba(255,0,0,0.8); }
+
+        /* LIGHTBOX PRO */
+        .lightbox-wrapper { display: flex; flex-direction: column; max-width: 90%; max-height: 95vh; align-items: center; width: 800px; }
+        .lightbox-media { max-width: 100%; max-height: 70vh; border-radius: 8px; border: 2px solid #333; box-shadow: 0 0 50px rgba(0,0,0,0.8); background:#000; }
+        .lightbox-info { background: #111; padding: 20px; border-radius: 12px; width: 100%; margin-top: 15px; border: 1px solid #333; text-align: left; box-sizing: border-box; }
+        
+        .lb-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .lb-save-btn { 
+            background: #222; color: #888; border: 1px solid #333; padding: 5px 12px; 
+            border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        .lb-save-btn:hover { background: #333; color: #fff; }
+        .lb-save-btn.active { background: rgba(255, 68, 68, 0.1); color: var(--gh-red); border-color: var(--gh-red); }
+
+        .close-lightbox { position: absolute; top: 20px; right: 30px; font-size: 40px; color: #fff; cursor: pointer; z-index: 3001; transition:0.2s; }
+        .close-lightbox:hover { color: var(--gh-red); transform: scale(1.1); }
+
+    </style>
+</head>
+<body>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            <div class="gallery-header">
+                <div>
+                    <h1 class="page-title">The Archive</h1>
+                    <div style="color:#666; font-size:13px; margin-top:5px;">Community Clips & Screenshots</div>
+                </div>
+                <button class="upload-btn" onclick="openUploadModal()">+ Upload</button>
+            </div>
+
+            <div class="gallery-grid" id="galleryGrid">
+                <div style="color:#666; padding:50px; text-align:center; column-span:all;">Loading archives...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="uploadModal" class="gh-modal">
+        <div class="gh-modal-content">
+            <h2 style="color:var(--gh-blue); margin-top:0;">Upload to Archive</h2>
+            <label style="color:#888; font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">FILE (IMG or VIDEO)</label>
+            <input type="file" id="upFile" class="gh-input" accept="image/*,video/mp4,video/webm">
+            <label style="color:#888; font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">CAPTION</label>
+            <textarea id="upCaption" class="gh-input" rows="3" placeholder="Describe the play..."></textarea>
+            <div style="display:flex; gap:10px;">
+                <button class="upload-btn" style="flex:1;" onclick="uploadImage()">Submit</button>
+                <button class="upload-btn" style="flex:1; background:#333; color:#fff;" onclick="closeModal('uploadModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lightbox" class="gh-modal">
+        <span class="close-lightbox" onclick="closeModal('lightbox')">&times;</span>
+        <div class="lightbox-wrapper">
+            <div id="lbMediaContainer"></div>
+            
+            <div class="lightbox-info">
+                <div class="lb-header-row">
+                    <div>
+                        <span id="lbAuthor" style="color:var(--gh-blue); font-weight:bold; font-size:14px; display:block;">AUTHOR</span>
+                        <span id="lbDate" style="color:#666; font-size:11px;">DATE</span>
+                    </div>
+                    <button id="lbSaveAction" class="lb-save-btn">❤ SAVE</button>
+                </div>
+                <p id="lbCaption" style="color:#ddd; margin:0; line-height:1.5;">...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        let isAdmin = false;
+        let currentUser = null;
+        let savedClips = new Set();
+
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(async user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                currentUser = user;
+                
+                // Initialize Visuals
+                const container = document.getElementById("particleContainer");
+                if(container){
+                    for(let i=0; i<30; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; p.style.animationDelay=Math.random()*15+"s"; container.appendChild(p); }
+                }
+
+                // Check Admin
+                const token = await user.getIdTokenResult();
+                isAdmin = !!token.claims.admin;
+                if (!isAdmin) {
+                    const uDoc = await db.collection("users").doc(user.uid).get();
+                    if(uDoc.exists && uDoc.data().role === 'admin') isAdmin = true;
+                }
+                
+                // Load Saved Clips & Gallery
+                db.collection("users").doc(user.uid).collection("saved").where("type", "==", "media")
+                    .onSnapshot(snap => {
+                        savedClips.clear();
+                        snap.forEach(doc => savedClips.add(doc.id));
+                        loadGallery();
+                    });
+            }
+        });
+
+        function loadGallery() {
+            db.collection("gallery").orderBy("timestamp", "desc").limit(50).onSnapshot(snap => {
+                const grid = document.getElementById("galleryGrid");
+                grid.innerHTML = "";
+                
+                if(snap.empty) { grid.innerHTML = "<div style='color:#666; text-align:center; width:100%; column-span:all;'>Archive is empty.</div>"; return; }
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const isApproved = d.status === 'approved';
+                    const isMine = currentUser && d.authorId === currentUser.uid;
+
+                    if (isApproved || isMine || isAdmin) {
+                        const div = document.createElement("div");
+                        div.className = "gallery-item";
+                        
+                        const isVideo = d.type && d.type.startsWith('video');
+                        
+                        // Admin Controls
+                        let controls = "";
+                        if (isAdmin || (isMine && !isApproved)) {
+                            controls = `<div class="item-controls">`;
+                            if (isAdmin && !isApproved) controls += `<button class="g-btn btn-approve" onclick="approvePost('${doc.id}')">✓</button>`;
+                            controls += `<button class="g-btn btn-delete" onclick="deletePost('${doc.id}')">✕</button></div>`;
+                        }
+
+                        // Save Button logic
+                        const isSaved = savedClips.has(doc.id) ? 'active' : '';
+                        const saveBtn = currentUser ? 
+                            `<div class="grid-save-btn ${isSaved}" onclick="toggleSave('${doc.id}', '${d.url}', '${d.caption ? d.caption.replace(/'/g, "\\'") : ""}', '${d.authorName}')">❤</div>` 
+                            : '';
+
+                        const mediaTag = isVideo 
+                            ? `<video src="${d.url}" class="g-media" muted onmouseover="this.play()" onmouseout="this.pause()"></video><div class="play-icon">▶</div>`
+                            : `<img src="${d.url}" class="g-media">`;
+
+                        const safeData = encodeURIComponent(JSON.stringify({
+                            id: doc.id, 
+                            url: d.url, 
+                            type: d.type, 
+                            caption: d.caption, 
+                            author: d.authorName, 
+                            date: d.timestamp
+                        }));
+
+                        div.innerHTML = `
+                            ${!isApproved ? '<div class="pending-badge">PENDING</div>' : ''}
+                            ${controls}
+                            ${saveBtn}
+                            <div onclick="openLightbox('${safeData}')" style="position:relative; cursor:pointer;">
+                                ${mediaTag}
+                            </div>
+                            <div class="g-meta">
+                                <span class="g-author">${d.authorName}</span>
+                                <p class="g-caption">${d.caption ? d.caption.substring(0,50) + (d.caption.length>50?'...':'') : ''}</p>
+                            </div>
+                        `;
+                        grid.appendChild(div);
+                    }
+                });
+            });
+        }
+
+        /* --- SAVE SYSTEM --- */
+        async function toggleSave(id, url, caption, author) {
+            if(!currentUser) return alert("Login to save clips.");
+            const ref = db.collection("users").doc(currentUser.uid).collection("saved").doc(id);
+
+            if(savedClips.has(id)) {
+                await ref.delete();
+            } else {
+                await ref.set({
+                    type: 'media',
+                    url: url,
+                    caption: caption,
+                    author: author,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        }
+
+        /* --- UPLOAD & ADMIN --- */
+        async function uploadImage() {
+            if(!currentUser) return alert("Login required.");
+            const file = document.getElementById("upFile").files[0];
+            const cap = document.getElementById("upCaption").value;
+            if(!file) return alert("Select a file.");
+            if(file.size > 20 * 1024 * 1024) return alert("File too large (Max 20MB)."); 
+
+            const btn = document.querySelector(".upload-btn");
+            btn.innerText = "Uploading..."; btn.disabled = true;
+
+            try {
+                const ref = storage.ref(`gallery/${Date.now()}_${file.name}`);
+                await ref.put(file);
+                const url = await ref.getDownloadURL();
+
+                await db.collection("gallery").add({
+                    url: url, type: file.type, caption: cap,
+                    authorId: currentUser.uid, authorName: currentUser.displayName || "Agent",
+                    status: isAdmin ? 'approved' : 'pending', 
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert("Upload complete!");
+                closeModal('uploadModal');
+                document.getElementById("upFile").value = "";
+                document.getElementById("upCaption").value = "";
+            } catch(e) { alert("Error: " + e.message); }
+            btn.innerText = "+ Upload"; btn.disabled = false;
+        }
+
+        async function approvePost(id) {
+            if(!confirm("Approve?")) return;
+            await db.collection("gallery").doc(id).update({ status: 'approved' });
+        }
+
+        async function deletePost(id) {
+            if(!confirm("Delete?")) return;
+            await db.collection("gallery").doc(id).delete();
+        }
+
+        /* LIGHTBOX */
+        function openLightbox(encodedData) {
+            const data = JSON.parse(decodeURIComponent(encodedData));
+            const container = document.getElementById("lbMediaContainer");
+            
+            if(data.type && data.type.startsWith('video')) {
+                container.innerHTML = `<video src="${data.url}" class="lightbox-media" controls autoplay></video>`;
+            } else {
+                container.innerHTML = `<img src="${data.url}" class="lightbox-media">`;
+            }
+
+            document.getElementById("lbAuthor").innerText = "UPLOADED BY " + (data.author || "UNKNOWN").toUpperCase();
+            document.getElementById("lbCaption").innerText = data.caption || "No description.";
+            
+            let dateStr = "Just now";
+            if(data.date && data.date.seconds) { dateStr = new Date(data.date.seconds * 1000).toLocaleDateString(); }
+            document.getElementById("lbDate").innerText = dateStr;
+
+            const saveBtn = document.getElementById("lbSaveAction");
+            const isSaved = savedClips.has(data.id);
+            saveBtn.className = isSaved ? "lb-save-btn active" : "lb-save-btn";
+            saveBtn.innerText = isSaved ? "❤ SAVED" : "❤ SAVE";
+            
+            saveBtn.onclick = () => {
+                toggleSave(data.id, data.url, data.caption || "", data.author);
+                saveBtn.classList.toggle("active");
+                saveBtn.innerText = saveBtn.classList.contains("active") ? "❤ SAVED" : "❤ SAVE";
+            };
+
+            document.getElementById("lightbox").style.display = "flex";
+        }
+
+        function closeModal(id) { document.getElementById(id).style.display = "none"; }
+        document.getElementById("lightbox").addEventListener('click', (e) => { if(e.target.id === "lightbox") closeModal("lightbox"); });
+        function openUploadModal() { document.getElementById("uploadModal").style.display = "flex"; }
+
+    </script>
+</body>
+</html>

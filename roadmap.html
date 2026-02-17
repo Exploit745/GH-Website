@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – System Status</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* GATEKEEPER */
+        body { display: none; }
+
+        /* [TIMELINE SPECIFIC STYLES] */
+        .page-header { text-align: center; margin-bottom: 60px; }
+        
+        /* CIRCUIT TIMELINE */
+        .timeline { position: relative; padding: 20px 0; }
+
+        .timeline::before {
+            content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; margin-left: -2px;
+            background: #222; z-index: 1;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5); border-radius: 2px;
+        }
+
+        .node { position: relative; width: 50%; padding: 0 40px; box-sizing: border-box; margin-bottom: 40px; }
+        .node:nth-child(odd) { left: 0; text-align: right; }
+        .node:nth-child(even) { left: 50%; text-align: left; }
+
+        .node::after {
+            content: ''; position: absolute; width: 20px; height: 20px; right: -10px; top: 20px;
+            background: #000; border: 3px solid #444; border-radius: 50%; z-index: 10;
+            transition: 0.3s;
+        }
+        .node:nth-child(even)::after { left: -10px; }
+
+        .node::before {
+            content: ''; position: absolute; height: 3px; top: 29px; z-index: 1; width: 40px; background: #444;
+        }
+        .node:nth-child(odd)::before { right: 0; }
+        .node:nth-child(even)::before { left: 0; }
+
+        /* CARD STYLES */
+        .circuit-card {
+            background: #111; border: 1px solid #333; padding: 25px; border-radius: 12px;
+            position: relative; transition: 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .circuit-card:hover { transform: translateY(-5px); background: #161616; }
+
+        .phase-badge { 
+            display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 10px; 
+            font-weight: bold; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px;
+        }
+        .node-title { margin: 0 0 10px 0; font-size: 20px; color: #fff; font-weight: bold; }
+        .node-desc { font-size: 13px; color: #888; line-height: 1.5; margin: 0; }
+        .node-list { margin-top: 15px; list-style: none; padding: 0; font-size: 12px; color: #aaa; display: inline-block; text-align: left; }
+        .node-list li { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        
+        /* STATES */
+        .node.complete::after { background: var(--gh-blue); border-color: var(--gh-blue); box-shadow: 0 0 15px var(--gh-blue); }
+        .node.complete::before { background: var(--gh-blue); box-shadow: 0 0 10px var(--gh-blue); }
+        .node.complete .circuit-card { border-color: #004455; box-shadow: 0 0 20px rgba(0, 234, 255, 0.05); }
+        .node.complete .phase-badge { background: rgba(0, 234, 255, 0.1); color: var(--gh-blue); border: 1px solid var(--gh-blue); }
+        .node.complete .node-title { color: var(--gh-blue); }
+
+        .node.active::after { background: var(--gh-yellow); border-color: var(--gh-yellow); box-shadow: 0 0 20px var(--gh-yellow); animation: pulseNode 1.5s infinite; }
+        .node.active::before { background: var(--gh-yellow); box-shadow: 0 0 15px var(--gh-yellow); }
+        .node.active .circuit-card { border-color: var(--gh-yellow); background: radial-gradient(circle at top left, #222200 0%, #111 100%); }
+        .node.active .phase-badge { background: rgba(253, 255, 85, 0.1); color: var(--gh-yellow); border: 1px solid var(--gh-yellow); }
+        .node.active .node-title { color: var(--gh-yellow); }
+
+        .node.planned::after { background: #333; border-color: #555; }
+        .node.planned .circuit-card { border-color: #333; border-style: dashed; }
+        .node.planned .phase-badge { background: #222; color: #888; border: 1px solid #444; }
+        .node.planned .node-title { color: #888; }
+
+        @keyframes pulseNode { 0% { box-shadow: 0 0 0 0 rgba(253, 255, 85, 0.7); } 100% { box-shadow: 0 0 0 15px rgba(253, 255, 85, 0); } }
+
+        /* CHECKMARKS */
+        .check { color: var(--gh-blue); font-weight: bold; }
+        .wip { color: var(--gh-yellow); font-weight: bold; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+
+        /* MOBILE FIX */
+        @media (max-width: 768px) {
+            .timeline::before { left: 20px; }
+            .node { width: 100%; padding-left: 50px; padding-right: 0; text-align: left; }
+            .node:nth-child(even) { left: 0; }
+            .node::after { left: 11px !important; right: auto; }
+            .node::before { left: 20px !important; width: 30px; }
+            .node:nth-child(odd) .node-list { text-align: left; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            <div class="page-header">
+                <h1 class="page-title">Project Roadmap</h1>
+                <div class="page-subtitle">Current Status: <span style="color:var(--gh-yellow);">PHASE S2 ACTIVE</span></div>
+            </div>
+
+            <div class="timeline">
+                
+                <div class="node complete">
+                    <div class="circuit-card">
+                        <span class="phase-badge">Phase S1: Experience & Retention</span>
+                        <h3 class="node-title">The Foundation</h3>
+                        <p class="node-desc">COMPLETE.<br>Making GH understandable, welcoming, and connected. Reducing early confusion.</p>
+                        <ul class="node-list">
+                            <li><span class="check">✔</span> <b>Welcome Flow:</b> First-time setup.</li>
+                            <li><span class="check">✔</span> <b>Announcements:</b> Centralized history.</li>
+                            <li><span class="check">✔</span> <b>Saved Items:</b> The Vault / Bookmarks.</li>
+                            <li><span class="check">✔</span> <b>My Activity:</b> Personal Dashboard.</li>
+                            <li><span class="check">✔</span> <b>Follower System:</b> Social connections.</li>
+                            <li><span class="check">✔</span> <b>Drafts & Feedback:</b> Content tools.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="node active">
+                    <div class="circuit-card">
+                        <span class="phase-badge">Phase S2: Safety & Stability</span>
+                        <h3 class="node-title">Moderation Readiness</h3>
+                        <p class="node-desc">ACTIVE.<br>Preparing GH for real users and content. Protecting the platform from chaos.</p>
+                        <ul class="node-list">
+                            <li><span class="wip">🚧</span> <b>Guidelines:</b> Code of Conduct & Policies.</li>
+                            <li><span class="wip">🚧</span> <b>Report Flow:</b> Flag content/users.</li>
+                            <li><span class="wip">🚧</span> <b>Admin Dashboard:</b> The Ban Hammer.</li>
+                            <li>⭕ <b>System Status:</b> Live maintenance page.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="node planned">
+                    <div class="circuit-card">
+                        <span class="phase-badge">Phase S3: Power Tools</span>
+                        <h3 class="node-title">Growth & Usability</h3>
+                        <p class="node-desc">Improving usability as content activity increases. Removing friction for power users.</p>
+                        <ul class="node-list">
+                            <li>🔍 <b>Advanced Search:</b> Stories, members, content.</li>
+                            <li>📥 <b>Full Inbox:</b> Notification history & sessions.</li>
+                            <li>✨ <b>Feature Tour:</b> "What's New" highlights.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="node planned">
+                    <div class="circuit-card">
+                        <span class="phase-badge">Phase S4: Community Depth</span>
+                        <h3 class="node-title">Identity & Interaction</h3>
+                        <p class="node-desc">Strengthening community identity. Features that shine with high participation.</p>
+                        <ul class="node-list">
+                            <li>📊 <b>Voting Hub:</b> Polls & Disputes.</li>
+                            <li>🏆 <b>Hall of Fame:</b> Achievements & Badges Gallery.</li>
+                            <li>📣 <b>Shoutouts:</b> Recognition & Member Directory.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="node planned">
+                    <div class="circuit-card">
+                        <span class="phase-badge">Phase S5: Maturity</span>
+                        <h3 class="node-title">Admin Control</h3>
+                        <p class="node-desc">Safe scaling. Protecting platform integrity as complexity grows.</p>
+                        <ul class="node-list">
+                            <li>👁️ <b>Audit Logs:</b> Admin action tracking.</li>
+                            <li>🧪 <b>Feature Flags:</b> Beta access control.</li>
+                            <li>🛡️ <b>Mod Queues:</b> Advanced content management.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="node planned">
+                    <div class="circuit-card">
+                        <span class="phase-badge">Phase S6: Formalization</span>
+                        <h3 class="node-title">Legal & Public</h3>
+                        <p class="node-desc">Preparing for public growth and monetization.</p>
+                        <ul class="node-list">
+                            <li>⚖️ <b>Terms of Service:</b> Formal agreements.</li>
+                            <li>🔒 <b>Privacy Policy:</b> Data protection standards.</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+            }
+        });
+    </script>
+</body>
+</html>

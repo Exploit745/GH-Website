@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Dossier</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* [PAGE SPECIFIC STYLES] */
+        .profile-banner {
+            height: 250px; width: 100%; 
+            background: linear-gradient(to bottom, transparent, #050505), url('assets/GH_Hero.png'); 
+            background-size: cover; background-position: center;
+            position: relative; border-bottom: 2px solid var(--gh-blue);
+        }
+        .banner-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.3); }
+        
+        .settings-gear {
+            position: absolute; top: 20px; right: 20px; 
+            background: rgba(0,0,0,0.6); color: #fff; border: 1px solid #444; 
+            width: 35px; height: 35px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 18px; text-decoration: none; z-index: 20;
+            transition: 0.2s;
+        }
+        .settings-gear:hover { transform: rotate(90deg); border-color: var(--gh-blue); color: var(--gh-blue); }
+
+        .edit-banner-btn { 
+            position: absolute; top: 20px; right: 65px; 
+            background: rgba(0,0,0,0.6); color: #fff; border: 1px solid var(--gh-blue); 
+            padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; 
+            transition: 0.2s; z-index: 5; font-weight: bold; display: none; 
+        }
+        .edit-banner-btn:hover { background: var(--gh-blue); color: #000; box-shadow: 0 0 10px var(--gh-blue); }
+
+        .profile-bar {
+            max-width: 1100px; margin: -60px auto 0; padding: 0 20px;
+            display: flex; align-items: flex-end; gap: 30px; position: relative; z-index: 2;
+        }
+        
+        .avatar-container { position: relative; width: 160px; height: 160px; flex-shrink: 0; }
+        .profile-avatar { width: 100%; height: 100%; border-radius: 50%; border: 4px solid #050505; background: #000; object-fit: cover; box-shadow: 0 0 30px rgba(0, 234, 255, 0.2); }
+        .avatar-overlay { position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-size: 24px; z-index: 10; border: 4px solid transparent; }
+
+        .profile-info { flex-grow: 1; padding-bottom: 10px; }
+        .profile-name { font-size: 36px; font-weight: 900; color: #fff; margin: 0; text-transform: uppercase; text-shadow: 0 2px 10px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 10px; }
+        
+        .role-chip { font-size: 12px; padding: 4px 10px; border-radius: 6px; font-weight: bold; text-transform: uppercase; border: 1px solid #555; vertical-align: middle; background: #333; color: #ccc; display: inline-block; margin-right: 5px; }
+        .role-chip.admin { background: rgba(253, 255, 85, 0.2); color: var(--gh-yellow); border-color: var(--gh-yellow); }
+        .role-chip.capt { background: rgba(0, 234, 255, 0.2); color: var(--gh-blue); border-color: var(--gh-blue); }
+        .role-chip.vip { background: rgba(255, 68, 255, 0.2); color: #ff44ff; border-color: #ff44ff; }
+        
+        .profile-uid { color: #888; font-size: 13px; font-family: monospace; letter-spacing: 1px; margin-top: 5px; }
+
+        .profile-actions { padding-bottom: 15px; display: flex; gap: 10px; align-items: flex-end; }
+        .action-btn { background: #111; border: 1px solid #444; color: #fff; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+        .action-btn:hover { border-color: var(--gh-blue); color: var(--gh-blue); box-shadow: 0 0 10px rgba(0,234,255,0.2); }
+        .btn-edit { background: var(--gh-yellow); color: #000; border: none; display: none; }
+        .btn-edit:hover { background: #fff; color: #000; }
+
+        .btn-follow { border-color: var(--gh-yellow); color: var(--gh-yellow); }
+        .btn-follow:hover { background: var(--gh-yellow); color: #000; }
+        .btn-follow.active { background: var(--gh-yellow); color: #000; box-shadow: 0 0 15px rgba(253, 255, 85, 0.3); }
+
+        .profile-grid { max-width: 1100px; margin: 40px auto; padding: 0 20px; width: 100%; box-sizing: border-box; display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        .panel { background: #111; border: 1px solid #333; border-radius: 12px; padding: 25px; margin-bottom: 25px; }
+        .panel h3 { margin-top: 0; color: var(--gh-blue); border-bottom: 1px solid #222; padding-bottom: 10px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .bio-text { color: #ccc; line-height: 1.6; font-size: 14px; font-style: italic; white-space: pre-wrap; }
+        .social-link { display: flex; justify-content: space-between; padding: 10px; background: #1a1a1a; margin-bottom: 5px; border-radius: 6px; text-decoration: none; color: #fff; font-size: 13px; transition: 0.2s; }
+        .social-link:hover { background: #222; color: var(--gh-yellow); }
+        .conn-icon { width: 20px; text-align: center; margin-right: 10px; display: inline-block; }
+
+        .badge-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+        .badge { width: 40px; height: 40px; background: #222; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid #444; cursor: help; transition: 0.2s; }
+        .badge:hover { transform: scale(1.1); border-color: var(--gh-blue); box-shadow: 0 0 10px rgba(0, 234, 255, 0.3); }
+
+        .squad-mini { display: flex; align-items: center; gap: 15px; text-decoration: none; transition: 0.2s; }
+        .squad-mini:hover { opacity: 0.8; }
+        .squad-logo { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; border: 1px solid #444; }
+        .squad-name { font-weight: bold; color: #fff; font-size: 16px; display: block; }
+        .squad-role { color: var(--gh-red); font-size: 11px; font-weight: bold; text-transform: uppercase; }
+
+        .gh-input-group { margin-bottom: 15px; }
+        .gh-input-group label { display: block; color: #888; margin-bottom: 5px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        textarea.gh-input { min-height: 80px; resize: vertical; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px; }
+        .section-label { color: var(--gh-blue); font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; display: block; font-weight: bold; }
+
+        @media (max-width: 800px) {
+            .profile-bar { flex-direction: column; align-items: center; text-align: center; margin-top: -80px; }
+            .profile-grid { grid-template-columns: 1fr; }
+            .profile-info { padding-bottom: 20px; }
+            .profile-actions { padding-bottom: 0; width: 100%; justify-content: center; }
+            .avatar-container { margin-bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content" id="mainContent" style="display:none;">
+            
+            <div class="profile-banner" id="pBanner">
+                <div class="banner-overlay"></div>
+                <a href="settings.html" class="settings-gear" title="Account Settings" id="settingsBtn" style="display:none;">⚙️</a>
+                
+                <button id="editBannerBtn" class="edit-banner-btn" onclick="triggerBannerUpload()">📷 Edit Cover</button>
+                <input type="file" id="bannerInput" accept="image/*" style="display:none">
+            </div>
+
+            <div class="profile-bar">
+                <div class="avatar-container">
+                    <img src="assets/GH_Hero.png" id="pAvatar" class="profile-avatar">
+                    <div id="avatarOverlay" class="avatar-overlay" onclick="triggerAvatarUpload()">📷</div>
+                    <input type="file" id="avatarInput" accept="image/*" style="display:none">
+                </div>
+                
+                <div class="profile-info">
+                    <h1 class="profile-name">
+                        <span id="pName">Agent</span>
+                    </h1>
+                    <div id="roleList" style="margin-top:5px;"></div>
+                    <div class="profile-uid" id="pUid">UID: --</div>
+                    <div style="font-size:11px; color:var(--gh-yellow); font-weight:bold; margin-top:5px;">
+                        <span id="followerCount">0</span> Followers
+                    </div>
+                </div>
+                
+                <div class="profile-actions" id="actionButtons">
+                    <button id="editProfileBtn" class="action-btn btn-edit" onclick="openEditModal()">Edit Profile</button>
+                </div>
+            </div>
+
+            <div class="profile-grid">
+                
+                <div class="col-left">
+                    <div class="panel">
+                        <h3>Personnel File</h3>
+                        <p class="bio-text" id="pBio">"No bio data available."</p>
+                    </div>
+
+                    <div class="panel">
+                        <h3>Active Assignment</h3>
+                        <div id="squadContainer">
+                            <div style="color:#666; font-size:13px;">No Squad Affiliation.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-right">
+                    <div class="panel">
+                        <h3>Comm Links</h3>
+                        <div id="connList"></div>
+                    </div>
+
+                    <div class="panel">
+                        <h3>Service Record</h3>
+                        <div class="badge-grid" id="badgeContainer"></div>
+                    </div>
+                    
+                    <div class="panel">
+                        <h3>Vital Stats</h3>
+                        <div class="social-link" style="background:transparent; padding:5px 0; border:none; cursor:default;">
+                            <span>Birthday</span> <span style="color:#888;" id="bdayText">--/--</span>
+                        </div>
+                        <div class="social-link" style="background:transparent; padding:5px 0; border:none; cursor:default;">
+                            <span>Status</span> <span style="color:#00ff6a;">Active</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+        
+        <div id="loading" style="text-align:center; padding:100px; color:#666;">Decrypting Dossier...</div>
+    </div>
+
+    <div id="editModal" class="gh-modal">
+        <div class="gh-modal-content"></div>
+    </div>
+
+    <div id="userEditTemplate" style="display:none;">
+        <h2>Edit Dossier</h2>
+        <div class="gh-input-group"><label>Display Name</label><input type="text" id="editName" class="gh-input" placeholder="Your Name"></div>
+        <div class="gh-input-group"><label>Birthday</label><input type="date" id="editBirthday" class="gh-input"></div>
+        <div class="gh-input-group"><label>Bio (About You)</label><textarea id="editBio" class="gh-input" placeholder="Tell us about your gaming history..."></textarea></div>
+        <div class="gh-input-group"><label>Favorite Games (Comma Separated)</label><input type="text" id="editGames" class="gh-input" placeholder="Valorant, Minecraft..."></div>
+        <div style="border-top:1px solid #333; margin: 20px 0; padding-top:20px;">
+            <span class="section-label" style="border:none;">Connections</span>
+            <div class="gh-input-group"><label>Discord</label><input type="text" id="editDiscord" class="gh-input" placeholder="User#1234"></div>
+            <div class="gh-input-group"><label>Steam URL</label><input type="text" id="editSteam" class="gh-input" placeholder="https://steam..."></div>
+            <div class="gh-input-group"><label>Twitch/YT</label><input type="text" id="editTwitch" class="gh-input" placeholder="https://twitch..."></div>
+        </div>
+        <div class="modal-actions">
+            <button class="gh-btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="gh-btn btn-primary" onclick="saveProfile()">Save Changes</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        let targetUid = null;
+        let currentUser = null;
+        let isOwner = false;
+        let amIAdmin = false;
+        let isFollowing = false;
+
+        const BADGE_REGISTRY = {
+            'early': { icon: '🥚', title: 'Early Adopter' },
+            'admin': { icon: '🛡️', title: 'System Admin' },
+            'bug':   { icon: '🐛', title: 'Bug Hunter' },
+            'champ': { icon: '🏆', title: 'Tournament Champion' },
+            'vip':   { icon: '💎', title: 'Supporter / VIP' },
+            'artist':{ icon: '🎨', title: 'Media Creator' },
+            'dev':   { icon: '💻', title: 'Developer' },
+            'sigma': { icon: '🗿', title: 'Sigma Status' }
+        };
+
+        const container = document.getElementById("particleContainer");
+        if(container) {
+            for(let i=0;i<30;i++){const p=document.createElement("div");p.className="particle";p.style.left=Math.random()*100+"vw";p.style.top=Math.random()*100+"vh";p.style.animationDelay=Math.random()*10+"s";container.appendChild(p);}
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramUid = urlParams.get('uid');
+            if (paramUid) targetUid = paramUid;
+
+            auth.onAuthStateChanged(async user => {
+                if (!user) return window.location.href = "login.html";
+                currentUser = user;
+
+                const token = await user.getIdTokenResult();
+                amIAdmin = !!token.claims.admin;
+                if (!amIAdmin) {
+                    const uDoc = await db.collection("users").doc(user.uid).get();
+                    if(uDoc.exists && uDoc.data().role === 'admin') amIAdmin = true;
+                }
+
+                if (!targetUid) {
+                    targetUid = user.uid;
+                    window.history.replaceState(null, null, `?uid=${targetUid}`);
+                }
+
+                if(currentUser && targetUid !== currentUser.uid) {
+                    const savedDoc = await db.collection("users").doc(currentUser.uid).collection("saved").doc(targetUid).get();
+                    isFollowing = savedDoc.exists;
+                }
+
+                loadProfile(targetUid);
+
+                if (user.uid === targetUid) {
+                    isOwner = true;
+                    enableOwnerTools();
+                } else {
+                    updateActionButtons(); 
+                }
+
+                if (amIAdmin && user.uid !== targetUid) injectAdminTools();
+            });
+        });
+
+        async function updateActionButtons() {
+            const actionDiv = document.getElementById("actionButtons");
+            
+            const oldFollow = document.getElementById("followBtn");
+            if(oldFollow) oldFollow.remove();
+            
+            const followText = isFollowing ? "UNFOLLOW" : "FOLLOW";
+            const followClass = isFollowing ? "btn-follow active" : "btn-follow";
+            
+            const followBtn = document.createElement("button");
+            followBtn.id = "followBtn";
+            followBtn.className = `action-btn ${followClass}`;
+            followBtn.innerHTML = `★ ${followText}`;
+            followBtn.onclick = toggleFollow;
+            
+            const oldFriend = document.getElementById("friendBtn");
+            if(oldFriend) oldFriend.remove();
+            
+            const myDoc = await db.collection("users").doc(currentUser.uid).collection("friends").doc(targetUid).get();
+            let friendBtn = document.createElement("button");
+            friendBtn.id = "friendBtn";
+            friendBtn.className = "action-btn";
+            friendBtn.style.color = "var(--gh-blue)";
+            friendBtn.style.borderColor = "var(--gh-blue)";
+
+            if (!myDoc.exists) {
+                friendBtn.innerText = "➕ Add Friend";
+                friendBtn.onclick = sendFriendRequest;
+            } else {
+                const status = myDoc.data().status;
+                if (status === 'accepted') {
+                    friendBtn.innerText = "✅ Friends";
+                    friendBtn.style.borderColor = "#00ff6a";
+                    friendBtn.style.color = "#00ff6a";
+                    friendBtn.onclick = removeFriend;
+                } else if (status === 'sent') {
+                    friendBtn.innerText = "⏳ Request Sent";
+                    friendBtn.style.opacity = "0.7";
+                    friendBtn.onclick = removeFriend; 
+                } else if (status === 'pending') {
+                    friendBtn.innerText = "📩 Accept Request";
+                    friendBtn.style.background = "var(--gh-blue)";
+                    friendBtn.style.color = "#000";
+                    friendBtn.onclick = acceptFriend;
+                }
+            }
+
+            actionDiv.insertBefore(followBtn, actionDiv.firstChild);
+            actionDiv.insertBefore(friendBtn, actionDiv.firstChild);
+        }
+
+        async function toggleFollow() {
+            if(!currentUser) return;
+            
+            const btn = document.getElementById("followBtn");
+            const myUid = currentUser.uid;
+            
+            // Database References
+            const bookmarkRef = db.collection("users").doc(myUid).collection("saved").doc(targetUid);
+            const targetProfileRef = db.collection("users").doc(targetUid);
+            
+            // Profile Data for the Bookmark
+            const name = document.getElementById("pName").innerText;
+            const photoURL = document.getElementById("pAvatar").src;
+
+            btn.disabled = true;
+            
+            try {
+                if(isFollowing) {
+                    // --- UNFOLLOW SEQUENCE ---
+                    
+                    // 1. Remove Bookmark
+                    await bookmarkRef.delete();
+                    
+                    // 2. Decrement Count (Catch errors here specifically)
+                    try {
+                        await targetProfileRef.update({ 
+                            followersCount: firebase.firestore.FieldValue.increment(-1) 
+                        });
+                    } catch (err) {
+                        console.error("Count update failed:", err);
+                        // We don't alert here because removing the bookmark is the priority
+                    }
+                    
+                    isFollowing = false;
+                    btn.classList.remove("active");
+                    btn.innerHTML = "★ FOLLOW";
+
+                } else {
+                    // --- FOLLOW SEQUENCE ---
+                    
+                    // 1. Add Bookmark
+                    await bookmarkRef.set({
+                        type: 'user',
+                        name: name,
+                        photoURL: photoURL,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // 2. Increment Count
+                    await targetProfileRef.update({ 
+                        followersCount: firebase.firestore.FieldValue.increment(1) 
+                    });
+                    
+                    // 3. Send Notification
+                    db.collection("notifications").add({
+                        uid: targetUid, 
+                        type: "success", 
+                        title: "New Follower",
+                        message: `${currentUser.displayName || "A user"} is now following you.`,
+                        link: `profile.html?uid=${currentUser.uid}`, 
+                        read: false,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    isFollowing = true;
+                    btn.classList.add("active");
+                    btn.innerHTML = "★ UNFOLLOW";
+                }
+                
+                // Refresh the number on screen immediately
+                loadProfile(targetUid);
+
+            } catch (error) {
+                console.error("Follow Error:", error);
+                alert("Comm Link Failed: " + error.message); // This will tell us if Rules are still broken
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function sendFriendRequest() {
+            try {
+                const batch = db.batch();
+                const myRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(targetUid);
+                batch.set(myRef, { status: 'sent', timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                const theirRef = db.collection("users").doc(targetUid).collection("friends").doc(currentUser.uid);
+                batch.set(theirRef, { status: 'pending', timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                await batch.commit();
+                await db.collection("notifications").add({
+                    uid: targetUid, type: "info", title: "Friend Request",
+                    message: `${currentUser.displayName || "A user"} wants to be friends.`,
+                    link: `profile.html?uid=${currentUser.uid}`, read: false, 
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                updateActionButtons();
+            } catch(e) { alert("Error: " + e.message); }
+        }
+
+        async function acceptFriend() {
+            try {
+                const batch = db.batch();
+                const myRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(targetUid);
+                batch.update(myRef, { status: 'accepted' });
+                const theirRef = db.collection("users").doc(targetUid).collection("friends").doc(currentUser.uid);
+                batch.update(theirRef, { status: 'accepted' });
+                await batch.commit();
+                updateActionButtons();
+            } catch(e) { alert("Error: " + e.message); }
+        }
+
+        async function removeFriend() {
+            if(!confirm("Remove friend / Cancel request?")) return;
+            try {
+                const batch = db.batch();
+                batch.delete(db.collection("users").doc(currentUser.uid).collection("friends").doc(targetUid));
+                batch.delete(db.collection("users").doc(targetUid).collection("friends").doc(currentUser.uid));
+                await batch.commit();
+                updateActionButtons();
+            } catch(e) { alert("Error: " + e.message); }
+        }
+
+        async function loadProfile(uid) {
+            try {
+                const doc = await db.collection("users").doc(uid).get();
+                if(!doc.exists) { document.getElementById("loading").innerHTML = "<span style='color:red'>User Not Found</span>"; return; }
+
+                const data = doc.data();
+                
+                // --- SELF-REPAIR: Ensure followersCount exists ---
+                if (data.followersCount === undefined) {
+                    console.log("Repairing profile stats...");
+                    // We don't await this so the UI loads instantly
+                    db.collection("users").doc(uid).update({ followersCount: 0 });
+                    data.followersCount = 0; // Local fix for display
+                }
+                // --------------------------------------------------
+
+                if(data.name) document.getElementById("pName").innerText = data.name;
+                document.getElementById("pUid").innerText = "UID: " + uid;
+                
+                // LIVE UPDATE: Ensure we show 0 if null/undefined
+                document.getElementById("followerCount").innerText = data.followersCount || 0;
+                
+                if(data.headerUrl) document.getElementById("pBanner").style.backgroundImage = `url(${data.headerUrl})`;
+                if(data.photoURL) { document.getElementById("pAvatar").src = data.photoURL; document.getElementById("pAvatar").style.opacity = 1; }
+                if(data.bio) document.getElementById("pBio").innerText = data.bio;
+                if(data.birthday) document.getElementById("bdayText").innerText = data.birthday;
+
+                const roleBox = document.getElementById("roleList");
+                roleBox.innerHTML = "";
+                let r = data.role || "member";
+                let rClass = r === 'admin' ? 'admin' : (r === 'vip' ? 'vip' : '');
+                roleBox.innerHTML += `<div class="role-chip ${rClass}">${r.toUpperCase()}</div>`;
+
+                const teamQuery = await db.collection("teams").where("members", "array-contains", uid).get();
+                if(!teamQuery.empty) {
+                    const team = teamQuery.docs[0].data();
+                    const isCapt = (team.captainId === uid);
+                    if(isCapt) roleBox.innerHTML += `<div class="role-chip capt">SQUAD CAPTAIN</div>`;
+                    else roleBox.innerHTML += `<div class="role-chip">SQUAD MEMBER</div>`;
+                    document.getElementById("squadContainer").innerHTML = `<a href="teams.html" class="squad-mini"><img src="${team.logo || 'assets/GH_Hero.png'}" class="squad-logo"><div><span class="squad-name">${team.name} <span style="color:var(--gh-yellow);">[${team.tag}]</span></span><span class="squad-role">ACTIVE DUTY</span></div></a>`;
+                }
+
+                const badgeBox = document.getElementById("badgeContainer");
+                badgeBox.innerHTML = ""; 
+                renderBadge('early', badgeBox); 
+                if (data.badges) data.badges.forEach(bKey => renderBadge(bKey, badgeBox));
+                if (data.role === 'admin' && (!data.badges || !data.badges.includes('admin'))) renderBadge('admin', badgeBox);
+
+                renderExtras(data);
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("mainContent").style.display = "block";
+            } catch(e) { console.error(e); }
+        }
+
+        function renderBadge(key, container) {
+            const b = BADGE_REGISTRY[key];
+            if(b) container.innerHTML += `<div class="badge" title="${b.title}">${b.icon}</div>`;
+        }
+
+        function renderExtras(data) {
+            const connBox = document.getElementById("connList");
+            if(data.socials) {
+                connBox.innerHTML = "";
+                Object.keys(data.socials).forEach(k => {
+                    if(data.socials[k]) {
+                        connBox.innerHTML += `<div class="social-link"><div style="display:flex; align-items:center;"><span class="conn-icon">${k.charAt(0).toUpperCase()}</span><span style="font-size:13px; text-transform:uppercase;">${k}</span></div><a href="${data.socials[k].startsWith('http')?data.socials[k]:'#'}" target="_blank" style="color:var(--gh-blue); text-decoration:none;">LINK ↗</a></div>`;
+                    }
+                });
+            } else { connBox.innerHTML = "<div style='color:#666; font-size:13px; text-align:center;'>No connections.</div>"; }
+        }
+
+        function enableOwnerTools() {
+            document.getElementById("editProfileBtn").style.display = "block";
+            document.getElementById("editBannerBtn").style.display = "block";
+            document.getElementById("settingsBtn").style.display = "flex"; 
+            const overlay = document.getElementById("avatarOverlay");
+            overlay.style.display = "flex"; overlay.style.opacity = "0"; 
+            overlay.onmouseover = function() { this.style.opacity = 1; };
+            overlay.onmouseout = function() { this.style.opacity = 0; };
+        }
+
+        function injectAdminTools() {
+            const btn = document.createElement("button");
+            btn.className = "action-btn";
+            btn.style.display = "block";
+            btn.style.marginTop = "10px";
+            btn.style.borderColor = "var(--gh-red)";
+            btn.style.color = "var(--gh-red)";
+            btn.innerText = "⚡ ADMIN OPS";
+            btn.onclick = openAdminOps;
+            document.getElementById("roleList").parentNode.insertBefore(btn, document.getElementById("roleList").nextSibling);
+        }
+
+        async function openEditModal() {
+            const doc = await db.collection("users").doc(targetUid).get();
+            const d = doc.data();
+            document.querySelector("#editModal .gh-modal-content").innerHTML = document.getElementById("userEditTemplate").innerHTML;
+            document.getElementById("editName").value = d.name || "";
+            document.getElementById("editBirthday").value = d.birthday || "";
+            document.getElementById("editBio").value = d.bio || "";
+            document.getElementById("editGames").value = d.favoriteGames ? d.favoriteGames.join(", ") : "";
+            if(d.socials) {
+                document.getElementById("editDiscord").value = d.socials.discord || "";
+                document.getElementById("editSteam").value = d.socials.steam || "";
+                document.getElementById("editTwitch").value = d.socials.twitch || "";
+            }
+            document.getElementById("editModal").style.display = "flex";
+        }
+
+        async function openAdminOps() {
+            const doc = await db.collection("users").doc(targetUid).get();
+            const data = doc.data();
+            const currentRole = data.role || "member";
+            const currentBadges = data.badges || [];
+            let badgeOptions = "";
+            Object.keys(BADGE_REGISTRY).forEach(key => {
+                if(key === 'early') return;
+                const isChecked = currentBadges.includes(key) ? "checked" : "";
+                badgeOptions += `<label style="display:flex; align-items:center; gap:10px; margin-bottom:10px; cursor:pointer;"><input type="checkbox" value="${key}" ${isChecked}><span style="font-size:24px;">${BADGE_REGISTRY[key].icon}</span><span style="font-size:12px; color:#ccc;">${BADGE_REGISTRY[key].title}</span></label>`;
+            });
+            document.querySelector("#editModal .gh-modal-content").innerHTML = `<h2 style="color:var(--gh-red); margin-top:0;">Admin Operations</h2><div style="margin-bottom:20px; border-bottom:1px solid #333; padding-bottom:20px;"><label class="section-label">System Role</label><select id="adminRoleSelect" class="gh-input"><option value="member" ${currentRole==='member'?'selected':''}>Member</option><option value="vip" ${currentRole==='vip'?'selected':''}>VIP / Supporter</option><option value="mod" ${currentRole==='mod'?'selected':''}>Moderator</option><option value="admin" ${currentRole==='admin'?'selected':''}>Administrator</option></select></div><div><label class="section-label">Award Badges</label><div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;" id="adminBadgeList">${badgeOptions}</div></div><div class="modal-actions"><button class="gh-btn btn-secondary" onclick="closeModal()">Cancel</button><button class="gh-btn btn-danger" onclick="saveAdminOps()">APPLY CHANGES</button></div>`;
+            document.getElementById("editModal").style.display = "flex";
+        }
+
+        async function saveAdminOps() {
+            const newRole = document.getElementById("adminRoleSelect").value;
+            const checkboxes = document.querySelectorAll("#adminBadgeList input[type='checkbox']");
+            let newBadges = [];
+            checkboxes.forEach(cb => { if(cb.checked) newBadges.push(cb.value); });
+            try { await db.collection("users").doc(targetUid).update({ role: newRole, admin: (newRole === 'admin'), badges: newBadges }); alert("Updated."); closeModal(); loadProfile(targetUid); } catch(e) { alert("Error: " + e.message); }
+        }
+
+        async function saveProfile() {
+            const name = document.getElementById("editName").value;
+            const bday = document.getElementById("editBirthday").value;
+            const bio = document.getElementById("editBio").value;
+            const games = document.getElementById("editGames").value.split(',').map(s => s.trim()).filter(s => s);
+            const socials = { discord: document.getElementById("editDiscord").value, steam: document.getElementById("editSteam").value, twitch: document.getElementById("editTwitch").value };
+            await db.collection("users").doc(targetUid).set({ name, birthday: bday, bio, favoriteGames: games, socials }, { merge: true });
+            closeModal(); loadProfile(targetUid);
+        }
+
+        function closeModal() { document.getElementById("editModal").style.display = "none"; }
+        function triggerBannerUpload() { document.getElementById('bannerInput').click(); }
+        function triggerAvatarUpload() { document.getElementById('avatarInput').click(); }
+        document.getElementById('bannerInput').addEventListener('change', e => uploadImage(e.target.files[0], 'banner'));
+        document.getElementById('avatarInput').addEventListener('change', e => uploadImage(e.target.files[0], 'avatar'));
+
+        async function uploadImage(file, type) {
+            if(!file) return;
+            if(!confirm(`Upload new ${type}?`)) return;
+            try {
+                const path = type === 'banner' ? `headers/${targetUid}` : `avatars/${targetUid}`;
+                const ref = storage.ref(path);
+                if(type === 'avatar') document.getElementById("pAvatar").style.opacity = 0.5;
+                await ref.put(file);
+                const url = await ref.getDownloadURL();
+                const update = type === 'banner' ? { headerUrl: url } : { photoURL: url };
+                await db.collection("users").doc(targetUid).update(update);
+                loadProfile(targetUid);
+                if(type==='avatar') auth.currentUser.updateProfile({ photoURL: url });
+            } catch(e) { alert("Upload Failed."); document.getElementById("pAvatar").style.opacity = 1; }
+        }
+    </script>
+</body>
+</html>

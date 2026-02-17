@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GH – The Loot Stash</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="header.css">
+  <link rel="stylesheet" href="drawer.css">
+  <script src="https://js.stripe.com/v3/"></script>
+  
+  <style>
+    /* [LOOT STASH STYLES] */
+    
+    body { background-color: #050509; } 
+
+    /* HEADER AREA */
+    .shop-hero { text-align: center; padding: 40px 20px; }
+    .shop-title { font-size: 42px; font-weight: 900; color: #fff; margin: 0 0 10px 0; letter-spacing: -1px; }
+    .shop-sub { color: #8b9bb4; font-size: 14px; max-width: 600px; margin: 0 auto; line-height: 1.5; }
+
+    /* FILTERS */
+    .filter-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 50px; flex-wrap: wrap; }
+    .filter-pill {
+        background: #12141c; color: #8b9bb4; border: 1px solid #2a2e3b; padding: 8px 20px;
+        border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s;
+    }
+    .filter-pill:hover { background: #2a2e3b; color: #fff; }
+    .filter-pill.active { background: #4f46e5; color: #fff; border-color: #4f46e5; box-shadow: 0 0 15px rgba(79, 70, 229, 0.4); }
+
+    /* UTILITY BAR (Cart & Admin) */
+    .utility-bar { 
+        display: flex; justify-content: space-between; align-items: center; max-width: 1100px; 
+        margin: 0 auto 20px; padding: 0 20px;
+    }
+    .cart-trigger { position: relative; cursor: pointer; color: #fff; font-size: 24px; transition: 0.2s; }
+    .cart-trigger:hover { color: #4f46e5; transform: scale(1.1); }
+    .cart-badge { 
+        position: absolute; top: -5px; right: -8px; background: #ff4444; color: #fff; 
+        font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; 
+    }
+
+    /* GRID */
+    .product-grid { 
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+        gap: 25px; max-width: 1100px; margin: 0 auto 80px; padding: 0 20px; 
+    }
+
+    /* CARD DESIGN */
+    .loot-card {
+        background: #0f111a; border-radius: 16px; padding: 20px; position: relative;
+        transition: transform 0.3s ease, box-shadow 0.3s ease; display: flex; flex-direction: column;
+        border: 1px solid transparent;
+    }
+    .loot-card:hover { transform: translateY(-8px); box-shadow: 0 10px 40px rgba(0,0,0,0.5); border-color: #2a2e3b; }
+
+    /* TAGS */
+    .loot-tag {
+        position: absolute; top: 15px; right: 15px; font-size: 10px; font-weight: 800;
+        padding: 4px 8px; border-radius: 4px; text-transform: uppercase; z-index: 2;
+    }
+    .tag-best { background: #ff4444; color: #fff; box-shadow: 0 0 10px rgba(255, 68, 68, 0.3); }
+    .tag-limit { background: #4f46e5; color: #fff; box-shadow: 0 0 10px rgba(79, 70, 229, 0.3); }
+    .tag-new { background: #fdff55; color: #000; }
+
+    /* WISHLIST BUTTON (NEW) */
+    .wishlist-btn {
+        position: absolute; top: 15px; left: 15px;
+        background: rgba(0,0,0,0.6); color: #888;
+        width: 30px; height: 30px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: 0.2s; z-index: 5;
+        border: 1px solid #333; font-size: 14px;
+    }
+    .wishlist-btn:hover { background: #111; color: #fff; border-color: #fff; }
+    .wishlist-btn.active { color: #ff4444; border-color: #ff4444; background: rgba(255, 68, 68, 0.1); box-shadow: 0 0 10px rgba(255,68,68,0.2); }
+
+    .loot-img-box {
+        height: 180px; display: flex; align-items: center; justify-content: center;
+        margin-bottom: 20px; position: relative;
+    }
+    .loot-img { max-height: 100%; max-width: 100%; object-fit: contain; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3)); transition: 0.3s; }
+    .loot-card:hover .loot-img { transform: scale(1.1) rotate(3deg); }
+
+    .loot-info { text-align: left; margin-bottom: 15px; flex-grow: 1; }
+    .loot-title { font-size: 18px; font-weight: bold; color: #fff; margin-bottom: 5px; }
+    .loot-price { color: #fdff55; font-weight: bold; font-size: 16px; margin-bottom: 10px; display: block; }
+    .loot-desc { color: #8b9bb4; font-size: 13px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .loot-actions { margin-top: auto; }
+    
+    .size-select {
+        background: #1a1d29; border: 1px solid #2a2e3b; color: #8b9bb4; padding: 8px;
+        border-radius: 6px; width: 100%; margin-bottom: 10px; font-size: 12px; cursor: pointer;
+    }
+
+    .add-cart-btn {
+        width: 100%; background: #2a2e3b; color: #fff; border: none; padding: 12px;
+        border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s;
+        font-size: 14px;
+    }
+    .add-cart-btn:hover { background: #fff; color: #000; }
+
+    .admin-del {
+        position: absolute; top: 15px; left: 55px; /* Offset for heart */
+        color: #ff4444; font-size: 18px; cursor: pointer; display: none; z-index: 10;
+        background: rgba(0,0,0,0.6); width: 30px; height: 30px; border-radius: 50%;
+        align-items: center; justify-content: center; border: 1px solid #ff4444;
+    }
+    .admin-del:hover { background: #ff4444; color: #fff; }
+
+    /* CART SIDEBAR */
+    .cart-sidebar { 
+        position: fixed; top: 0; right: -400px; width: 350px; height: 100vh; 
+        background: #0f111a; border-left: 1px solid #2a2e3b; z-index: 3000; 
+        transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 25px; display: flex; flex-direction: column;
+        box-shadow: -10px 0 80px rgba(0,0,0,0.9); box-sizing: border-box;
+    }
+    .cart-sidebar.open { right: 0; }
+    .cart-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2e3b; padding-bottom: 15px; margin-bottom: 20px; }
+    .cart-title { color: #fff; font-weight: 900; font-size: 20px; }
+    .cart-items { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+    
+    .cart-item { display: flex; gap: 15px; background: #161821; padding: 10px; border-radius: 8px; align-items: center; }
+    .cart-img { width: 50px; height: 50px; object-fit: contain; }
+    .cart-info { flex-grow: 1; }
+    .cart-name { color: #fff; font-size: 13px; font-weight: bold; display: block; }
+    .cart-meta { color: #666; font-size: 11px; }
+    
+    .checkout-btn { background: #4f46e5; color: #fff; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+    .checkout-btn:hover { background: #4338ca; }
+
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2900; display: none; backdrop-filter: blur(4px); }
+    .overlay.active { display: block; }
+
+    /* MODAL */
+    .gh-modal-content { background: #0f111a !important; border: 1px solid #2a2e3b !important; box-shadow: 0 0 50px rgba(0,0,0,0.5) !important; }
+    .gh-input { background: #161821 !important; border-color: #2a2e3b !important; color: #fff !important; }
+
+    @media (max-width: 768px) {
+        .cart-sidebar { width: 100%; right: -100%; }
+    }
+  </style>
+</head>
+<body>
+
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            
+            <div class="shop-hero">
+                <h1 class="shop-title">The Loot Stash</h1>
+                <div class="shop-sub">High-quality gear for low-quality code. Proceeds go directly to keeping the servers from catching fire.</div>
+            </div>
+
+            <div class="filter-bar">
+                <div class="filter-pill active">All Loot</div>
+                <div class="filter-pill">Apparel</div>
+                <div class="filter-pill">Digital Trash</div>
+                <div class="filter-pill">Accessories</div>
+            </div>
+
+            <div class="utility-bar">
+                <button id="adminManageBtn" class="filter-pill" style="display:none; background:#2a2e3b;" onclick="openAddModal()">+ New Item</button>
+                <div class="cart-trigger" onclick="toggleCart()" style="margin-left: auto;">
+                    🛒 <span class="cart-badge" id="cartCount">0</span>
+                </div>
+            </div>
+
+            <div id="loadingMsg" style="text-align:center; color:#666; margin-top:50px;">Decrypting Inventory...</div>
+            <div class="product-grid" id="productGrid"></div>
+
+        </div>
+    </div>
+
+    <div class="overlay" id="cartOverlay" onclick="toggleCart()"></div>
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <span class="cart-title">Your Stash</span>
+            <span style="color:#666; cursor:pointer;" onclick="toggleCart()">✕</span>
+        </div>
+        <div class="cart-items" id="cartItemsContainer">
+            <div style="text-align:center; color:#666; margin-top:50px;">Empty. Go buy something.</div>
+        </div>
+        <div style="border-top:1px solid #2a2e3b; padding-top:20px; margin-top:auto;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; color:#fff; font-size:18px;">
+                <span>Total</span>
+                <span id="cartTotal">$0.00</span>
+            </div>
+            <button class="checkout-btn" id="btnCheckout" onclick="checkout()">Secure Checkout</button>
+        </div>
+    </div>
+
+    <div id="addModal" class="gh-modal">
+        <div class="gh-modal-content">
+            <h2 style="color:#fff; margin-top:0;">Stock New Item</h2>
+            <input type="text" id="newProdName" class="gh-input" placeholder="Item Name">
+            <input type="number" id="newProdPrice" class="gh-input" placeholder="Price (USD)">
+            <textarea id="newProdDesc" class="gh-input" placeholder="Description (Make it funny)..." rows="3"></textarea>
+            <div style="margin-bottom:15px;">
+                <label style="color:#666; font-size:12px; font-weight:bold;">IMAGE</label>
+                <input type="file" id="newProdImg" accept="image/*" class="gh-input">
+            </div>
+            <button class="checkout-btn" onclick="uploadAndCreate()">Add to Stash</button>
+            <button onclick="document.getElementById('addModal').style.display='none'" style="width:100%; background:transparent; border:none; color:#666; margin-top:10px; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <div id="successModal" class="gh-modal">
+        <div class="gh-modal-content" style="text-align:center;">
+            <div style="font-size:50px; margin-bottom:10px;">📦</div>
+            <h2 style="color:#4f46e5; margin-top:0;">Loot Secured!</h2>
+            <p style="color:#ccc; font-size:14px; margin-bottom:30px;">Your gear is on the way. Don't tell your wallet.</p>
+            <button class="checkout-btn" onclick="closeSuccess()">Nice.</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        let cart = JSON.parse(localStorage.getItem('gh_cart')) || [];
+        let isAdmin = false;
+        let savedItems = new Set(); // Local cache for saved IDs
+
+        // INIT
+        auth.onAuthStateChanged(async user => {
+            if(user) {
+                const token = await user.getIdTokenResult();
+                isAdmin = !!token.claims.admin;
+                if(isAdmin) document.getElementById("adminManageBtn").style.display = "block";
+                
+                // Load Saved Items
+                db.collection("users").doc(user.uid).collection("saved").where("type", "==", "product")
+                    .onSnapshot(snap => {
+                        savedItems.clear();
+                        snap.forEach(doc => savedItems.add(doc.id));
+                        updateWishlistUI();
+                    });
+            }
+            
+            // Check Success
+            const urlParams = new URLSearchParams(window.location.search);
+            if(urlParams.get('success')) {
+                cart = []; saveCart(); updateCartUI();
+                document.getElementById('successModal').style.display = 'flex';
+                window.history.replaceState({}, document.title, "shop.html");
+            }
+            loadProducts();
+            updateCartUI();
+        });
+
+        function closeSuccess() { document.getElementById('successModal').style.display = 'none'; }
+
+        // LOAD PRODUCTS
+        function loadProducts() {
+            db.collection("products").onSnapshot(snap => {
+                document.getElementById("loadingMsg").style.display = "none";
+                const grid = document.getElementById('productGrid');
+                grid.innerHTML = "";
+
+                if(snap.empty) {
+                    grid.innerHTML = "<div style='grid-column:1/-1; text-align:center; color:#666;'>Out of stock.</div>";
+                    return;
+                }
+
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    const pid = doc.id;
+                    
+                    let tagHtml = "";
+                    const price = parseFloat(p.price);
+                    if(price > 40) tagHtml = `<div class="loot-tag tag-best">BEST SELLER</div>`;
+                    else if(price < 15) tagHtml = `<div class="loot-tag tag-new">INFINITE STOCK</div>`;
+                    else if(p.name.includes("Cap")) tagHtml = `<div class="loot-tag tag-limit">LIMITED</div>`;
+
+                    const isSaved = savedItems.has(pid) ? 'active' : '';
+
+                    grid.innerHTML += `
+                        <div class="loot-card">
+                            ${tagHtml}
+                            <div class="wishlist-btn ${isSaved}" data-id="${pid}" onclick="toggleSave('${pid}', '${p.name.replace(/'/g, "\\'")}', ${p.price}, '${p.image}')">❤</div>
+                            ${isAdmin ? `<div class="admin-del" style="display:flex" onclick="deleteProduct('${pid}')">🗑</div>` : ''}
+                            
+                            <div class="loot-img-box">
+                                <img src="${p.image || 'assets/GH_Hero.png'}" class="loot-img">
+                            </div>
+                            
+                            <div class="loot-info">
+                                <div class="loot-title">${p.name}</div>
+                                <span class="loot-price">$${price.toFixed(2)}</span>
+                                <div class="loot-desc">${p.description || "Mystery Item."}</div>
+                            </div>
+
+                            <div class="loot-actions">
+                                <select id="size-${pid}" class="size-select">
+                                    <option value="S">Size: Small</option>
+                                    <option value="M" selected>Size: Medium</option>
+                                    <option value="L">Size: Large</option>
+                                    <option value="XL">Size: XL</option>
+                                </select>
+                                <button class="add-cart-btn" onclick="addToCart('${pid}', '${p.name.replace(/'/g, "\\'")}', ${p.price}, '${p.image}')">Add to Cart</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        // WISHLIST LOGIC
+        async function toggleSave(id, name, price, img) {
+            if(!auth.currentUser) return alert("Log in to save items.");
+            const uid = auth.currentUser.uid;
+            const ref = db.collection("users").doc(uid).collection("saved").doc(id);
+
+            if(savedItems.has(id)) {
+                // Remove
+                await ref.delete();
+            } else {
+                // Add
+                await ref.set({
+                    type: 'product',
+                    name: name,
+                    price: price,
+                    image: img,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        }
+
+        function updateWishlistUI() {
+            document.querySelectorAll('.wishlist-btn').forEach(btn => {
+                const id = btn.dataset.id;
+                if(savedItems.has(id)) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
+
+        // CART LOGIC
+        function addToCart(id, name, price, img) {
+            const sizeEl = document.getElementById(`size-${id}`);
+            const size = sizeEl ? sizeEl.value : "M";
+            cart.push({ id, name, price, img, size });
+            saveCart(); updateCartUI(); toggleCart(true);
+        }
+        function removeFromCart(index) { cart.splice(index, 1); saveCart(); updateCartUI(); }
+        function saveCart() { localStorage.setItem('gh_cart', JSON.stringify(cart)); }
+        
+        function updateCartUI() {
+            document.getElementById('cartCount').innerText = cart.length;
+            const container = document.getElementById('cartItemsContainer');
+            if(cart.length === 0) {
+                container.innerHTML = "<div style='text-align:center; color:#666; padding-top:50px;'>Empty. Go buy something.</div>";
+            } else {
+                container.innerHTML = cart.map((item, index) => `
+                    <div class="cart-item">
+                        <img src="${item.img || 'assets/GH_Hero.png'}" class="cart-img">
+                        <div class="cart-info">
+                            <span class="cart-name">${item.name}</span>
+                            <span class="cart-meta">${item.size} • $${item.price.toFixed(2)}</span>
+                        </div>
+                        <div style="color:#ff4444; cursor:pointer;" onclick="removeFromCart(${index})">✕</div>
+                    </div>
+                `).join('');
+            }
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById('cartTotal').innerText = '$' + total.toFixed(2);
+        }
+
+        function toggleCart(forceOpen = false) {
+            const sidebar = document.getElementById('cartSidebar');
+            const overlay = document.getElementById('cartOverlay');
+            if(forceOpen || !sidebar.classList.contains('open')) {
+                sidebar.classList.add('open'); overlay.classList.add('active');
+            } else {
+                sidebar.classList.remove('open'); overlay.classList.remove('active');
+            }
+        }
+
+        // ADMIN LOGIC
+        function openAddModal() { document.getElementById("addModal").style.display = "flex"; }
+        
+        async function uploadAndCreate() {
+            const name = document.getElementById("newProdName").value;
+            const price = parseFloat(document.getElementById("newProdPrice").value);
+            const desc = document.getElementById("newProdDesc").value;
+            const file = document.getElementById("newProdImg").files[0];
+
+            if(!name || !price || !file) return alert("Fill everything out.");
+            const btn = document.querySelector("#addModal .checkout-btn");
+            btn.innerText = "Uploading..."; btn.disabled = true;
+
+            try {
+                const ref = storage.ref(`products/${Date.now()}_${file.name}`);
+                await ref.put(file);
+                const url = await ref.getDownloadURL();
+                await db.collection("products").add({
+                    name, price, description: desc, image: url, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                document.getElementById("addModal").style.display = "none";
+                alert("Product Added.");
+                location.reload();
+            } catch(e) { alert("Error: " + e.message); }
+            btn.innerText = "Add to Stash"; btn.disabled = false;
+        }
+
+        async function deleteProduct(id) {
+            if(confirm("Delete this item?")) await db.collection("products").doc(id).delete();
+        }
+
+        // STRIPE CHECKOUT
+        async function checkout() {
+            const user = auth.currentUser;
+            if(!user) return alert("Log in to buy stuff.");
+            if(cart.length === 0) return alert("Cart empty.");
+
+            const btn = document.getElementById('btnCheckout');
+            btn.innerText = "Connecting..."; btn.disabled = true;
+
+            try {
+                const line_items = cart.map(item => ({
+                    price_data: {
+                        currency: 'usd',
+                        product_data: { name: item.name + ` (${item.size})`, images: [item.img] },
+                        unit_amount: Math.round(item.price * 100)
+                    }, quantity: 1
+                }));
+
+                const docRef = await db.collection('customers').doc(user.uid).collection('checkout_sessions').add({
+                    mode: 'payment', line_items: line_items,
+                    success_url: window.location.origin + '/shop.html?success=true',
+                    cancel_url: window.location.origin + '/shop.html?cancel=true'
+                });
+
+                docRef.onSnapshot((snap) => {
+                    const { error, url } = snap.data();
+                    if(error) { alert(error.message); btn.disabled=false; btn.innerText="Secure Checkout"; }
+                    if(url) window.location.assign(url);
+                });
+            } catch(e) { alert(e.message); btn.disabled=false; btn.innerText="Secure Checkout"; }
+        }
+    </script>
+</body>
+</html>

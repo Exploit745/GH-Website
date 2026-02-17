@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Soundboard</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* [SOUNDBOARD STYLES] */
+        .deck-container { max-width: 1000px; margin: 0 auto; text-align: center; }
+        
+        /* CONTROLS */
+        .deck-controls { 
+            background: #111; border: 1px solid #333; padding: 15px; border-radius: 12px; 
+            margin-bottom: 30px; display: flex; align-items: center; justify-content: center; gap: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); flex-wrap: wrap;
+        }
+        
+        .vol-wrapper { display: flex; align-items: center; gap: 10px; color: #888; font-weight: bold; font-size: 12px; text-transform: uppercase; }
+        .vol-slider { -webkit-appearance: none; width: 120px; height: 6px; background: #333; border-radius: 5px; outline: none; }
+        .vol-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--gh-blue); cursor: pointer; box-shadow: 0 0 10px var(--gh-blue); transition: 0.2s; }
+        .vol-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+        .action-btn { 
+            border: none; padding: 10px 20px; border-radius: 6px; font-weight: 900; 
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; font-size: 12px;
+        }
+        .stop-btn { background: var(--gh-red); color: #fff; box-shadow: 0 0 15px rgba(255, 68, 68, 0.2); }
+        .stop-btn:hover { background: #ff4444; transform: scale(1.05); }
+        
+        .add-btn { background: var(--gh-yellow); color: #000; display: none; box-shadow: 0 0 15px rgba(253, 255, 85, 0.2); }
+        .add-btn:hover { background: #fff; transform: scale(1.05); }
+
+        /* THE GRID (Compact) */
+        .pad-grid { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); 
+            gap: 15px; perspective: 1000px;
+        }
+
+        .sound-pad {
+            background: #1a1a1a; border: 2px solid #333; border-radius: 12px; aspect-ratio: 1;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.1s; position: relative; overflow: hidden;
+            user-select: none;
+        }
+        
+        /* HOVER / ACTIVE STATES */
+        .sound-pad:hover { border-color: #555; background: #222; transform: translateY(-2px); }
+        .sound-pad:active { transform: translateY(2px) scale(0.98); border-color: var(--pad-color); box-shadow: 0 0 20px var(--pad-color-glow); }
+        .sound-pad.playing { border-color: var(--pad-color); background: radial-gradient(circle, #222 0%, #000 100%); animation: padPulse 0.5s infinite alternate; }
+
+        .pad-icon { font-size: 28px; margin-bottom: 8px; pointer-events: none; transition: 0.2s; }
+        .sound-pad:active .pad-icon { transform: scale(1.2); }
+        
+        .pad-label { 
+            font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; 
+            pointer-events: none; letter-spacing: 1px; word-break: break-word; padding: 0 5px;
+        }
+        .sound-pad:hover .pad-label { color: #fff; }
+
+        /* DELETE BUTTON (Admin) */
+        .delete-pad-btn {
+            position: absolute; top: 5px; right: 5px; width: 20px; height: 20px;
+            background: rgba(255, 0, 0, 0.7); color: #fff; border-radius: 50%;
+            display: none; align-items: center; justify-content: center; font-size: 10px;
+            cursor: pointer; z-index: 10;
+        }
+        .delete-pad-btn:hover { background: red; transform: scale(1.1); }
+
+        @keyframes padPulse { from { box-shadow: 0 0 10px var(--pad-color-glow); } to { box-shadow: 0 0 25px var(--pad-color-glow); } }
+
+        /* CATEGORY TAGS */
+        .category-header { 
+            grid-column: 1 / -1; text-align: left; margin: 20px 0 10px; 
+            color: var(--gh-blue); font-size: 14px; font-weight: bold; text-transform: uppercase; border-bottom: 1px dashed #333; padding-bottom: 5px;
+        }
+
+        /* UPLOAD MODAL */
+        .drop-zone {
+            border: 2px dashed #444; border-radius: 8px; padding: 30px; text-align: center;
+            color: #888; cursor: pointer; transition: 0.2s; margin-bottom: 15px; background: #0a0a0a;
+        }
+        .drop-zone:hover, .drop-zone.dragover { border-color: var(--gh-yellow); color: var(--gh-yellow); background: #161616; }
+        .file-info { color: var(--gh-blue); font-size: 12px; margin-top: 10px; display: none; }
+
+        @media (max-width: 600px) {
+            .deck-controls { flex-direction: column; gap: 15px; }
+            .pad-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .pad-icon { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            
+            <div style="text-align:center; margin-bottom:20px;">
+                <h1 style="font-size:36px; margin:0; text-transform:uppercase; letter-spacing:2px;">Sonic Deck</h1>
+                <div style="color:#666; font-size:12px;">Global Soundboard</div>
+            </div>
+
+            <div class="deck-container">
+                
+                <div class="deck-controls">
+                    <div class="vol-wrapper">
+                        <span>Master</span>
+                        <input type="range" min="0" max="1" step="0.1" value="0.5" class="vol-slider" id="masterVol" oninput="updateVolume()">
+                        <span id="volDisplay">50%</span>
+                    </div>
+                    <button class="action-btn stop-btn" onclick="stopAll()">■ SILENCE</button>
+                    <button class="action-btn add-btn" id="adminAddBtn" onclick="openUploadModal()">+ ADD SOUND</button>
+                </div>
+
+                <div class="pad-grid" id="soundGrid">
+                    <div style="grid-column:1/-1; color:#666; padding:20px;">Loading Audio Matrix...</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="uploadModal" class="gh-modal">
+        <div class="gh-modal-content">
+            <h2 style="color:var(--gh-yellow); margin-top:0;">Upload Sound</h2>
+            
+            <div class="drop-zone" id="dropZone">
+                <span id="dropText">Drag & Drop MP3 or Click</span>
+                <input type="file" id="fileInput" accept="audio/mp3,audio/wav" style="display:none">
+                <div id="fileInfo" class="file-info">Selected: <span id="fileName"></span></div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                <div>
+                    <label style="font-size:11px; color:#666;">NAME</label>
+                    <input type="text" id="sName" class="gh-input" placeholder="e.g. Vine Boom" maxlength="12">
+                </div>
+                <div>
+                    <label style="font-size:11px; color:#666;">EMOJI</label>
+                    <input type="text" id="sIcon" class="gh-input" placeholder="💥" maxlength="2">
+                </div>
+            </div>
+
+            <label style="font-size:11px; color:#666;">CATEGORY</label>
+            <select id="sCat" class="gh-input" style="margin-bottom:15px;">
+                <option value="MEMES">Memes</option>
+                <option value="SYSTEM">System</option>
+                <option value="VOICE">Voice Lines</option>
+                <option value="FX">Effects</option>
+            </select>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="gh-btn btn-secondary" onclick="document.getElementById('uploadModal').style.display='none'">CANCEL</button>
+                <button class="gh-btn btn-primary" id="uploadConfirmBtn" onclick="uploadSound()">UPLOAD</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        /* VISUALS */
+        const container = document.getElementById("particleContainer");
+        for(let i=0; i<20; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; p.style.animationDelay=Math.random()*10+"s"; container.appendChild(p); }
+
+        
+        let isAdmin = false;
+        let activeAudio = [];
+        let masterGain = 0.5;
+        let selectedFile = null;
+
+        /* INIT */
+        auth.onAuthStateChanged(async user => {
+            if(user) {
+                const token = await user.getIdTokenResult();
+                if(token.claims.admin || (await db.collection('users').doc(user.uid).get()).data().role === 'admin') {
+                    isAdmin = true;
+                    document.getElementById('adminAddBtn').style.display = 'block';
+                }
+            }
+            loadSounds();
+        });
+
+        /* LOAD SOUNDS */
+        function loadSounds() {
+            db.collection('sounds').orderBy('category').onSnapshot(snap => {
+                const grid = document.getElementById("soundGrid");
+                grid.innerHTML = "";
+                
+                if(snap.empty) { grid.innerHTML = "<div style='grid-column:1/-1; text-align:center; color:#666;'>No sounds found.</div>"; return; }
+
+                let currentCat = "";
+                snap.docs.forEach(doc => {
+                    const s = doc.data();
+                    
+                    // Category Header
+                    if(s.category !== currentCat) {
+                        currentCat = s.category;
+                        grid.innerHTML += `<div class="category-header">${currentCat}</div>`;
+                    }
+
+                    // Color Coding
+                    let color = "#fff";
+                    if(s.category === "MEMES") color = "#ff4444";
+                    if(s.category === "SYSTEM") color = "#00ff6a";
+                    if(s.category === "VOICE") color = "#33b5e5";
+                    if(s.category === "FX") color = "#ffbb33";
+
+                    // Delete Button
+                    const delBtn = isAdmin ? `<div class="delete-pad-btn" onclick="deleteSound('${doc.id}', event)">✕</div>` : '';
+
+                    grid.innerHTML += `
+                        <div class="sound-pad" 
+                             style="--pad-color:${color}; --pad-color-glow:${color}66;" 
+                             onmousedown="playSound('${s.url}', this)">
+                            ${delBtn}
+                            <div class="pad-icon">${s.icon || '🔊'}</div>
+                            <div class="pad-label">${s.name}</div>
+                        </div>
+                    `;
+                });
+                
+                if(isAdmin) document.querySelectorAll('.delete-pad-btn').forEach(b => b.style.display = 'flex');
+            });
+        }
+
+        /* PLAY ENGINE */
+        function playSound(url, el) {
+            el.classList.add("playing");
+            setTimeout(() => el.classList.remove("playing"), 200);
+
+            const audio = new Audio(url);
+            audio.volume = masterGain;
+            audio.play();
+            activeAudio.push(audio);
+            audio.onended = () => {
+                const i = activeAudio.indexOf(audio);
+                if (i > -1) activeAudio.splice(i, 1);
+            };
+        }
+
+        function stopAll() {
+            activeAudio.forEach(a => { a.pause(); a.currentTime = 0; });
+            activeAudio = [];
+        }
+
+        function updateVolume() {
+            masterGain = document.getElementById("masterVol").value;
+            document.getElementById("volDisplay").innerText = Math.round(masterGain * 100) + "%";
+        }
+
+        /* ADMIN: UPLOAD */
+        function openUploadModal() {
+            document.getElementById('uploadModal').style.display = 'flex';
+            resetUploadForm();
+        }
+
+        function resetUploadForm() {
+            selectedFile = null;
+            document.getElementById('sName').value = "";
+            document.getElementById('sIcon').value = "";
+            document.getElementById('fileName').innerText = "";
+            document.getElementById('fileInfo').style.display = "none";
+            document.getElementById('dropText').innerText = "Drag & Drop MP3 or Click";
+        }
+
+        // Drag & Drop Logic
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.onclick = () => fileInput.click();
+        
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+        
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        };
+
+        fileInput.onchange = () => handleFile(fileInput.files[0]);
+
+        function handleFile(file) {
+            if(!file || !file.type.startsWith('audio/')) return alert("Audio files only!");
+            selectedFile = file;
+            document.getElementById('dropText').innerText = "File Ready";
+            document.getElementById('fileName').innerText = file.name;
+            document.getElementById('fileInfo').style.display = "block";
+        }
+
+        async function uploadSound() {
+            const name = document.getElementById('sName').value;
+            const icon = document.getElementById('sIcon').value;
+            const cat = document.getElementById('sCat').value;
+            
+            if(!name || !selectedFile) return alert("Name and File required.");
+
+            const btn = document.getElementById('uploadConfirmBtn');
+            btn.innerText = "UPLOADING...";
+            btn.disabled = true;
+
+            try {
+                // 1. Upload to Storage
+                const ref = storage.ref(`sounds/${Date.now()}_${selectedFile.name}`);
+                await ref.put(selectedFile);
+                const url = await ref.getDownloadURL();
+
+                // 2. Save to Firestore
+                await db.collection('sounds').add({
+                    name: name,
+                    icon: icon || '🔊',
+                    category: cat,
+                    url: url,
+                    uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                document.getElementById('uploadModal').style.display = 'none';
+            } catch(e) {
+                alert("Upload failed: " + e.message);
+            } finally {
+                btn.innerText = "UPLOAD";
+                btn.disabled = false;
+            }
+        }
+
+        /* ADMIN: DELETE */
+        async function deleteSound(docId, e) {
+            e.stopPropagation(); // Prevent sound playing
+            if(confirm("Delete this sound permanently?")) {
+                await db.collection('sounds').doc(docId).delete();
+            }
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Field Manual</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+    <style>
+        /* GATEKEEPER */
+        body { display: none; }
+
+        /* GUIDE LAYOUT */
+        .guide-hero {
+            text-align: center; margin-bottom: 40px; padding: 60px 20px;
+            background: linear-gradient(180deg, #0a0a0a 0%, #000 100%);
+            border-bottom: 2px solid var(--gh-blue);
+        }
+        .guide-title { font-size: 36px; font-weight: 900; color: #fff; text-transform: uppercase; margin: 0; letter-spacing: 2px; }
+        .guide-sub { color: var(--gh-yellow); font-size: 14px; margin-top: 10px; font-weight: bold; letter-spacing: 1px; }
+
+        .guide-container { 
+            max-width: 1000px; margin: 0 auto; display: grid; 
+            grid-template-columns: 220px 1fr; gap: 50px; padding: 20px;
+            align-items: start; 
+        }
+
+        /* SIDEBAR NAV */
+        .guide-nav { 
+            position: sticky; top: 100px; 
+            background: #111; border: 1px solid #333; border-radius: 8px;
+            overflow: hidden; padding: 10px 0;
+        }
+        .nav-item {
+            display: block; padding: 12px 20px; color: #888; text-decoration: none;
+            border-left: 3px solid transparent; transition: 0.2s; font-size: 13px; font-weight: bold;
+        }
+        .nav-item:hover { background: #161616; color: #ccc; }
+        .nav-item.active { 
+            color: #fff; border-left-color: var(--gh-blue); 
+            background: linear-gradient(90deg, rgba(0, 234, 255, 0.1) 0%, transparent 100%); 
+        }
+
+        /* CONTENT SECTIONS */
+        .guide-section { margin-bottom: 80px; scroll-margin-top: 120px; }
+        .sec-title { 
+            font-size: 28px; color: #fff; border-bottom: 1px solid #333; 
+            padding-bottom: 15px; margin-bottom: 25px; display: flex; align-items: center; gap: 15px; 
+        }
+        .sec-icon { color: var(--gh-yellow); font-size: 24px; }
+        
+        .guide-text { color: #ccc; line-height: 1.7; font-size: 15px; margin-bottom: 25px; }
+        
+        /* FEATURE CARDS */
+        .feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 25px; }
+        .guide-card { 
+            background: #111; padding: 20px; border-radius: 8px; border: 1px solid #333; 
+            transition: 0.3s;
+        }
+        .guide-card:hover { border-color: var(--gh-blue); transform: translateY(-3px); }
+        
+        .gc-head { color: #fff; font-weight: 900; margin-bottom: 8px; font-size: 14px; text-transform: uppercase; }
+        .gc-body { color: #888; font-size: 12px; line-height: 1.5; }
+
+        /* COMMANDMENTS */
+        .strike-banner {
+            background: rgba(255, 68, 68, 0.1); border: 1px dashed var(--gh-red);
+            color: var(--gh-red); padding: 15px; border-radius: 8px; margin-bottom: 20px;
+            font-size: 12px; font-weight: bold; text-align: center; text-transform: uppercase;
+        }
+
+        .rule-box { 
+            background: rgba(255, 255, 255, 0.03); border-left: 4px solid #333; 
+            padding: 20px; margin-bottom: 15px; border-radius: 0 8px 8px 0; transition: 0.2s;
+        }
+        .rule-box:hover { background: #1a1a1a; }
+        .rule-title { color: #fff; font-weight: 900; margin-bottom: 5px; font-size: 14px; text-transform: uppercase; }
+        
+        .rb-red { border-left-color: var(--gh-red); }
+        .rb-red .rule-title { color: var(--gh-red); }
+        
+        .rb-blue { border-left-color: var(--gh-blue); }
+        .rb-blue .rule-title { color: var(--gh-blue); }
+        
+        .rb-yellow { border-left-color: var(--gh-yellow); }
+        .rb-yellow .rule-title { color: var(--gh-yellow); }
+
+        @media (max-width: 800px) {
+            .guide-container { grid-template-columns: 1fr; gap: 30px; }
+            .guide-nav { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content" style="max-width:100%; padding:0;">
+            
+            <div class="guide-hero">
+                <h1 class="guide-title">GH Protocols</h1>
+                <div class="guide-sub">OFFICIAL SITE MANUAL & GUIDELINES</div>
+            </div>
+
+            <div class="guide-container">
+                
+                <div class="guide-nav">
+                    <a href="#intro" class="nav-item active">00. Introduction</a>
+                    <a href="#nav" class="nav-item">01. Navigation</a>
+                    <a href="#code" class="nav-item">02. Code of Conduct</a>
+                    <a href="#support" class="nav-item">03. Support</a>
+                </div>
+
+                <div class="guide-content">
+                    
+                    <div id="intro" class="guide-section">
+                        <div class="sec-title"><span class="sec-icon">📘</span> Welcome Agent</div>
+                        <p class="guide-text">
+                            Gamers Hangout (GH) is a modular ecosystem for gaming, development, and community. 
+                            This manual outlines the tools at your disposal and the laws that govern this space.
+                            Review these protocols carefully. Ignorance is not an excuse.
+                        </p>
+                    </div>
+
+                    <div id="nav" class="guide-section">
+                        <div class="sec-title"><span class="sec-icon">🧭</span> Navigation</div>
+                        <p class="guide-text">The Drawer (Left Menu) is your lifeline. Here is what the sectors do:</p>
+                        
+                        <div class="feat-grid">
+                            <div class="guide-card">
+                                <div class="gc-head">Dashboard</div>
+                                <div class="gc-body">Your home base. Live stats, news updates, and quick access to everything.</div>
+                            </div>
+                            <div class="guide-card">
+                                <div class="gc-head">Members</div>
+                                <div class="gc-body">The personnel database. Find friends, view dossiers, and track the hierarchy.</div>
+                            </div>
+                            <div class="guide-card">
+                                <div class="gc-head">My Activity</div>
+                                <div class="gc-body">Your personal logs. Edit your bio, track your stats, and manage your account.</div>
+                            </div>
+                            <div class="guide-card">
+                                <div class="gc-head">Inbox</div>
+                                <div class="gc-body">Encrypted comms. Direct messages and system notifications live here.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="code" class="guide-section">
+                        <div class="sec-title"><span class="sec-icon">📜</span> Code of Conduct</div>
+                        
+                        <div class="strike-banner">
+                            ⚠️ VIOLATIONS RESULT IN: 1. MUTE (24H) | 2. TIMEOUT (48H) | 3. EXCOMMUNICATION
+                        </div>
+
+                        <div class="rule-box rb-blue">
+                            <div class="rule-title">1. Respect Everyone</div>
+                            <div style="font-size:13px; color:#ccc;">Be kind, considerate, and respectful. No harassment, bullying, or hate speech of any kind. Zero tolerance.</div>
+                        </div>
+
+                        <div class="rule-box rb-yellow">
+                            <div class="rule-title">2. No Spam</div>
+                            <div style="font-size:13px; color:#ccc;">Avoid spamming messages, emojis, or links. Keep the data stream clean and flowing naturally.</div>
+                        </div>
+
+                        <div class="rule-box">
+                            <div class="rule-title">3. No Drama</div>
+                            <div style="font-size:13px; color:#ccc;">Keep personal conflicts private or off-platform. This space is for building and gaming, not fighting.</div>
+                        </div>
+
+                        <div class="rule-box">
+                            <div class="rule-title">4. Keep Channels On-Topic</div>
+                            <div style="font-size:13px; color:#ccc;">Post content where it belongs. Don't post Minecraft memes in the serious dev forums.</div>
+                        </div>
+
+                        <div class="rule-box rb-yellow">
+                            <div class="rule-title">5. No Self-Promotion</div>
+                            <div style="font-size:13px; color:#ccc;">Only share personal projects if explicitly permitted by Admins or in designated "Showcase" areas.</div>
+                        </div>
+
+                        <div class="rule-box rb-red">
+                            <div class="rule-title">6. No NSFW Content</div>
+                            <div style="font-size:13px; color:#ccc;">No age-restricted or obscene content. This includes text, images, or links featuring nudity, extreme violence, or disturbing content.</div>
+                        </div>
+
+                        <div class="rule-box rb-red">
+                            <div class="rule-title">7. Appropriate Language</div>
+                            <div style="font-size:13px; color:#ccc;">Avoid excessive profanity. Slurs are an instant ban.</div>
+                        </div>
+                    </div>
+
+                    <div id="support" class="guide-section">
+                        <div class="sec-title"><span class="sec-icon">🚑</span> Support</div>
+                        <p class="guide-text">
+                            Found a glitch in the matrix? Need to report a violation? Use the secure channel below.
+                        </p>
+                        <a href="support.html" class="gh-btn btn-primary" style="background:var(--gh-blue); color:#000; width:auto; padding:10px 20px;">OPEN TICKET</a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                initGuide();
+            }
+        });
+
+        function initGuide() {
+            // SCROLL SPY
+            const sections = document.querySelectorAll('.guide-section');
+            const navItems = document.querySelectorAll('.nav-item');
+
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 200) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navItems.forEach(item => {
+                    item.classList.remove('active');
+                    if (item.getAttribute('href').includes(current)) {
+                        item.classList.add('active');
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>

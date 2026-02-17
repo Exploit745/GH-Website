@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – My Activity</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* GATEKEEPER */
+        body { display: none; }
+
+        /* [PERSONAL DASHBOARD STYLES] */
+        
+        .bg-blob { position: absolute; border-radius: 50%; filter: blur(80px); z-index: -2; opacity: 0.4; animation: float 12s infinite ease-in-out; }
+        .blob-1 { top: 10%; left: -10%; width: 40vw; height: 40vw; background: var(--gh-purple); }
+        .blob-2 { bottom: 10%; right: -10%; width: 40vw; height: 40vw; background: rgba(0, 234, 255, 0.2); animation-delay: -5s; }
+        @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(20px, 30px); } }
+
+        .page-header { border-bottom: 2px solid var(--gh-blue); margin-bottom: 30px; padding-bottom: 10px; }
+        .page-title { font-size: 36px; font-weight: 900; color: #fff; text-transform: uppercase; margin: 0; text-shadow: 0 0 20px var(--gh-blue); }
+
+        /* GRID LAYOUT */
+        .activity-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
+
+        /* CARD STYLES */
+        .gh-card {
+            background: rgba(17, 17, 17, 0.85); backdrop-filter: blur(10px);
+            border: 1px solid #333; border-radius: 16px; padding: 25px;
+            position: relative; overflow: hidden; display: flex; flex-direction: column;
+            transition: 0.1s; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .gh-card:hover { border-color: var(--gh-blue); }
+        .gh-card.yellow-hover:hover { border-color: var(--gh-yellow); }
+        .gh-card.red-hover:hover { border-color: var(--gh-red); }
+
+        .card-head { 
+            font-size: 14px; font-weight: 900; color: #888; text-transform: uppercase; 
+            letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px dashed #333; 
+            padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* HERO IDENTITY CARD */
+        .identity-card { 
+            grid-column: 1 / -1; background: linear-gradient(135deg, #111 0%, #0a0a0a 100%); 
+            border: 2px solid var(--gh-blue); flex-direction: row; align-items: center; gap: 25px; flex-wrap: wrap;
+        }
+        .id-av { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--gh-yellow); object-fit: cover; box-shadow: 0 0 20px rgba(253, 255, 85, 0.2); }
+        
+        .id-info { flex-grow: 1; }
+        .id-info h1 { margin: 0; font-size: 32px; color: #fff; text-transform: uppercase; line-height: 1; }
+        .id-meta { display: flex; gap: 15px; margin-top: 8px; font-family: monospace; font-size: 11px; color: #888; }
+        .id-meta span { background: #1a1a1a; padding: 4px 8px; border-radius: 4px; border: 1px solid #333; }
+        
+        .id-stats { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 5px; }
+        .stat-badge { font-size: 20px; font-weight: 900; color: var(--gh-yellow); }
+        .stat-label { font-size: 10px; text-transform: uppercase; color: #666; letter-spacing: 1px; }
+
+        /* BOOKMARK CARD */
+        .bookmark-card { cursor: pointer; transition: 0.2s; position: relative; }
+        .bookmark-card:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(0, 234, 255, 0.15); }
+        .bm-stat { font-size: 42px; font-weight: 900; color: #fff; line-height: 1; }
+        .bm-label { color: var(--gh-blue); font-weight: bold; text-transform: uppercase; font-size: 12px; margin-top: 5px; }
+        .bm-icon { position: absolute; right: 20px; bottom: 20px; font-size: 60px; opacity: 0.1; color: #fff; transform: rotate(-15deg); }
+
+        /* LISTS (Shared) */
+        .scroll-list { max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; }
+        
+        .list-item { background: #1a1a1a; padding: 12px; border-radius: 8px; border-left: 2px solid #333; transition: 0.2s; cursor: pointer; position: relative; }
+        .list-item:hover { background: #222; border-left-color: var(--gh-blue); }
+        .item-text { font-size: 13px; color: #ccc; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; padding-right: 20px; }
+        .item-meta { font-size: 10px; color: #666; margin-top: 5px; display: flex; justify-content: space-between; }
+        
+        .item-del-btn { position: absolute; top: 10px; right: 10px; color: #444; font-weight: bold; transition: 0.2s; }
+        .item-del-btn:hover { color: var(--gh-red); }
+
+        /* NOTIFICATIONS */
+        .noti-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border-bottom: 1px solid #222; }
+        .noti-item:last-child { border-bottom: none; }
+        .noti-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gh-yellow); margin-top: 5px; flex-shrink: 0; }
+        .noti-text { font-size: 12px; color: #ddd; }
+        .noti-time { font-size: 10px; color: #666; display: block; margin-top: 2px; }
+
+        /* DM LIST */
+        .dm-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; transition: 0.2s; cursor: pointer; text-decoration: none; color: inherit; }
+        .dm-item:hover { background: rgba(255,255,255,0.05); }
+        .dm-av { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #444; }
+        .dm-name { font-size: 13px; font-weight: bold; color: #fff; }
+
+        /* CONFIG TOGGLES */
+        .config-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 6px; }
+        .cfg-label { font-size: 12px; font-weight: bold; color: #ccc; }
+        
+        .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--gh-yellow); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        @media (max-width: 900px) {
+            .activity-grid { grid-template-columns: 1fr; }
+            .identity-card { flex-direction: column; text-align: center; }
+            .id-stats { align-items: center; width: 100%; border-top: 1px solid #333; padding-top: 15px; margin-top: 10px; }
+            .id-meta { justify-content: center; flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="particles" id="particleContainer"></div> 
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            
+            <div class="page-header">
+                <h1 class="page-title">My Activity</h1>
+            </div>
+
+            <div class="activity-grid">
+                
+                <div class="gh-card identity-card tilt-card">
+                    <img src="assets/GH_Hero.png" id="myAvatar" class="id-av">
+                    <div class="id-info">
+                        <h1 id="myName">Loading...</h1>
+                        <div class="id-meta">
+                            <span id="myUid">UID: --</span>
+                            <span id="joinDate">JOINED: --</span>
+                            <span id="lastLogin">LAST SEEN: --</span>
+                        </div>
+                    </div>
+                    <div class="id-stats">
+                        <div class="stat-badge" id="followerCount">0</div>
+                        <div class="stat-label">Followers</div>
+                        <a href="settings.html" class="gh-btn" style="background:#222; border:1px solid #444; font-size:10px; margin-top:5px;">EDIT PROFILE</a>
+                    </div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:25px;">
+                    
+                    <div class="gh-card bookmark-card tilt-card" onclick="window.location.href='bookmarks.html'">
+                        <div class="bm-icon">💾</div>
+                        <div class="card-head" style="border-bottom:none; margin-bottom:5px; color:var(--gh-blue);">THE STASH (Bookmarks)</div>
+                        <div class="bm-stat" id="savedCount">--</div>
+                        <div class="bm-label">Items Secured</div>
+                    </div>
+
+                    <div class="gh-card tilt-card">
+                        <div class="card-head">Saved Drafts</div>
+                        <div class="scroll-list" id="draftList">
+                            <div style="text-align:center; padding:20px; color:#666;">No unreleased content.</div>
+                        </div>
+                    </div>
+
+                    <div class="gh-card tilt-card">
+                        <div class="card-head">Yap History (Your Posts)</div>
+                        <div class="scroll-list" id="myPostsList">
+                            <div style="text-align:center; padding:20px; color:#666;">Loading transmission log...</div>
+                        </div>
+                    </div>
+
+                    <div class="gh-card tilt-card">
+                        <div class="card-head">Timeline (Recent Actions)</div>
+                        <div class="scroll-list" id="timelineList">
+                            <div style="text-align:center; padding:20px; color:#666;">Scanning temporal data...</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:25px;">
+                    
+                    <div class="gh-card red-hover tilt-card">
+                        <div class="card-head" style="color:var(--gh-red);">Signals & Alerts</div>
+                        <div class="scroll-list" id="notiList" style="max-height:200px;">
+                            <div style="text-align:center; color:#666; font-size:12px; padding:10px;">No new signals.</div>
+                        </div>
+                        <a href="inbox.html" style="text-align:center; margin-top:10px; color:#fff; font-size:12px; font-weight:bold; text-decoration:none; padding:8px; background:#222; border-radius:4px;">OPEN INBOX</a>
+                    </div>
+
+                    <div class="gh-card tilt-card">
+                        <div class="card-head">Active Comms (DMs)</div>
+                        <div class="dm-list" id="dmList">
+                            <div style="text-align:center; padding:20px; color:#666;">Scanning...</div>
+                        </div>
+                    </div>
+
+                    <div class="gh-card yellow-hover tilt-card">
+                        <div class="card-head" style="color:var(--gh-yellow);">System Override</div>
+                        <div class="config-row">
+                            <span class="cfg-label">Public Profile</span>
+                            <label class="switch"><input type="checkbox" id="prefPublic" onchange="savePref('publicProfile', this.checked)"><span class="slider"></span></label>
+                        </div>
+                        <div class="config-row">
+                            <span class="cfg-label">Show Birthday</span>
+                            <label class="switch"><input type="checkbox" id="prefBday" onchange="savePref('showBirthday', this.checked)"><span class="slider"></span></label>
+                        </div>
+                        <div class="config-row">
+                            <span class="cfg-label">Dashboard Pings</span>
+                            <label class="switch"><input type="checkbox" id="prefPush" onchange="savePref('pushNotis', this.checked)"><span class="slider"></span></label>
+                        </div>
+                        <div class="config-row">
+                            <span class="cfg-label">Email Alerts</span>
+                            <label class="switch"><input type="checkbox" id="prefEmail" onchange="savePref('emailNotis', this.checked)"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        let currentUser = null;
+
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(async user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                currentUser = user;
+                
+                // Initialize Visuals
+                const container = document.getElementById("particleContainer");
+                if(container){ for(let i=0; i<15; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; container.appendChild(p); }}
+
+                // Hero Metadata
+                if(user.metadata) {
+                    const joinDate = new Date(user.metadata.creationTime).toLocaleDateString();
+                    const lastLogin = new Date(user.metadata.lastSignInTime).toLocaleDateString();
+                    document.getElementById("joinDate").innerText = "JOINED: " + joinDate;
+                    document.getElementById("lastLogin").innerText = "ONLINE: " + lastLogin;
+                }
+
+                // Load Doc
+                const doc = await db.collection("users").doc(user.uid).get();
+                if(doc.exists) {
+                    const d = doc.data();
+                    document.getElementById("myName").innerText = d.name || "Agent";
+                    document.getElementById("myUid").innerText = `UID: ${user.uid.substring(0,8)}...`;
+                    if(d.photoURL) document.getElementById("myAvatar").src = d.photoURL;
+                    
+                    document.getElementById("followerCount").innerText = (d.followersCount !== undefined) ? d.followersCount : 0;
+
+                    // Load Prefs
+                    document.getElementById("prefPublic").checked = d.publicProfile !== false; 
+                    document.getElementById("prefBday").checked = d.showBirthday !== false; 
+                    document.getElementById("prefPush").checked = d.pushNotis !== false; 
+                    document.getElementById("prefEmail").checked = d.emailNotis || false;
+                }
+
+                // Execute Modules
+                loadSavedCount();
+                loadDrafts();
+                loadMyPosts();
+                loadComms();
+                loadNotifications();
+                loadTimeline(); 
+            }
+        });
+
+        /* --- THE STASH COUNT --- */
+        function loadSavedCount() {
+            db.collection("users").doc(currentUser.uid).collection("saved").onSnapshot(snap => {
+                document.getElementById("savedCount").innerText = snap.size;
+            });
+        }
+
+        /* --- DRAFTS SYSTEM --- */
+        function loadDrafts() {
+            db.collection("users").doc(currentUser.uid).collection("drafts").orderBy("timestamp", "desc").onSnapshot(snap => {
+                const list = document.getElementById("draftList");
+                if(snap.empty) { list.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">No unreleased content.</div>`; return; }
+                list.innerHTML = "";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const date = d.timestamp ? new Date(d.timestamp.seconds*1000).toLocaleDateString() : "Just now";
+                    
+                    list.innerHTML += `
+                        <div class="list-item">
+                            <div class="item-text" onclick="useDraft('${d.text ? d.text.replace(/'/g, "\\'") : ""}')">${d.text || "Empty Draft"}</div>
+                            <div class="item-del-btn" onclick="deleteDraft('${doc.id}')">✕</div>
+                            <div class="item-meta"><span>${date}</span><span>Tap to Copy</span></div>
+                        </div>`;
+                });
+            });
+        }
+
+        async function deleteDraft(id) {
+            if(!confirm("Discard this draft?")) return;
+            await db.collection("users").doc(currentUser.uid).collection("drafts").doc(id).delete();
+        }
+
+        function useDraft(text) {
+            navigator.clipboard.writeText(text);
+            alert("Draft copied to clipboard! Go to Feed to post.");
+            // In a future update, we could auto-open the post modal with this text
+        }
+
+        /* --- YAP HISTORY (POSTS) --- */
+        function loadMyPosts() {
+            db.collection("posts").where("authorId", "==", currentUser.uid).orderBy("timestamp", "desc").limit(10).onSnapshot(snap => {
+                const list = document.getElementById("myPostsList");
+                if(snap.empty) { list.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">No yapps found.</div>`; return; }
+                list.innerHTML = "";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const date = d.timestamp ? new Date(d.timestamp).toLocaleDateString() : "Unknown";
+                    const preview = d.text ? d.text : (d.image ? "[Image Attachment]" : "Content Unavailable");
+                    
+                    list.innerHTML += `
+                        <div class="list-item" onclick="window.location.href='posts.html'">
+                            <div class="item-text">${preview}</div>
+                            <div class="item-meta"><span>${date}</span><span>❤️ ${d.likes ? d.likes.length : 0}</span></div>
+                        </div>`;
+                });
+            });
+        }
+
+        /* --- SIGNALS (NOTIFICATIONS) --- */
+        function loadNotifications() {
+            db.collection("notifications").where("uid", "==", currentUser.uid).orderBy("timestamp", "desc").limit(5).onSnapshot(snap => {
+                const list = document.getElementById("notiList");
+                if(snap.empty) { list.innerHTML = `<div style="text-align:center; color:#666; font-size:12px; padding:10px;">All quiet.</div>`; return; }
+                list.innerHTML = "";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const time = d.timestamp ? new Date(d.timestamp.seconds*1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
+                    list.innerHTML += `
+                        <div class="noti-item" onclick="window.location.href='${d.link || 'inbox.html'}'">
+                            <div class="noti-dot"></div>
+                            <div>
+                                <div class="noti-text">${d.message}</div>
+                                <span class="noti-time">${time}</span>
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+
+        /* --- TIMELINE (RECENT ACTIONS) --- */
+        function loadTimeline() {
+            const list = document.getElementById("timelineList");
+            list.innerHTML = "";
+            
+            db.collection("users").doc(currentUser.uid).collection("saved").orderBy("timestamp", "desc").limit(3).get().then(snap => {
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const type = d.type || "Item";
+                    list.innerHTML += `<div class="list-item" style="border-left-color:var(--gh-blue)"><div class="item-text">You saved a <b>${type.toUpperCase()}</b> to The Vault.</div><div class="item-meta"><span>Archive Log</span></div></div>`;
+                });
+            });
+
+            db.collection("posts").where("authorId", "==", currentUser.uid).orderBy("timestamp", "desc").limit(3).get().then(snap => {
+                snap.forEach(doc => {
+                    list.innerHTML += `<div class="list-item" style="border-left-color:var(--gh-yellow)"><div class="item-text">You broadcasted a new <b>YAPP</b>.</div><div class="item-meta"><span>Transmission Log</span></div></div>`;
+                });
+            });
+        }
+
+        /* --- COMMS (DMS) --- */
+        async function loadComms() {
+            const list = document.getElementById("dmList");
+            const snap = await db.collection("users").doc(currentUser.uid).collection("friends").where("status", "==", "accepted").get();
+            if(snap.empty) { list.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">No active channels.</div>`; return; }
+            list.innerHTML = "";
+            for(const fDoc of snap.docs) {
+                const uid = fDoc.id;
+                const uData = await db.collection("users").doc(uid).get();
+                if(uData.exists) {
+                    const u = uData.data();
+                    list.innerHTML += `
+                        <div class="dm-item" onclick="window.location.href='inbox.html'">
+                            <img src="${u.photoURL || 'assets/GH_Hero.png'}" class="dm-av">
+                            <div class="dm-name">${u.name}</div>
+                            <div style="margin-left:auto; font-size:10px; color:var(--gh-blue);">OPEN ></div>
+                        </div>`;
+                }
+            }
+        }
+
+        /* --- CONFIG ACTIONS --- */
+        async function savePref(key, value) {
+            try { await db.collection("users").doc(currentUser.uid).update({ [key]: value }); } 
+            catch(e) { console.error(e); }
+        }
+
+        /* 3D TILT EFFECT */
+        document.addEventListener('mousemove', e => {
+            document.querySelectorAll('.tilt-card').forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left; 
+                const y = e.clientY - rect.top;
+                if(x > 0 && x < rect.width && y > 0 && y < rect.height) {
+                    const rotateX = ((y - rect.height/2) / rect.height) * -3;
+                    const rotateY = ((x - rect.width/2) / rect.width) * 3;
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+                } else {
+                    card.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale(1)`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

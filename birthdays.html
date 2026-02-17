@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Birthdays</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* [BIRTHDAY SPECIFIC STYLES] */
+
+        /* HERO SECTION */
+        .bday-hero {
+            padding: 60px 20px; text-align: center; margin-bottom: 40px;
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            border-bottom: 2px solid var(--gh-blue);
+        }
+        
+        .hero-graphic {
+            width: 200px; height: 200px; margin: 0 auto 20px auto;
+            border-radius: 50%; border: 4px solid var(--gh-yellow);
+            display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden; background: #000;
+            box-shadow: 0 0 50px rgba(253, 255, 85, 0.2); animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float { 0% {transform: translateY(0px);} 50% {transform: translateY(-10px);} 100% {transform: translateY(0px);} }
+        
+        .hero-avatar { width: 100%; height: 100%; object-fit: cover; }
+
+        .status-text { color: var(--gh-blue); text-transform: uppercase; letter-spacing: 3px; font-size: 14px; margin-bottom: 10px; font-weight: 900; }
+        .bday-name { font-size: 42px; font-weight: 900; color: var(--gh-yellow); text-transform: uppercase; text-shadow: 0 0 20px rgba(253, 255, 85, 0.3); }
+        
+        /* LIST VIEW */
+        .section-title {
+            text-align: center; margin: 40px 0 20px 0; color: #fff;
+            font-size: 18px; text-transform: uppercase; letter-spacing: 4px; font-weight: 900;
+            border-bottom: 1px solid #333; padding-bottom: 10px; display: inline-block;
+        }
+
+        .upcoming-list { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 5px; }
+        
+        .list-card {
+            background: #111; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
+            border-left: 3px solid #333; transition: 0.2s; border-radius: 4px;
+        }
+        .list-card:hover { border-left-color: var(--gh-blue); background: #161616; transform: translateX(5px); }
+        
+        .user-flex { display: flex; align-items: center; gap: 15px; }
+        .list-av { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #444; }
+        
+        .days-left { color: var(--gh-blue); font-size: 11px; text-transform: uppercase; font-weight: bold; text-align: right; }
+
+        /* CALENDAR GRID (BIGGER VERSION) */
+        .calendar-wrapper { max-width: 1200px; margin: 0 auto 50px; width: 100%; }
+        .month-header { text-align: center; font-size: 32px; font-weight: 900; color: #fff; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .calendar-container {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; 
+            background-color: #111; padding: 10px; border-radius: 12px; border: 1px solid #333;
+        }
+        
+        .day-header { text-align: center; font-size: 14px; color: var(--gh-yellow); padding: 10px; font-weight: 900; text-transform: uppercase; background: #000; border-radius: 4px; }
+        
+        .day-card {
+            background-color: #080808; height: 120px; padding: 8px; position: relative;
+            transition: 0.2s; border: 1px solid #222; display: flex; flex-direction: column; border-radius: 6px;
+        }
+        .day-card:hover { border-color: var(--gh-blue); z-index: 2; transform: scale(1.05); background: #111; }
+        
+        .day-num { color: #444; font-size: 16px; font-weight: 900; }
+        .today .day-num { color: var(--gh-blue); }
+        .today { background: rgba(0, 234, 255, 0.05); border-color: var(--gh-blue); box-shadow: inset 0 0 20px rgba(0, 234, 255, 0.1); }
+
+        .day-event-dot { 
+            width: 8px; height: 8px; background-color: var(--gh-yellow); 
+            border-radius: 50%; margin: 3px; box-shadow: 0 0 8px var(--gh-yellow);
+        }
+        .events-container { display: flex; flex-wrap: wrap; margin-top: auto; justify-content: flex-end; align-content: flex-end; }
+
+        /* TOOLTIP */
+        .day-card:hover::after {
+            content: attr(data-tooltip);
+            position: absolute; bottom: 105%; left: 50%; transform: translateX(-50%);
+            background: #000; color: var(--gh-yellow); padding: 8px 12px; border-radius: 6px;
+            font-size: 12px; white-space: nowrap; pointer-events: none; font-weight: bold;
+            border: 1px solid var(--gh-yellow); z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+            display: none;
+        }
+        .day-card[data-tooltip]:hover::after { display: block; }
+
+        @media (max-width: 800px) {
+            .day-card { height: 80px; }
+            .day-header { font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content" style="padding:0;">
+            
+            <section class="bday-hero" id="heroSection">
+                <div class="status-text">🎂 ACTIVE SPAWN DAYS</div>
+                <div class="hero-graphic">
+                    <img id="heroAvatar" src="assets/GH_Hero.png" class="hero-avatar" style="opacity:0.3;">
+                </div>
+                <div class="bday-name" id="heroName" style="color:#444;">THE CAKE IS A LIE</div>
+                <p style="color: #666; margin-top: 10px; font-size:12px; text-transform:uppercase;">(No birthdays today. Sadge.)</p>
+            </section>
+
+            <div class="content" style="padding: 20px; text-align:center;">
+                
+                <div class="section-title">Upcoming Bdays</div>
+                <div class="upcoming-list" id="upcomingList">
+                    <div style="text-align:center; color:#666; padding:20px;">Decrypting birth certificates...</div>
+                </div>
+
+                <div style="margin-top:60px;"></div>
+
+                <div class="section-title">Tactical Calendar</div>
+                <div class="calendar-wrapper">
+                    <div class="month-header" id="monthHeader">LOADING...</div>
+                    <div class="calendar-container">
+                        <div class="day-header">Sun</div><div class="day-header">Mon</div><div class="day-header">Tue</div>
+                        <div class="day-header">Wed</div><div class="day-header">Thu</div><div class="day-header">Fri</div><div class="day-header">Sat</div>
+                        <div id="calendarGrid" style="display:contents;"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        /* VISUALS */
+        const container = document.getElementById("particleContainer");
+        if(container){
+            for(let i=0; i<30; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; p.style.animationDelay=Math.random()*10+"s"; container.appendChild(p); }
+        }
+
+        /* LOGIC */
+        auth.onAuthStateChanged(user => {
+            if(user) loadBirthdays();
+            else window.location.href = "login.html";
+        });
+
+        function loadBirthdays() {
+            db.collection("users").get().then(snap => {
+                const users = [];
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    // PRIVACY CHECK: Only show if they have birthday AND showBirthday isn't false
+                    if(d.birthday && d.showBirthday !== false) {
+                        users.push({
+                            id: doc.id,
+                            name: d.name || "Agent",
+                            photo: d.photoURL || "assets/GH_Hero.png",
+                            role: d.role || "Member",
+                            dob: d.birthday // YYYY-MM-DD
+                        });
+                    }
+                });
+                processBirthdays(users);
+            });
+        }
+
+        function processBirthdays(users) {
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth(); // 0-11
+            const currentDate = today.getDate();
+
+            let todaysBirthdays = [];
+            let upcoming = [];
+            let monthEvents = {}; // Day -> [Names]
+
+            users.forEach(u => {
+                // Parse "YYYY-MM-DD"
+                const parts = u.dob.split('-');
+                const bMonth = parseInt(parts[1]) - 1; // 0-11
+                const bDay = parseInt(parts[2]);
+
+                // 1. Check Today
+                if (bMonth === currentMonth && bDay === currentDate) {
+                    todaysBirthdays.push(u);
+                }
+
+                // 2. Calculate Next Birthday Date
+                let nextBday = new Date(currentYear, bMonth, bDay);
+                if (nextBday < today && (bMonth !== currentMonth || bDay !== currentDate)) {
+                    nextBday.setFullYear(currentYear + 1);
+                }
+
+                // 3. Calc Difference
+                const diffTime = nextBday - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+                if (diffDays >= 0 && diffDays <= 60) {
+                    upcoming.push({ ...u, daysLeft: diffDays, dateStr: nextBday.toLocaleDateString(undefined, {month:'short', day:'numeric'}) });
+                }
+
+                // 4. Map for Calendar (Current Month Only)
+                if (bMonth === currentMonth) {
+                    if (!monthEvents[bDay]) monthEvents[bDay] = [];
+                    monthEvents[bDay].push(u.name);
+                }
+            });
+
+            renderHero(todaysBirthdays);
+            renderUpcoming(upcoming);
+            renderCalendar(currentYear, currentMonth, monthEvents);
+        }
+
+        function renderHero(list) {
+            if (list.length > 0) {
+                const u = list[0]; 
+                document.getElementById("heroName").innerText = u.name + " 🎉";
+                document.getElementById("heroName").style.color = "var(--gh-yellow)";
+                document.getElementById("heroAvatar").src = u.photo;
+                document.getElementById("heroAvatar").style.opacity = "1";
+                
+                let subText = "LEVEL UP DETECTED!";
+                if(list.length > 1) subText += ` (+ ${list.length - 1} other agents)`;
+                document.querySelector(".bday-hero p").innerText = subText;
+                document.querySelector(".bday-hero p").style.color = "#fff";
+                document.querySelector(".bday-hero p").style.fontWeight = "bold";
+            }
+        }
+
+        function renderUpcoming(list) {
+            list.sort((a, b) => a.daysLeft - b.daysLeft);
+            const container = document.getElementById("upcomingList");
+            container.innerHTML = "";
+
+            if (list.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:#444; padding:20px; font-style:italic;">No loot drops detected in range.</div>`;
+                return;
+            }
+
+            list.forEach(u => {
+                const msg = u.daysLeft === 0 ? "TODAY!" : `In ${u.daysLeft} Days`;
+                const col = u.daysLeft === 0 ? "var(--gh-yellow)" : "var(--gh-blue)";
+                
+                container.innerHTML += `
+                    <div class="list-card" onclick="window.location.href='profile.html?uid=${u.id}'" style="cursor:pointer;">
+                        <div class="user-flex">
+                            <img src="${u.photo}" class="list-av">
+                            <div>
+                                <div style="font-weight:bold; color:#fff;">${u.name}</div>
+                                <div style="color:#666; font-size:11px;">${u.dateStr}</div>
+                            </div>
+                        </div>
+                        <div class="days-left" style="color:${col};">${msg}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderCalendar(year, month, events) {
+            const grid = document.getElementById("calendarGrid");
+            const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+            document.getElementById("monthHeader").innerText = months[month] + " " + year;
+
+            const firstDay = new Date(year, month, 1).getDay(); // 0 (Sun) - 6 (Sat)
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayDate = new Date().getDate();
+
+            let html = "";
+
+            // Empty slots
+            for (let i = 0; i < firstDay; i++) {
+                html += `<div class="day-card" style="background:#000; border:none;"></div>`;
+            }
+
+            // Days
+            for (let d = 1; d <= daysInMonth; d++) {
+                const isToday = (d === todayDate) ? "today" : "";
+                const hasEvent = events[d];
+                
+                let dots = "";
+                let tooltip = "";
+                
+                if (hasEvent) {
+                    hasEvent.forEach(name => {
+                        dots += `<div class="day-event-dot"></div>`;
+                    });
+                    tooltip = `data-tooltip="🎂 ${hasEvent.join(' & ')}"`;
+                }
+
+                html += `
+                    <div class="day-card ${isToday}" ${tooltip}>
+                        <div class="day-num">${d}</div>
+                        <div class="events-container">${dots}</div>
+                    </div>
+                `;
+            }
+
+            grid.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

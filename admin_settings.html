@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – System Settings</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* [SETTINGS SPECIFIC STYLES] */
+
+        /* HEADER */
+        .title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid var(--gh-blue); padding-bottom: 5px; }
+        .page-title { font-size: 32px; font-weight: 700; color: var(--gh-blue); margin: 0; }
+        
+        .back-btn { 
+            background: transparent; border: 1px solid var(--gh-blue); color: var(--gh-blue); 
+            padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; 
+            text-decoration: none; transition: 0.2s;
+        }
+        .back-btn:hover { background: var(--gh-blue); color: #000; }
+
+        /* GRID */
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; }
+        
+        /* CARD OVERRIDES */
+        .card { 
+            background: #111; border: 2px solid #333; border-radius: 12px; padding: 20px; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.5); display: flex; flex-direction: column; 
+        }
+        .card h3 { margin-top: 0; color: var(--gh-yellow); border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
+
+        /* TOGGLES */
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 10px; background: #1a1a1a; border-radius: 6px; border: 1px solid #333; }
+        .toggle-label { font-size: 14px; font-weight: bold; }
+        
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--gh-blue); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .switch.danger input:checked + .slider { background-color: var(--gh-red); }
+
+        /* THEME GRID */
+        .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .theme-btn { 
+            background: #222; border: 2px solid #444; color: #fff; padding: 12px; 
+            border-radius: 8px; cursor: pointer; text-align: center; font-weight: bold; 
+            transition: 0.2s; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; 
+        }
+        .theme-btn:hover { border-color: #fff; }
+        .theme-btn.active { border-color: var(--gh-yellow); box-shadow: 0 0 10px var(--gh-yellow); color: var(--gh-yellow); }
+        
+        .section-label { 
+            grid-column: 1 / -1; font-size: 11px; color: #888; text-transform: uppercase; 
+            margin-top: 15px; margin-bottom: 5px; letter-spacing: 1px; 
+            border-bottom: 1px dashed #333; padding-bottom: 2px; 
+        }
+        .section-label:first-child { margin-top: 0; }
+
+        /* STATS */
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; padding-bottom: 8px; border-bottom: 1px dashed #333; }
+        .stat-val { font-weight: bold; color: var(--gh-blue); }
+
+        /* MAINTENANCE BTNS */
+        .maint-btn { 
+            width:100%; padding:10px; margin-bottom:10px; border-radius:6px; border:none; 
+            font-weight:bold; cursor:pointer; text-transform:uppercase; font-size:12px;
+        }
+        .btn-backup { background:#333; color:#fff; border:1px solid #555; }
+        .btn-backup:hover { background:var(--gh-blue); color:#000; }
+        .btn-clear { background:transparent; color:#666; border:1px dashed #444; }
+        .btn-clear:hover { border-color:#fff; color:#fff; }
+
+        @media (max-width: 768px) { .settings-grid { grid-template-columns: 1fr; } .content { padding: 15px; } }
+    </style>
+</head>
+
+<body>
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+        <div class="content">
+            <div class="title-row">
+                <h1 class="page-title">System Settings</h1>
+                <a href="admin.html" class="back-btn">← Admin Panel</a>
+            </div>
+
+            <div id="loadingSettings" style="text-align:center; padding:50px; color:#888;">Loading Configuration...</div>
+
+            <div id="settingsContent" style="display:none;" class="settings-grid">
+                
+                <div class="card">
+                    <h3>🌍 Global Status</h3>
+                    <div class="toggle-row" style="border-color: var(--gh-red);">
+                        <div>
+                            <span class="toggle-label" style="color:var(--gh-red);">MAINTENANCE MODE</span>
+                            <div style="font-size:11px; color:#888;">Locks site for non-admins.</div>
+                        </div>
+                        <label class="switch danger">
+                            <input type="checkbox" id="toggle_maintenance" onchange="updateConfig('maintenance')">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <span class="toggle-label">Accepting Applications</span>
+                        <label class="switch"><input type="checkbox" id="toggle_applications" onchange="updateConfig('applications')"><span class="slider"></span></label>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🎨 Site Themes</h3>
+                    <div class="theme-grid">
+                        <div class="section-label">Core</div>
+                        <button class="theme-btn" id="theme_default" onclick="setTheme('default')">⚡ NEON (Def)</button>
+                        <button class="theme-btn" id="theme_retro" onclick="setTheme('retro')">👾 RETRO</button>
+                        <button class="theme-btn" id="theme_cyber" onclick="setTheme('cyber')">🌆 CYBER</button>
+                        <button class="theme-btn" id="theme_midnight" onclick="setTheme('midnight')">🌑 MIDNIGHT</button>
+
+                        <div class="section-label">Seasons</div>
+                        <button class="theme-btn" id="theme_spring" onclick="setTheme('spring')">🌸 SPRING</button>
+                        <button class="theme-btn" id="theme_summer" onclick="setTheme('summer')">☀️ SUMMER</button>
+                        <button class="theme-btn" id="theme_autumn" onclick="setTheme('autumn')">🍂 AUTUMN</button>
+                        <button class="theme-btn" id="theme_winter" onclick="setTheme('winter')">❄️ WINTER</button>
+
+                        <div class="section-label">Holidays</div>
+                        <button class="theme-btn" id="theme_val" onclick="setTheme('val')">💘 VALENTINE</button>
+                        <button class="theme-btn" id="theme_patrick" onclick="setTheme('patrick')">🍀 PATRICK</button>
+                        <button class="theme-btn" id="theme_patriot" onclick="setTheme('patriot')">🎆 PATRIOT</button>
+                        <button class="theme-btn" id="theme_halloween" onclick="setTheme('halloween')">🎃 SPOOKY</button>
+                        <button class="theme-btn" id="theme_xmas" onclick="setTheme('xmas')">🎄 CHRISTMAS</button>
+                        <button class="theme-btn" id="theme_newyear" onclick="setTheme('newyear')">🥂 NEW YEAR</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>💾 Data & Maintenance</h3>
+                    <button class="maint-btn btn-backup" onclick="exportUsers()">📥 Export User Data (JSON)</button>
+                    <button class="maint-btn btn-clear" onclick="alert('Local cache cleared.')">🧹 Clear Local Cache</button>
+                    <div style="font-size:11px; color:#666; margin-top:10px;">
+                        Version: v4.0.0 (Stable)<br>
+                        Build Date: Jan 2026
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📊 System Vitals</h3>
+                    <div class="stat-row"><span>Total Members</span><span class="stat-val" id="statMembers">--</span></div>
+                    <div class="stat-row"><span>Posts / Yapps</span><span class="stat-val" id="statPosts">--</span></div>
+                    <div class="stat-row"><span>Active Squads</span><span class="stat-val" id="statTeams">--</span></div>
+                    <div class="stat-row"><span>Pending Apps</span><span class="stat-val" id="statApps">--</span></div>
+                    <div class="stat-row"><span>Open Tickets</span><span class="stat-val" id="statTickets">--</span></div>
+                    <div class="stat-row"><span>Shop Items</span><span class="stat-val" id="statProds">--</span></div>
+                    
+                    <button class="back-btn" style="width:100%; justify-content:center; margin-top:15px;" onclick="loadStats()">↻ Refresh Data</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script> 
+    <script src="drawer.js"></script>
+
+    <script>
+        /* VISUALS */
+        const container = document.getElementById("particleContainer");
+        if(container) {
+            for(let i=0; i<30; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; p.style.animationDelay=Math.random()*10+"s"; container.appendChild(p); }
+        }
+
+        /* AUTH GUARD */
+        auth.onAuthStateChanged(async user => {
+            if (!user) return location.href = "login.html";
+            const token = await user.getIdTokenResult();
+            if (token.claims.admin) {
+                document.getElementById("loadingSettings").style.display = "none";
+                document.getElementById("settingsContent").style.display = "grid";
+                initSettings();
+            } else { location.href = "gh_dashboard.html"; }
+        });
+
+        /* 1. LOAD CONFIG */
+        function initSettings() {
+            // Toggles
+            ['maintenance', 'applications'].forEach(feat => {
+                db.collection("site_config").doc(feat).onSnapshot(doc => {
+                    document.getElementById(`toggle_${feat}`).checked = doc.exists ? doc.data().enabled : false;
+                });
+            });
+            // Theme
+            db.collection("site_config").doc("theme").onSnapshot(doc => {
+                const current = doc.exists ? doc.data().mode : 'default';
+                document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+                const active = document.getElementById(`theme_${current}`);
+                if(active) active.classList.add('active');
+            });
+            loadStats();
+        }
+
+        /* 2. ACTIONS */
+        async function updateConfig(feat) {
+            const val = document.getElementById(`toggle_${feat}`).checked;
+            try { await db.collection("site_config").doc(feat).set({ enabled: val }, { merge: true }); }
+            catch(e) { alert("Error"); document.getElementById(`toggle_${feat}`).checked = !val; }
+        }
+        async function setTheme(mode) {
+            await db.collection("site_config").doc("theme").set({ mode: mode }, { merge: true });
+        }
+
+        /* 3. EXPORT USERS */
+        async function exportUsers() {
+            if(!confirm("Download list of all users? (JSON)")) return;
+            const snap = await db.collection("users").get();
+            const data = [];
+            snap.forEach(doc => {
+                const d = doc.data();
+                data.push({ uid: doc.id, email: d.email, name: d.name, role: d.role });
+            });
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type : 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gh_users_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+        }
+
+        /* 4. EXPANDED STATS */
+        async function loadStats() {
+            try {
+                const u = await db.collection("users").get();
+                document.getElementById("statMembers").innerText = u.size;
+                
+                const p = await db.collection("posts").get();
+                document.getElementById("statPosts").innerText = p.size;
+                
+                const a = await db.collection("applications").where("status", "==", "pending").get();
+                document.getElementById("statApps").innerText = a.size;
+
+                const t = await db.collection("teams").get();
+                document.getElementById("statTeams").innerText = t.size;
+
+                const tic = await db.collection("support_tickets").where("status", "==", "open").get();
+                document.getElementById("statTickets").innerText = tic.size;
+
+                const prod = await db.collection("products").get();
+                document.getElementById("statProds").innerText = prod.size;
+
+            } catch(e) { console.error(e); }
+        }
+    </script>
+</body>
+</html>

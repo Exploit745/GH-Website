@@ -5,201 +5,178 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GH – Login</title>
 
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+
     <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #000;
-            color: #fff;
-        }
+        /* [LOGIN SPECIFIC STYLES] */
 
-        /* ==========================================================
-           UNIVERSAL HEADER – unchanged (GH standard)
-        ========================================================== */
-        .navbar {
-            width: 100%;
-            background: #111;
-            border-bottom: 2px solid #fdff55;
-            padding: 15px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-sizing: border-box;
-            z-index: 1000;
-        }
+        /* LAYOUT */
+        .container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 80px); text-align: center; padding: 20px; position: relative; z-index: 1; }
+        .logo { width: 200px; margin-bottom: 30px; filter: drop-shadow(0 0 14px rgba(0, 234, 255, 0.3)); transition: transform 0.3s ease; }
+        .logo:hover { transform: scale(1.05); }
 
-        .navbar .brand {
-            font-weight: 700;
-            color: #fdff55;
-            font-size: 20px;
-        }
-
-        .navbar .nav-links a {
-            color: #fff;
-            margin-left: 20px;
-            text-decoration: none;
-            font-weight: bold;
-            position: relative;
-            transition: 0.25s ease;
-        }
-
-        .navbar .nav-links a:hover {
-            color: #fdff55;
-            text-shadow: 0 0 10px #fdff55;
-        }
-
-        .navbar .nav-links a::after {
-            content: "";
-            height: 2px;
-            width: 0%;
-            background: #fdff55;
-            display: block;
-            transition: width 0.25s;
-            margin-top: 3px;
-        }
-
-        .navbar .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        /* ==========================================================
-           LOGIN PAGE LAYOUT
-        ========================================================== */
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: calc(100vh - 80px);
-            text-align: center;
-            padding: 20px;
-        }
-
-        .logo {
-            width: 200px;
-            margin-bottom: 30px;
-            filter: drop-shadow(0 0 14px #00eaff55);
-        }
-
-        /* Login Card – neon themed */
+        /* CARD */
         .login-card {
             background: #111;
-            border: 2px solid #fdff55;
+            border: 2px solid var(--gh-yellow);
             padding: 40px;
             border-radius: 14px;
             width: 320px;
             text-align: left;
-            box-shadow: 0 0 20px #fdff5522, 0 0 20px #00eaff22 inset;
+            box-shadow: 0 0 20px rgba(253, 255, 85, 0.1), 0 0 20px rgba(0, 234, 255, 0.1) inset;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
         }
+        .login-card:hover { box-shadow: 0 0 30px rgba(253, 255, 85, 0.2), 0 0 30px rgba(0, 234, 255, 0.2) inset; transform: translateY(-4px); }
 
-        .login-card h2 {
-            text-align: center;
-            margin-top: 0;
-            margin-bottom: 20px;
-            color: #fdff55;
-            text-shadow: 0 0 12px #fdff55aa;
+        .login-card h2 { text-align: center; margin-top: 0; margin-bottom: 20px; color: var(--gh-yellow); text-shadow: 0 0 12px rgba(253, 255, 85, 0.6); }
+
+        /* FORMS */
+        label { display: block; margin-top: 18px; margin-bottom: 6px; font-size: 14px; color: var(--gh-blue); text-shadow: 0 0 6px rgba(0, 234, 255, 0.4); }
+
+        input[type="email"], input[type="password"] {
+            width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; transition: 0.25s; box-sizing: border-box;
         }
+        input[type="email"]:focus, input[type="password"]:focus { outline: none; border-color: var(--gh-blue); box-shadow: 0 0 10px var(--gh-blue), 0 0 5px var(--gh-blue) inset; }
 
-        label {
-            display: block;
-            margin-top: 18px;
-            margin-bottom: 6px;
-            font-size: 14px;
-            color: #00eaff;
-            text-shadow: 0 0 6px #00eaff66;
+        /* PASSWORD WRAPPER */
+        .password-wrapper { position: relative; }
+        .password-wrapper input { padding-right: 40px; }
+        .toggle-password {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            cursor: pointer; font-size: 18px; user-select: none; opacity: 0.7;
         }
+        .toggle-password:hover { opacity: 1; }
 
-        /* Input Fields – Cyan glow */
-        input[type="email"],
-        input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid #00eaff55;
-            background: #222;
-            color: #fff;
-            transition: 0.25s;
-        }
+        /* REMEMBER ME */
+        .remember-row { display: flex; align-items: center; margin-top: 15px; gap: 8px; }
+        .remember-row input { margin: 0; width: 16px; height: 16px; accent-color: var(--gh-blue); cursor: pointer; }
+        .remember-row label { margin: 0; font-size: 13px; color: #ccc; text-shadow: none; cursor: pointer; }
 
-        input[type="email"]:focus,
-        input[type="password"]:focus {
-            outline: none;
-            border-color: #00eaff;
-            box-shadow: 0 0 10px #00eaff, 0 0 5px #00eaff inset;
-        }
-
-        /* LOGIN BUTTON – cyan primary */
+        /* BUTTON */
         .login-btn {
-            width: 100%;
-            padding: 12px;
-            background: #00eaff;
-            color: #000;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 20px;
-            box-shadow: 0 0 14px #00eaff55;
-            transition: 0.25s ease;
+            width: 100%; padding: 12px; background: var(--gh-blue); color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 20px; box-shadow: 0 0 14px rgba(0, 234, 255, 0.3); transition: 0.25s ease;
         }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 0 18px var(--gh-blue); }
+        .login-btn:disabled { background: #555; color: #888; cursor: not-allowed; box-shadow: none; transform: none; }
 
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 18px #00eaff;
-        }
+        /* THEME OVERRIDES (Light Mode) */
+        body.light-mode .login-card { background: #fff; border-color: #ccc; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        body.light-mode .login-card h2 { color: #d4d700; text-shadow: none; }
+        body.light-mode label { color: #0088cc; text-shadow: none; }
+        body.light-mode input { background: #f9f9f9; color: #000; border-color: #ccc; }
+        body.light-mode .remember-row label { color: #555; }
     </style>
 </head>
 <body>
 
-<!-- UNIVERSAL HEADER -->
+<div class="particles" id="particleContainer"></div>
+
 <div id="header"></div>
-<script src="header.js"></script>
 
 <div class="container">
     <img src="assets/GH_Hero.png" alt="GH Logo" class="logo" />
 
     <div class="login-card">
         <h2>Welcome to GH</h2>
-
+        
         <label>Email</label>
         <input type="email" id="emailInput" placeholder="Enter your email" />
-
+        
         <label>Password</label>
-        <input type="password" id="passwordInput" placeholder="Enter your password" />
+        <div class="password-wrapper">
+            <input type="password" id="passwordInput" placeholder="Enter your password" />
+            <span id="togglePass" class="toggle-password" onclick="togglePasswordVisibility()">👁️</span>
+        </div>
+
+        <div class="remember-row">
+            <input type="checkbox" id="rememberMe">
+            <label for="rememberMe">Remember me</label>
+        </div>
 
         <button class="login-btn" id="loginBtn">Log In</button>
     </div>
 </div>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+<script src="firebase-init.js"></script>
+
+<script src="header.js"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBID0q4e18Rgzoj1jdBIznAAaIqNlNSzY8",
-  authDomain: "gh-website-7603c.firebaseapp.com",
-  projectId: "gh-website-7603c",
-  storageBucket: "gh-website-7603c.firebasestorage.app",
-  messagingSenderId: "382290025026",
-  appId: "1:382290025026:web:a2c70de3fd2f42e6c96bdb",
-  measurementId: "G-RM35ZB7826"
-};
+/* --- THEME SYNC --- */
+function applyTheme() {
+    const theme = localStorage.getItem('theme') || localStorage.getItem('gh_theme');
+    if(theme === 'light') document.body.classList.add('light-mode');
+    else document.body.classList.remove('light-mode');
+}
+applyTheme();
+window.addEventListener('themeChanged', applyTheme);
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
+/* --- VISUALS --- */
+const container = document.getElementById("particleContainer");
+if(container){
+    for (let i = 0; i < 30; i++) {
+        const p = document.createElement("div");
+        p.classList.add("particle");
+        p.style.left = Math.random() * 100 + "vw";
+        p.style.top = Math.random() * 100 + "vh";
+        p.style.animationDelay = Math.random() * 10 + "s";
+        p.style.opacity = Math.random() * 0.4 + 0.1;
+        p.style.transform = `scale(${Math.random() * 1 + 0.5})`;
+        container.appendChild(p);
+    }
+}
 
-document.getElementById("loginBtn").addEventListener("click", () => {
+/* --- LOGIC --- */
+function togglePasswordVisibility() {
+    const input = document.getElementById("passwordInput");
+    const icon = document.getElementById("togglePass");
+    if(input.type === "password") {
+        input.type = "text";
+        icon.style.opacity = "1";
+    } else {
+        input.type = "password";
+        icon.style.opacity = "0.7";
+    }
+}
+
+document.getElementById("loginBtn").addEventListener("click", async () => {
     const email = document.getElementById("emailInput").value.trim();
     const password = document.getElementById("passwordInput").value.trim();
+    const rememberMe = document.getElementById("rememberMe").checked;
+    const btn = document.getElementById("loginBtn");
 
-    auth.signInWithEmailAndPassword(email, password)
-      .then(() => {
-          window.location.href = "gh_dashboard.html";
-      })
-      .catch(err => {
-          alert("Login failed: " + err.message);
-      });
+    if(!email || !password) return alert("Please fill in all fields.");
+
+    btn.disabled = true;
+    btn.textContent = "Authenticating...";
+
+    try {
+        const persistence = rememberMe 
+            ? firebase.auth.Auth.Persistence.LOCAL 
+            : firebase.auth.Auth.Persistence.SESSION;
+
+        // Uses global 'auth' from firebase-init.js
+        await auth.setPersistence(persistence);
+        await auth.signInWithEmailAndPassword(email, password);
+        window.location.href = "gh_dashboard.html";
+
+    } catch (err) {
+        alert("Login failed: " + err.message);
+        btn.disabled = false;
+        btn.textContent = "Log In";
+    }
+});
+
+document.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        document.getElementById('loginBtn').click();
+    }
 });
 </script>
 

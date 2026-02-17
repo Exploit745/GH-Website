@@ -3,228 +3,297 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GH – Home</title>
+    <title>GH – Home Base</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
 
     <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #000;
-            color: #fff;
+        /* HERO SECTION */
+        .hero { padding: 100px 20px 40px; text-align: center; position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
+        .hero-logo { width: 350px; max-width: 90%; filter: drop-shadow(0 0 25px rgba(253, 255, 85, 0.3)); animation: floatHero 6s ease-in-out infinite; }
+        @keyframes floatHero { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-15px) rotate(1deg); } }
+
+        .quote-box {
+            margin-top: 20px; font-style: italic; color: #fff; font-size: 14px; 
+            background: rgba(255,255,255,0.05); padding: 8px 20px; border-radius: 20px;
+            border: 1px solid #333; max-width: 600px;
         }
 
-        /* ================================
-           UNIVERSAL HEADER (RESTORED)
-        ================================ */
-        .navbar {
-            width: 100%;
-            background: #111;
-            border-bottom: 2px solid #fdff55;
-            padding: 15px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-sizing: border-box;
-            z-index: 1000;
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: rgba(0, 255, 106, 0.1); border: 1px solid #00ff6a;
+            padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: bold;
+            color: #00ff6a; text-transform: uppercase; letter-spacing: 1px;
+            margin-top: 15px; box-shadow: 0 0 15px rgba(0, 255, 106, 0.2);
         }
+        .status-dot { width: 8px; height: 8px; background: #00ff6a; border-radius: 50%; box-shadow: 0 0 5px #00ff6a; animation: pulseDot 2s infinite; }
+        @keyframes pulseDot { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        .navbar .brand {
-            font-weight: 700;
-            color: #fdff55;
-            font-size: 20px;
+        /* ADMIN DECK */
+        .admin-deck {
+            display: none; width: 90%; max-width: 800px; margin: 20px auto; 
+            background: #1a0505; border: 1px solid #ff4444; border-radius: 12px; padding: 15px;
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.2); text-align: left;
         }
+        .deck-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #330000; padding-bottom: 10px; margin-bottom: 10px; }
+        .deck-title { color: #ff4444; font-weight: 900; text-transform: uppercase; font-size: 14px; letter-spacing: 1px; }
+        .deck-controls { display: flex; gap: 10px; }
+        .deck-btn { background: #330000; color: #ff4444; border: 1px solid #ff4444; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .deck-btn:hover { background: #ff4444; color: #000; }
 
-        .navbar .nav-links a {
-            color: #fff;
-            margin-left: 20px;
-            text-decoration: none;
-            font-weight: bold;
-            position: relative;
-            transition: 0.2s ease;
+        /* MARQUEE */
+        .marquee-container { 
+            background: var(--gh-yellow); color: #000; overflow: hidden; white-space: nowrap; 
+            padding: 10px 0; border-top: 2px solid #fff; border-bottom: 2px solid #fff; 
+            font-weight: 900; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; 
+            transform: rotate(-1deg); width: 102%; margin-left: -1%; 
+            margin-top: 40px; margin-bottom: 60px; 
+            box-shadow: 0 0 20px rgba(253, 255, 85, 0.4); 
         }
+        .marquee-content { display: inline-block; animation: scrollLeft 20s linear infinite; }
+        @keyframes scrollLeft { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-        .navbar .nav-links a:hover {
-            color: #fdff55;
-            text-shadow: 0 0 10px #fdff55;
+        /* STORY SECTIONS */
+        .section { max-width: 950px; margin: 0 auto 80px; padding: 0 20px; }
+        .section-title { font-size: 24px; font-weight: 900; color: #fff; text-transform: uppercase; margin-bottom: 30px; border-left: 4px solid var(--gh-yellow); padding-left: 15px; letter-spacing: 1px; }
+
+        .story-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; }
+        .story-card { background: #111; border: 1px solid #333; padding: 25px; border-radius: 12px; transition: 0.3s; position: relative; overflow: hidden; }
+        .story-card:hover { transform: translateY(-5px); border-color: var(--gh-yellow); box-shadow: 0 10px 30px rgba(253, 255, 85, 0.1); }
+        .story-icon { font-size: 30px; margin-bottom: 15px; display: block; color: var(--gh-yellow); text-shadow: 0 0 10px rgba(253, 255, 85, 0.4); }
+        .story-head { font-weight: 900; font-size: 18px; color: #fff; margin-bottom: 10px; display: block; text-transform: uppercase; }
+        .story-body { font-size: 14px; color: #aaa; line-height: 1.6; }
+
+        /* SHOP TEASER */
+        .shop-teaser { 
+            background: linear-gradient(135deg, #111, #0a0a0a); border: 2px dashed var(--gh-yellow); 
+            border-radius: 16px; padding: 50px; text-align: center; position: relative; overflow: hidden;
         }
+        .shop-teaser::before { content:"LOCKED"; position:absolute; top:20px; right:-30px; background:var(--gh-yellow); color:#000; padding:5px 40px; transform:rotate(45deg); font-weight:bold; font-size:12px; box-shadow: 0 5px 10px rgba(0,0,0,0.5); }
+        
+        .teaser-title { font-size: 36px; font-weight: 900; color: #fff; margin-bottom: 10px; text-shadow: 0 0 15px rgba(255,255,255,0.1); }
+        .teaser-sub { color: #666; margin-bottom: 30px; font-size: 16px; }
+        .btn-locked { background: #222; color: var(--gh-yellow); padding: 15px 40px; border-radius: 8px; font-weight: bold; border: 1px solid var(--gh-yellow); cursor: not-allowed; text-transform: uppercase; font-size: 14px; letter-spacing: 2px; opacity: 0.7; }
 
-        .navbar .nav-links a::after {
-            content: "";
-            display: block;
-            height: 2px;
-            width: 0%;
-            background: #fdff55;
-            transition: width 0.2s ease;
-            margin-top: 3px;
+        /* FOOTER CTA */
+        .apply-cta { text-align: center; margin-top: 40px; padding: 80px 20px; background: radial-gradient(circle, #1a1a1a 0%, #000 70%); border-top: 1px solid #333; }
+        .action-btn { 
+            display: inline-block; padding: 15px 40px; background: var(--gh-blue); color: #000; 
+            text-decoration: none; font-weight: 900; border-radius: 30px; 
+            text-transform: uppercase; letter-spacing: 2px; transition: 0.2s; 
+            box-shadow: 0 0 20px rgba(0, 234, 255, 0.4);
         }
+        .action-btn:hover { transform: scale(1.05); background: #fff; box-shadow: 0 0 40px rgba(0, 234, 255, 0.6); }
+        .btn-disabled { background: #333; color: #666; pointer-events: none; border: 1px solid #444; box-shadow: none; }
 
-        .navbar .nav-links a:hover::after {
-            width: 100%;
-        }
+        footer { text-align: center; padding: 40px; color: #444; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; }
 
-        /* ================================
-           HERO
-        ================================ */
-        .hero {
-            padding: 70px 20px 40px;
-            text-align: center;
-        }
-
-        .hero-logo {
-            width: 350px;
-            max-width: 80%;
-            filter: drop-shadow(0 0 10px #00eaff55);
-        }
-
-        /* ================================
-           SECTION / CARD UI
-        ================================ */
-        .section {
-            max-width: 900px;
-            margin: 50px auto;
-            padding: 0 20px;
-        }
-
-        .card {
-            background: #111;
-            padding: 30px;
-            border-radius: 14px;
-            border: 2px solid #fdff55; /* YELLOW PRIMARY */
-            box-shadow: 0 0 20px #fdff5533;
-        }
-
-        .card h2 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            color: #fdff55;
-            text-shadow: 0 0 6px #fdff5533;
-        }
-
-        /* Divider */
-        .divider {
-            width: 50%;
-            height: 4px;
-            background: #fdff55;
-            border-radius: 2px;
-            margin: 25px auto;
-            box-shadow: 0 0 8px #fdff5522;
-        }
-
-        /* ================================
-           PUBLIC STORIES
-        ================================ */
-        .story-list {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            padding-top: 18px;
-        }
-
-        .story-item {
-            background: #111;
-            padding: 20px;
-            border-radius: 12px;
-            border: 2px solid #fdff55;
-            box-shadow: 0 0 15px #00eaff22;
-            transition: 0.25s ease;
-        }
-
-        .story-item:hover {
-            border-color: #00eaff;
-            box-shadow: 0 0 20px #00eaff55;
-        }
-
-        /* ================================
-           APPLY BUTTON
-        ================================ */
-        .apply-btn {
-            display: inline-block;
-            padding: 14px 26px;
-            margin-top: 20px;
-            background: #00eaff;
-            color: #000;
-            text-decoration: none;
-            font-weight: bold;
-            border-radius: 6px;
-            box-shadow: 0 0 12px #00eaff44;
-            transition: 0.25s ease;
-            font-size: 16px;
-        }
-
-        .apply-btn:hover {
-            box-shadow: 0 0 20px #00eaff;
-            transform: translateY(-3px);
-        }
-
-        /* FOOTER */
-        footer {
-            text-align: center;
-            padding: 20px;
-            background: #111;
-            color: #fff;
-            border-top: 2px solid #fdff55;
-            margin-top: 60px;
+        @media (max-width: 700px) {
+            .hero-logo { width: 280px; }
+            .story-grid { grid-template-columns: 1fr; }
+            .marquee-container { font-size: 10px; }
         }
     </style>
 </head>
 
 <body>
 
-    <!-- UNIVERSAL HEADER -->
+    <div style="position: fixed; inset: 0; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAABZJREFUeNpi2r9//38gYGAEESAAEGAAasgJOgzOKCoAAAAASUVORK5CYII='); opacity: 0.03; pointer-events: none; z-index: -1;"></div>
+    
+    <div class="particles" id="particleContainer"></div>
     <div id="header"></div>
-    <script src="header.js"></script>
 
-    <!-- HERO -->
+    <div id="adminDeck" class="admin-deck">
+        <div class="deck-header">
+            <span class="deck-title">⚡ Admin Command Deck</span>
+            <span style="font-size:11px; color:#ff4444;">SECURE CONNECTION</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size:12px; color:#aaa;">
+                System Status: <span style="color:#00ff6a;">ONLINE</span><br>
+                Apps: <span id="deckAppStatus">CHECKING...</span>
+            </div>
+            <div class="deck-controls">
+                <button class="deck-btn" onclick="quickToggleApps()">Toggle Apps</button>
+                <button class="deck-btn" onclick="window.location.href='admin.html'">Full Console ↗</button>
+            </div>
+        </div>
+    </div>
+
     <div class="hero">
-        <img src="assets/GH_Hero.png" class="hero-logo" alt="GH Logo" />
-    </div>
-
-    <!-- WHAT IS GH -->
-    <div class="section">
-        <div class="card">
-            <h2>What is GH?</h2>
-            <p>GH isn’t a clan or a giant community. It’s just us — a long-running friend group with a home base online. A place to talk, chill, share stories, and hop into games whenever someone’s around.</p>
-            <p>It’s simple, but it’s ours. That’s why it matters.</p>
-            <div class="divider"></div>
+        <img id="heroImage" class="hero-logo" src="assets/GH_Hero.png" alt="GH">
+        
+        <div class="quote-box" id="dailyQuote">"Systems initializing..."</div>
+        
+        <div class="status-pill">
+            <div class="status-dot"></div>
+            <span>System Online</span>
         </div>
     </div>
 
-    <!-- PUBLIC STORIES -->
-    <div class="section">
-        <h2 style="color:#fdff55; text-shadow:0 0 5px #fdff5522;">Public Stories</h2>
-
-        <div class="story-list">
-            <div class="story-item">
-                <strong style="color:#00eaff;">Where GH Started</strong><br><br>
-                Started as a tiny group chat. Turned into a whole shared space.
-            </div>
-
-            <div class="story-item">
-                <strong style="color:#00eaff;">Good Moments Live Here</strong><br><br>
-                From cracked plays to cursed nights in VC.
-            </div>
-
-            <div class="story-item">
-                <strong style="color:#00eaff;">Why We Made This Site</strong><br><br>
-                Just a way to keep everyone connected.
-            </div>
+    <div class="marquee-container">
+        <div class="marquee-content">
+            GAMING • CODING • YAPPING • TOUCH GRASS? NEVER • ENERGY DRINKS • BROKEN CONTROLLERS • 3AM VIBES • SEND HELP • GAMING • CODING • YAPPING • TOUCH GRASS? NEVER • ENERGY DRINKS • BROKEN CONTROLLERS • 3AM VIBES • SEND HELP
         </div>
     </div>
 
-    <!-- APPLY -->
     <div class="section">
-        <div class="card">
-            <h2>Apply</h2>
-            <p>GH is private. Always has been. But if you’re connected to someone in the group, you can apply. Nothing formal — just letting us know who you are.</p>
+        <div class="section-title">GH Intel</div>
+        <div class="story-grid">
+            
+            <div class="story-card">
+                <span class="story-icon">🕹️</span>
+                <span class="story-head">The Origin</span>
+                <div class="story-body">
+                    We started as a group chat in 2020 because we got tired of random matchmaking. It evolved into a digital safehouse for night owls, sweats, and casuals alike.
+                </div>
+            </div>
 
-            <a href="apply.html" class="apply-btn">Apply Now</a>
+            <div class="story-card">
+                <span class="story-icon">💀</span>
+                <span class="story-head">The Chaos</span>
+                <div class="story-body">
+                    We host tournaments where the prize is "bragging rights." We have a bounty board for challenges that range from "Impossible" to "Why would you do this?"
+                </div>
+            </div>
+
+            <div class="story-card">
+                <span class="story-icon">💾</span>
+                <span class="story-head">The Tech</span>
+                <div class="story-body">
+                    This entire site is hand-coded. No templates. Just caffeine and spite. Features like the Arcade, Shop, and Rosters are built by us, for us.
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- FOOTER -->
+    <div class="section">
+        <div class="shop-teaser">
+            <div class="teaser-title">THE MERCH VAULT</div>
+            <div class="teaser-sub">We are currently arguing over hoodie designs. Wait for the drop.</div>
+            <button class="btn-locked">🔒 ACCESS DENIED / SOON</button>
+        </div>
+    </div>
+
+    <div class="apply-cta">
+        <h2 style="font-size:32px; margin:0 0 10px 0; text-transform:uppercase; font-weight:900;">Want In?</h2>
+        <p style="color:#888; max-width:500px; margin:0 auto 30px; font-size:14px;">
+            Our roster is invite-only, but we accept applications if you vibe with us. 
+            Do not apply if you hate fun.
+        </p>
+        <a href="apply.html" id="applyBtn" class="action-btn">Initialize Application</a>
+    </div>
+
     <footer>
-        © GamersHangout
+        &copy; 2026 GH Studios. Built with Caffeine & Spite.
     </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <script src="firebase-init.js"></script>
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        /* PARTICLES */
+        const container = document.getElementById("particleContainer");
+        if (container) {
+            for (let i=0; i<35; i++) {
+                const p = document.createElement("div"); p.classList.add("particle");
+                p.style.left = Math.random()*100+"vw"; p.style.top = Math.random()*100+"vh";
+                p.style.animationDelay = Math.random()*10+"s"; container.appendChild(p);
+            }
+        }
+
+        /* 1. DAILY QUOTES */
+        const quotes = [
+            "\"Lag is just a state of mind.\"",
+            "\"It worked on my machine.\"",
+            "\"GG WP.\"",
+            "\"Sleep is for the weak.\"",
+            "\"I didn't crash, I tactically disconnected.\"",
+            "\"Rush B.\"",
+            "\"One more game? (Lie)\""
+        ];
+        document.getElementById("dailyQuote").innerText = quotes[Math.floor(Math.random() * quotes.length)];
+
+        /* 2. ADMIN CHECK & DECK LOGIC */
+        auth.onAuthStateChanged(async user => {
+            if(user) {
+                const token = await user.getIdTokenResult();
+                // Check if admin
+                if(token.claims.admin) {
+                    document.getElementById("adminDeck").style.display = "block";
+                    listenToAppsStatus(); // Only listen if admin
+                }
+            }
+        });
+
+        function listenToAppsStatus() {
+            // Safety check in case 'db' crashed
+            if(typeof db === 'undefined') return;
+
+            db.collection('site_config').doc('applications').onSnapshot(doc => {
+                const isOpen = doc.exists ? doc.data().enabled : true;
+                const statusEl = document.getElementById("deckAppStatus");
+                if(isOpen) {
+                    statusEl.innerText = "OPEN"; statusEl.style.color = "#00ff6a";
+                } else {
+                    statusEl.innerText = "CLOSED"; statusEl.style.color = "#ff4444";
+                }
+            });
+        }
+
+        async function quickToggleApps() {
+            if(typeof db === 'undefined') return alert("System offline. Check connection.");
+            
+            const statusEl = document.getElementById("deckAppStatus");
+            const isCurrentlyOpen = statusEl.innerText === "OPEN";
+            // Toggle
+            await db.collection('site_config').doc('applications').set({ enabled: !isCurrentlyOpen }, { merge: true });
+        }
+
+        /* 3. PUBLIC APP BUTTON LISTENER */
+        if(typeof db !== 'undefined') {
+             db.collection('site_config').doc('applications').onSnapshot((doc) => {
+                const btn = document.getElementById('applyBtn');
+                if(!btn) return;
+                const isOpen = doc.exists ? doc.data().enabled : true;
+
+                if (!isOpen) {
+                    btn.classList.add('btn-disabled');
+                    btn.textContent = "ROSTER FULL (CLOSED)";
+                    btn.href = "#";
+                } else {
+                    btn.classList.remove('btn-disabled');
+                    btn.textContent = "INITIALIZE APPLICATION";
+                    btn.href = "apply.html";
+                }
+            });
+        }
+
+        /* 4. SEASONAL HERO */
+        (function initSeasonalHero() {
+            const now = new Date();
+            const m = now.getMonth();
+            const heroImg = document.getElementById("heroImage");
+            let heroFile = "assets/GH_Hero.png";
+            
+            if (m === 11 || m === 0) heroFile = "assets/gh_hero_winter.png";
+            else if (m === 9) heroFile = "assets/gh_hero_halloween.png"; 
+            else if (Math.random() < 0.05) heroFile = "assets/gh_hero_glitch.png";
+
+            const img = new Image();
+            img.onload = () => { heroImg.src = heroFile; };
+            img.src = heroFile;
+        })();
+    </script>
 
 </body>
 </html>

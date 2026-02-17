@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Terms of Service</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* GATEKEEPER */
+        body { display: none; }
+
+        /* [TOS SPECIFIC STYLES] */
+        .legal-hero {
+            text-align: center; margin-bottom: 40px; padding: 60px 20px;
+            background: linear-gradient(180deg, #1a0505 0%, #000 100%);
+            border-bottom: 2px solid var(--gh-red);
+        }
+        .legal-title { font-size: 36px; font-weight: 900; color: #fff; text-transform: uppercase; margin: 0; letter-spacing: 2px; }
+        .legal-sub { color: var(--gh-red); font-size: 14px; margin-top: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+
+        .legal-container { 
+            max-width: 1000px; margin: 0 auto; display: grid; 
+            grid-template-columns: 220px 1fr; gap: 50px; padding: 20px;
+            align-items: start;
+        }
+
+        /* SIDEBAR NAV */
+        .legal-nav { 
+            position: sticky; top: 100px; 
+            background: #111; border: 1px solid #333; border-radius: 8px;
+            overflow: hidden; padding: 10px 0;
+        }
+        .nav-item {
+            display: block; padding: 12px 20px; color: #888; text-decoration: none;
+            border-left: 3px solid transparent; transition: 0.2s; font-size: 13px; font-weight: bold;
+        }
+        .nav-item:hover { background: #161616; color: #ccc; }
+        .nav-item.active { 
+            color: #fff; border-left-color: var(--gh-red); 
+            background: linear-gradient(90deg, rgba(255, 68, 68, 0.1) 0%, transparent 100%); 
+        }
+
+        /* CONTENT */
+        .legal-section { margin-bottom: 60px; scroll-margin-top: 120px; }
+        .sec-head { 
+            font-size: 24px; color: #fff; border-bottom: 1px solid #333; 
+            padding-bottom: 10px; margin-bottom: 20px; font-weight: 900; text-transform: uppercase;
+        }
+        .legal-text { color: #ccc; line-height: 1.7; font-size: 14px; margin-bottom: 20px; }
+        
+        .clause-box { 
+            background: #111; padding: 20px; border-radius: 8px; border: 1px solid #333; 
+            margin-bottom: 15px; transition: 0.2s;
+        }
+        .clause-box:hover { border-color: #555; }
+        .clause-title { color: #fff; font-weight: bold; margin-bottom: 5px; display: block; font-size: 15px; }
+        .clause-desc { color: #888; font-size: 13px; line-height: 1.5; margin: 0; }
+
+        .violation-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .v-card { background: rgba(255, 68, 68, 0.05); border: 1px solid var(--gh-red); padding: 15px; border-radius: 8px; text-align: center; }
+        .v-title { color: var(--gh-red); font-weight: 900; font-size: 12px; margin-bottom: 5px; text-transform: uppercase; }
+        .v-desc { color: #ccc; font-size: 11px; }
+
+        @media (max-width: 800px) {
+            .legal-container { grid-template-columns: 1fr; }
+            .legal-nav { display: none; }
+            .violation-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content" style="max-width:100%; padding:0;">
+            
+            <div class="legal-hero">
+                <h1 class="legal-title">Terms of Service</h1>
+                <div class="legal-sub">Code of Conduct & Content Policy</div>
+            </div>
+
+            <div class="legal-container">
+                
+                <div class="legal-nav">
+                    <a href="#general" class="nav-item active">1. General Terms</a>
+                    <a href="#conduct" class="nav-item">2. Code of Conduct</a>
+                    <a href="#content" class="nav-item">3. Content Policy</a>
+                    <a href="#enforcement" class="nav-item">4. Enforcement</a>
+                </div>
+
+                <div class="legal-content">
+                    
+                    <div id="general" class="legal-section">
+                        <div class="sec-head">1. General Terms</div>
+                        <p class="legal-text">
+                            By accessing Gamers Hangout (GH), you agree to these terms. If you do not agree, you must disconnect immediately. 
+                            We reserve the right to modify these protocols at any time. Continued use of the platform constitutes acceptance of updated terms.
+                        </p>
+                        <div class="clause-box">
+                            <span class="clause-title">1.1 Eligibility</span>
+                            <p class="clause-desc">You must be at least 13 years old to use GH. We do not collect data from minors knowingly.</p>
+                        </div>
+                        <div class="clause-box">
+                            <span class="clause-title">1.2 Account Security</span>
+                            <p class="clause-desc">You are responsible for your account credentials. Actions taken by your account are your liability.</p>
+                        </div>
+                    </div>
+
+                    <div id="conduct" class="legal-section">
+                        <div class="sec-head">2. Code of Conduct</div>
+                        <p class="legal-text">This is a community, not an anarchy server. Adhere to the following rules or face the ban hammer.</p>
+                        
+                        <div class="clause-box" style="border-left: 3px solid var(--gh-blue);">
+                            <span class="clause-title" style="color:var(--gh-blue);">Respect & Civility</span>
+                            <p class="clause-desc">Zero tolerance for harassment, hate speech, or toxicity. We trash talk in games, not in personal attacks.</p>
+                        </div>
+                        <div class="clause-box" style="border-left: 3px solid var(--gh-yellow);">
+                            <span class="clause-title" style="color:var(--gh-yellow);">No Spam / Self-Promo</span>
+                            <p class="clause-desc">Keep the data stream clean. Do not flood chats or unsolicited links. Post projects only in designated showcases.</p>
+                        </div>
+                        <div class="clause-box" style="border-left: 3px solid var(--gh-red);">
+                            <span class="clause-title" style="color:var(--gh-red);">Doxing & Privacy</span>
+                            <p class="clause-desc">Sharing private information of others (doxing) results in an immediate, permanent IP ban.</p>
+                        </div>
+                    </div>
+
+                    <div id="content" class="legal-section">
+                        <div class="sec-head">3. Content Policy</div>
+                        <p class="legal-text">
+                            We support creative freedom, but there are hard limits on what can be uploaded to our servers (Gallery, Avatars, Posts).
+                        </p>
+                        
+                        <div class="clause-box">
+                            <span class="clause-title">🚫 Strictly Prohibited</span>
+                            <ul style="margin:5px 0 0 20px; font-size:13px; color:#888; line-height:1.6;">
+                                <li>NSFW / Explicit content of any kind.</li>
+                                <li>Real-world gore or graphic violence.</li>
+                                <li>Illegal content or pirated software links.</li>
+                                <li>Malicious files or exploit scripts.</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="clause-box">
+                            <span class="clause-title">✅ Encouraged Content</span>
+                            <p class="clause-desc">Gaming clips, art, memes, devlogs, and setup showcases.</p>
+                        </div>
+                    </div>
+
+                    <div id="enforcement" class="legal-section">
+                        <div class="sec-head">4. Enforcement</div>
+                        <p class="legal-text">
+                            Violation of these terms triggers the automated Three-Strike System. Admins reserve the right to bypass strikes for severe infractions.
+                        </p>
+                        
+                        <div class="violation-grid">
+                            <div class="v-card">
+                                <div class="v-title">Strike 1</div>
+                                <div class="v-desc">24 Hour Mute.<br>Warning Logged.</div>
+                            </div>
+                            <div class="v-card">
+                                <div class="v-title">Strike 2</div>
+                                <div class="v-desc">48 Hour Suspension.<br>Account Flagged.</div>
+                            </div>
+                            <div class="v-card" style="background:rgba(255, 0, 0, 0.1);">
+                                <div class="v-title">Strike 3</div>
+                                <div class="v-desc">Permanent Ban.<br>Excommunication.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                initScrollSpy();
+            }
+        });
+
+        /* SCROLL SPY */
+        function initScrollSpy() {
+            const sections = document.querySelectorAll('.legal-section');
+            const navItems = document.querySelectorAll('.nav-item');
+
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 150) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navItems.forEach(item => {
+                    item.classList.remove('active');
+                    if (item.getAttribute('href').includes(current)) {
+                        item.classList.add('active');
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>

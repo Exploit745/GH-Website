@@ -3,336 +3,338 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GH – Members</title>
+  <title>GH – Roster</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="header.css">
+  <link rel="stylesheet" href="drawer.css">
 
   <style>
-    body {
-      margin: 0;
-      background: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
+    /* [ROSTER SPECIFIC STYLES] */
+    
+    /* HEADER ROW */
+    .header-row { display: flex; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
+    
+    /* NAV PILLS */
+    .nav-pill-btn { display: inline-flex; align-items: center; gap: 8px; background: #1a1a1a; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; margin-left: 10px; }
+    
+    /* SQUADS (RED) */
+    .btn-squads { border: 1px solid var(--gh-red); color: var(--gh-red); }
+    .btn-squads:hover { background: var(--gh-red); color: #fff; box-shadow: 0 0 15px rgba(255,68,68,0.4); transform: translateY(-2px); }
+    
+    /* TOURNY (YELLOW) */
+    .btn-tourny { border: 1px solid var(--gh-yellow); color: var(--gh-yellow); }
+    .btn-tourny:hover { background: var(--gh-yellow); color: #000; box-shadow: 0 0 15px rgba(253, 255, 85, 0.4); transform: translateY(-2px); }
+
+    /* ARCHIVE (PURPLE) */
+    .btn-archive { border: 1px solid var(--gh-purple); color: var(--gh-purple); margin-right: auto; }
+    .btn-archive:hover { background: var(--gh-purple); color: #fff; box-shadow: 0 0 15px rgba(189, 0, 255, 0.4); transform: translateY(-2px); }
+
+    .search-box { position: relative; width: 100%; max-width: 300px; }
+    .search-input { width: 100%; padding: 10px 15px; background: #111; border: 1px solid #333; color: #fff; border-radius: 20px; outline: none; transition: 0.2s; padding-left: 35px; box-sizing: border-box; }
+    .search-input:focus { border-color: var(--gh-blue); box-shadow: 0 0 10px rgba(0, 234, 255, 0.2); }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #666; font-size: 14px; }
+
+    /* CARD GRID */
+    .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; padding-bottom: 50px; }
+    
+    .member-card { 
+        background: #111; border: 1px solid #333; border-radius: 12px; padding: 20px; 
+        display: flex; flex-direction: column; align-items: center; text-align: center; 
+        transition: all 0.2s ease; position: relative; overflow: hidden; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
     }
+    .member-card:hover { transform: translateY(-3px); border-color: var(--gh-blue); box-shadow: 0 0 20px rgba(0, 234, 255, 0.2); }
+    .member-card.admin-card { border-color: var(--gh-yellow); }
 
-    /* ==========================================
-       UNIVERSAL HEADER
-    ========================================== */
-    .navbar {
-      width: 100%;
-      background: #111;
-      border-bottom: 2px solid #fdff55;
-      padding: 15px 25px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-sizing: border-box;
-      z-index: 1000;
+    .member-avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #333; margin-bottom: 10px; transition: 0.2s; cursor: pointer; }
+    .member-avatar:hover { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+    
+    .member-name { font-size: 18px; font-weight: bold; color: #fff; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+    .role-badge { font-size: 10px; padding: 3px 10px; border-radius: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 15px; }
+    .badge-member { background: rgba(0, 234, 255, 0.1); color: var(--gh-blue); border: 1px solid var(--gh-blue); }
+    .badge-admin { background: rgba(253, 255, 85, 0.1); color: var(--gh-yellow); border: 1px solid var(--gh-yellow); }
+    
+    /* VIEW BUTTON */
+    .view-btn { 
+        background: transparent; border: 1px solid #444; color: #ccc; padding: 8px 0; 
+        border-radius: 6px; cursor: pointer; font-size: 12px; width: 100%; 
+        transition: 0.2s; font-weight: bold; text-decoration: none; display: block;
     }
+    .view-btn:hover { border-color: var(--gh-blue); color: #fff; background: rgba(0, 234, 255, 0.1); }
 
-    .navbar .brand {
-      font-weight: 700;
-      color: #fdff55;
-      font-size: 20px;
+    /* ADMIN & SAVE ICONS */
+    .manage-icon { position: absolute; top: 10px; right: 10px; color: #444; cursor: pointer; font-size: 14px; transition: 0.2s; }
+    .manage-icon:hover { color: var(--gh-red); transform: scale(1.2); }
+
+    .follow-icon { position: absolute; top: 10px; left: 10px; color: #444; cursor: pointer; font-size: 16px; transition: 0.2s; }
+    .follow-icon:hover { color: var(--gh-yellow); transform: scale(1.2); }
+    .follow-icon.active { color: var(--gh-yellow); text-shadow: 0 0 10px var(--gh-yellow); }
+
+    /* MODAL OVERRIDES */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(5px); }
+    .mp-card { width: 100%; max-width: 350px; background: #111; border: 1px solid #333; border-top: 2px solid var(--gh-blue); border-radius: 12px; padding: 30px; text-align: center; box-shadow: 0 0 40px rgba(0, 234, 255, 0.15); animation: slideUp 0.3s ease-out; position: relative; }
+    
+    /* ADMIN MODAL */
+    .admin-mgr-card { 
+        width: 100%; max-width: 400px; background: #111; border: 2px solid var(--gh-red); 
+        border-radius: 12px; padding: 25px; text-align: left; 
+        box-shadow: 0 0 50px rgba(255, 68, 68, 0.2); animation: slideUp 0.3s ease-out; 
     }
+    
+    .mgr-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+    .mgr-av { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+    
+    .mgr-actions { display: grid; gap: 10px; }
+    .mgr-btn { padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; text-align: left; }
+    .btn-promote { background: var(--gh-yellow); color: #000; }
+    .btn-demote { background: #333; color: #fff; border: 1px solid #555; }
+    .btn-nuke { background: rgba(255, 68, 68, 0.1); color: var(--gh-red); border: 1px solid var(--gh-red); }
+    .btn-nuke:hover { background: var(--gh-red); color: #fff; }
 
-    .navbar .nav-links a {
-      color: #fff;
-      margin-left: 20px;
-      text-decoration: none;
-      font-weight: bold;
-      position: relative;
-      transition: 0.25s ease;
-    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+    
+    .mp-avatar { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--gh-blue); margin-bottom: 15px; object-fit: cover; }
+    .mp-name { color: #fff; font-size: 24px; font-weight: bold; margin: 0; }
+    .mp-role { font-size: 11px; color: var(--gh-yellow); text-transform: uppercase; letter-spacing: 1px; border: 1px solid var(--gh-yellow); padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 5px; }
+    .mp-bio { color: #ccc; font-size: 13px; margin: 20px 0 10px; line-height: 1.5; font-style: italic; }
+    .mp-games { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 15px; }
+    .game-chip { background: #222; border: 1px solid #444; color: #aaa; font-size: 10px; padding: 4px 8px; border-radius: 10px; font-weight: bold; }
 
-    .navbar .nav-links a:hover {
-      color: #fdff55;
-      text-shadow: 0 0 10px #fdff55;
-    }
-
-    .navbar .nav-links a::after {
-      content: "";
-      height: 2px;
-      width: 0%;
-      background: #fdff55;
-      display: block;
-      transition: width 0.25s;
-      margin-top: 3px;
-    }
-
-    .navbar .nav-links a:hover::after {
-      width: 100%;
-    }
-
-    /* ==========================================
-       LAYOUT
-    ========================================== */
-    .main-wrap {
-      display: flex;
-      height: calc(100vh - 70px);
-    }
-
-    .content {
-      padding: 25px;
-      flex-grow: 1;
-      overflow-y: auto;
-    }
-
-    .card {
-      background: #111;
-      padding: 25px;
-      border-radius: 12px;
-      border: 2px solid #fdff55;
-      margin-bottom: 25px;
-      box-shadow: 0 0 16px #fdff5522;
-    }
-
-    .card h2 {
-      margin-top: 0;
-      color: #fdff55;
-      text-shadow: 0 0 10px #fdff5522;
-    }
-
-    /* ==========================================
-       MEMBER PREVIEW LIST
-    ========================================== */
-    .member-item {
-      background: #151515;
-      padding: 14px;
-      border-radius: 8px;
-      border-left: 3px solid #00eaff;
-      box-shadow: 0 0 14px #00eaff33;
-      margin-bottom: 16px;
-      cursor: pointer;
-      transition: 0.25s ease;
-    }
-
-    .member-item:hover {
-      box-shadow: 0 0 22px #00eaff88;
-    }
-
-    .member-name {
-      font-size: 18px;
-      font-weight: bold;
-      color: #00eaff;
-      text-shadow: 0 0 8px #00eaff77;
-      margin-bottom: 6px;
-    }
-
-    .member-detail {
-      font-size: 14px;
-      opacity: 0.85;
-      margin-bottom: 2px;
-    }
-
-    /* ==========================================
-       MODAL
-    ========================================== */
-    .modal-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #000000bb;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-    }
-
-    .modal {
-      background: #111;
-      border: 2px solid #fdff55;
-      border-radius: 12px;
-      padding: 25px;
-      width: 420px;
-      box-shadow: 0 0 25px #fdff5544, 0 0 20px #00eaff33 inset;
-    }
-
-    .modal h3 {
-      margin-top: 0;
-      color: #fdff55;
-      text-shadow: 0 0 10px #fdff55aa;
-    }
-
-    .modal p {
-      opacity: 0.9;
-      margin: 6px 0;
-    }
-
-    .modal-buttons {
-      margin-top: 18px;
-    }
-
-    .modal-btn {
-      padding: 8px 14px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-right: 10px;
-      font-weight: bold;
-      transition: 0.25s ease;
-    }
-
-    .promote { background: #00eaff; color: #000; }
-    .promote:hover { box-shadow: 0 0 14px #00eaff; }
-
-    .demote { background: #ffaa3b; color: #000; }
-    .demote:hover { box-shadow: 0 0 14px #ffaa3b; }
-
-    .remove { background: #ff4747; color: #000; }
-    .remove:hover { box-shadow: 0 0 14px #ff4747; }
-
-    .close {
-      background: #555;
-      color: #fff;
-    }
-    .close:hover {
-      box-shadow: 0 0 12px #888;
+    @media (max-width: 768px) {
+        .header-row { flex-direction: column; align-items: stretch; gap: 15px; }
+        .nav-pill-btn { margin-left: 0; justify-content: center; width: 100%; box-sizing: border-box; }
+        .btn-tourny, .btn-archive { margin-right: 0; }
+        .search-box { max-width: 100%; }
     }
   </style>
 </head>
-
 <body>
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
 
-<!-- UNIVERSAL HEADER -->
-<div id="header"></div>
-<script src="header.js"></script>
+    <div class="page-wrap">
+      <div id="drawer"></div>
+      <div class="content">
+        
+        <div class="header-row">
+            <h1 class="page-title">Roster</h1>
+            
+            <a href="teams.html" class="nav-pill-btn btn-squads">
+               <span style="font-size:14px;">🛡️</span> Active Squads
+            </a>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="scripts/auth.js"></script>
+            <a href="tournaments.html" class="nav-pill-btn btn-tourny">
+                <span style="font-size:14px;">🏆</span> Tournys
+            </a>
 
-<div class="main-wrap">
+            <a href="gallery.html" class="nav-pill-btn btn-archive">
+                <span style="font-size:14px;">📼</span> The Archive
+            </a>
 
-  <!-- UNIVERSAL DRAWER -->
-  <div id="drawer"></div>
-  <link rel="stylesheet" href="drawer.css">
-  <script src="drawer.js"></script>
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" class="search-input" placeholder="Find agent..." onkeyup="filterMembers()">
+            </div>
+        </div>
 
-  <!-- CONTENT -->
-  <div class="content">
-    <div class="card">
-      <h2>GH Members</h2>
-      <div id="memberList">Loading members...</div>
+        <div id="memberList" class="roster-grid">
+            <div style="opacity:0.5; padding:20px; grid-column: 1 / -1; text-align:center;">Scanning Database...</div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- MODAL -->
-<div id="modalBg" class="modal-bg">
-  <div class="modal">
+    <div id="miniProfileModal" class="modal-overlay">
+        <div class="mp-card">
+            <div id="mpContent"></div>
+            <button onclick="closeModal('miniProfileModal')" style="margin-top:20px; background:transparent; border:none; color:#666; cursor:pointer; font-size:12px;">Close</button>
+        </div>
+    </div>
 
-    <h3 id="modalName"></h3>
-    <p id="modalEmail"></p>
-    <p id="modalBirthday"></p>
-    <p id="modalJoined"></p>
-    <p id="modalRole"></p>
+    <div id="adminManagerModal" class="modal-overlay">
+        <div class="admin-mgr-card">
+            <div id="mgrContent">Loading...</div>
+            <button onclick="closeModal('adminManagerModal')" style="width:100%; margin-top:15px; background:transparent; border:none; color:#666; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
 
-    <div class="modal-buttons" id="modalButtons"></div>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
-    <button class="modal-btn close" onclick="closeModal()">Close</button>
-  </div>
-</div>
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
 
-<script>
-let isAdminUser = false;
+    <script>
+    /* PARTICLES */
+    const container = document.getElementById("particleContainer");
+    if(container) {
+        for(let i=0;i<30;i++){const p=document.createElement("div");p.className="particle";p.style.left=Math.random()*100+"vw";p.style.top=Math.random()*100+"vh";p.style.animationDelay=Math.random()*10+"s";p.style.opacity=Math.random()*0.4+0.1;p.style.transform=`scale(${Math.random()*1+0.5})`;container.appendChild(p);}
+    }
+    
+    let allMembers = [];
+    let amIAdmin = false;
+    let following = new Set();
 
-auth.onAuthStateChanged(async user => {
-  if (!user) return location.href = "login.html";
-
-  const token = await user.getIdTokenResult();
-  isAdminUser = !!token.claims.admin;
-
-  loadMembers();
-});
-
-/* ==========================
-   LOAD MEMBERS
-========================== */
-function loadMembers() {
-  db.collection("users")
-    .orderBy("name")
-    .onSnapshot(snapshot => {
-      const container = document.getElementById("memberList");
-
-      if (snapshot.empty) {
-        container.innerHTML = "<p>No members found.</p>";
-        return;
+    auth.onAuthStateChanged(async user => {
+      if (!user) return location.href = "login.html";
+      
+      const token = await user.getIdTokenResult();
+      amIAdmin = !!token.claims.admin;
+      if(!amIAdmin) {
+          const uDoc = await db.collection("users").doc(user.uid).get();
+          if(uDoc.exists && uDoc.data().role === 'admin') amIAdmin = true;
       }
-
-      container.innerHTML = "";
-
-      snapshot.forEach(doc => {
-        const m = doc.data();
-
-        const div = document.createElement("div");
-        div.className = "member-item";
-
-        div.innerHTML = `
-          <div class="member-name">${m.name}</div>
-          <div class="member-detail">Birthday: ${m.birthday || "N/A"}</div>
-          <div class="member-detail">Email: ${m.email}</div>
-        `;
-
-        div.onclick = () => openModal(doc.id, m);
-        container.appendChild(div);
-      });
+      
+      // Load Following List
+      db.collection("users").doc(user.uid).collection("saved").where("type", "==", "user")
+        .onSnapshot(snap => {
+            following.clear();
+            snap.forEach(doc => following.add(doc.id));
+            loadMembers();
+        });
     });
-}
 
-/* ==========================
-   MODAL LOGIC
-========================== */
-function openModal(id, data) {
-  selectedMemberId = id;
+    function loadMembers() {
+      db.collection("users").orderBy("name").onSnapshot(snap => {
+          allMembers = [];
+          snap.forEach(doc => { 
+              const d = doc.data();
+              if (d.publicProfile !== false) { // Respect privacy setting
+                  allMembers.push({ id: doc.id, ...d }); 
+              }
+          });
+          renderList(allMembers);
+      });
+    }
 
-  modalName.textContent = data.name;
-  modalEmail.textContent = "Email: " + data.email;
-  modalBirthday.textContent = "Birthday: " + (data.birthday || "N/A");
-  modalJoined.textContent = "Joined: " + (data.joinDate || "N/A");
-  modalRole.textContent = "Role: " + (data.admin ? "Admin" : "Member");
+    function renderList(list) {
+        const c = document.getElementById("memberList");
+        if(list.length === 0) { c.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#666;'>No agents found.</p>"; return; }
+        c.innerHTML = "";
+        
+        list.forEach(m => {
+            const role = (m.role === "admin" || m.admin === true) ? "Admin" : "Member";
+            const roleClass = role === "Admin" ? "badge-admin" : "badge-member";
+            const cardClass = role === "Admin" ? "admin-card" : "";
+            
+            const manageLink = amIAdmin ? `<div onclick="openAdminManager('${m.id}')" class="manage-icon" title="Manage User">⚙️</div>` : '';
+            
+            // Follow Button
+            const isFollowing = following.has(m.id);
+            const followClass = isFollowing ? 'active' : '';
+            const followHtml = (auth.currentUser && m.id !== auth.currentUser.uid) ? 
+                `<div onclick="toggleFollow('${m.id}', '${m.name.replace(/'/g, "\\'")}', '${m.photoURL || ""}')" class="follow-icon ${followClass}" title="Follow">★</div>` : '';
 
-  const btns = document.getElementById("modalButtons");
-  btns.innerHTML = "";
+            c.innerHTML += `
+                <div class="member-card ${cardClass}">
+                    ${followHtml}
+                    ${manageLink}
+                    <img src="${m.photoURL || 'assets/GH_Hero.png'}" class="member-avatar" onclick="openMiniProfile('${m.id}')" title="Quick View">
+                    
+                    <div class="member-name">${m.name || "Unknown"}</div>
+                    <div class="role-badge ${roleClass}">${role}</div>
+                    
+                    <a href="profile.html?uid=${m.id}" class="view-btn">VIEW DOSSIER</a>
+                </div>`;
+        });
+    }
 
-  if (isAdminUser) {
-    btns.innerHTML = `
-      <button class="modal-btn promote" onclick="promote('${id}')">Promote</button>
-      <button class="modal-btn demote" onclick="demote('${id}')">Demote</button>
-      <button class="modal-btn remove" onclick="removeUser('${id}')">Remove</button>
-    `;
-  }
+    /* SAVE SYSTEM (FOLLOW) */
+    async function toggleFollow(uid, name, avatar) {
+        if(!auth.currentUser) return;
+        const myUid = auth.currentUser.uid;
+        const ref = db.collection("users").doc(myUid).collection("saved").doc(uid);
 
-  document.getElementById("modalBg").style.display = "flex";
-}
+        if(following.has(uid)) {
+            await ref.delete();
+        } else {
+            await ref.set({
+                type: 'user',
+                name: name,
+                avatar: avatar,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+    }
 
-function closeModal() {
-  document.getElementById("modalBg").style.display = "none";
-}
+    function filterMembers() {
+        const term = document.getElementById("searchInput").value.toLowerCase();
+        const filtered = allMembers.filter(m => (m.name && m.name.toLowerCase().includes(term)));
+        renderList(filtered);
+    }
 
-/* ==========================
-   ADMIN ACTIONS
-========================== */
-function promote(id) {
-  db.collection("users").doc(id).update({ admin: true });
-  closeModal();
-}
+    /* MINI PROFILE */
+    async function openMiniProfile(uid) {
+        document.getElementById("miniProfileModal").style.display = "flex";
+        const content = document.getElementById("mpContent");
+        content.innerHTML = "<div style='opacity:0.6'>Loading...</div>";
+        
+        const m = allMembers.find(x => x.id === uid);
+        if(!m) return;
 
-function demote(id) {
-  db.collection("users").doc(id).update({ admin: false });
-  closeModal();
-}
+        let gamesHtml = "";
+        if(m.favoriteGames && m.favoriteGames.length) {
+            gamesHtml = `<div class="mp-games">` + m.favoriteGames.slice(0,3).map(g => `<span class="game-chip">${g}</span>`).join('') + `</div>`;
+        }
 
-function removeUser(id) {
-  if (!confirm("Remove this user?")) return;
-  db.collection("users").doc(id).delete();
-  closeModal();
-}
-</script>
+        content.innerHTML = `
+            <img src="${m.photoURL || 'assets/GH_Hero.png'}" class="mp-avatar">
+            <h2 class="mp-name">${m.name}</h2>
+            <div class="mp-role" style="color:var(--gh-blue); border:1px solid var(--gh-blue);">${m.role || 'Member'}</div>
+            <div class="mp-bio">"${m.bio || 'No Bio'}"</div>
+            ${gamesHtml}
+            <div style="font-size:11px; color:#666; margin-top:10px;">Click 'View Dossier' for details.</div>
+        `;
+    }
 
+    /* ADMIN MANAGER */
+    async function openAdminManager(uid) {
+        document.getElementById("adminManagerModal").style.display = "flex";
+        const content = document.getElementById("mgrContent");
+        
+        const m = allMembers.find(x => x.id === uid);
+        if(!m) return;
+
+        const isAdmin = (m.role === 'admin' || m.admin === true);
+        
+        content.innerHTML = `
+            <div class="mgr-header">
+                <img src="${m.photoURL || 'assets/GH_Hero.png'}" class="mgr-av">
+                <div>
+                    <h3 style="margin:0; color:#fff;">${m.name}</h3>
+                    <div style="font-size:12px; color:#888;">UID: ${uid}</div>
+                </div>
+            </div>
+            
+            <div class="mgr-actions">
+                ${!isAdmin ? 
+                    `<button class="mgr-btn btn-promote" onclick="setUserRole('${uid}', 'admin')">⚡ Promote to Admin</button>` :
+                    `<button class="mgr-btn btn-demote" onclick="setUserRole('${uid}', 'member')">⬇ Demote to Member</button>`
+                }
+                <button class="mgr-btn btn-nuke" onclick="nukeUser('${uid}')">☢ NUKE USER (Wipe Data)</button>
+            </div>
+        `;
+    }
+
+    async function setUserRole(uid, role) {
+        if(!confirm(`Change role to ${role.toUpperCase()}?`)) return;
+        await db.collection("users").doc(uid).update({ role: role, admin: (role === 'admin') });
+        closeModal('adminManagerModal');
+    }
+
+    async function nukeUser(uid) {
+        if(!confirm("DANGER: Permanently delete this user from database?")) return;
+        await db.collection("users").doc(uid).delete();
+        closeModal('adminManagerModal');
+    }
+
+    function closeModal(id) { document.getElementById(id).style.display = "none"; }
+    window.onclick = function(e) { 
+        if(e.target.classList.contains('modal-overlay')) e.target.style.display = "none"; 
+    }
+    </script>
 </body>
 </html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Sitrep Log</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+    <style>
+        /* [SITREP STYLES] */
+        .page-hero {
+            text-align: center; margin-bottom: 40px; padding: 40px 20px;
+            background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
+            border-bottom: 2px solid var(--gh-blue);
+            position: relative; overflow: hidden;
+        }
+        .hero-title { font-size: 42px; font-weight: 900; color: #fff; text-transform: uppercase; margin: 0; letter-spacing: 4px; text-shadow: 0 0 20px var(--gh-blue); }
+        .hero-sub { color: var(--gh-yellow); font-size: 12px; margin-top: 5px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; opacity: 0.8; }
+
+        /* FEED LAYOUT */
+        .feed-container { max-width: 800px; margin: 0 auto; padding: 20px; perspective: 1000px; }
+        
+        .sitrep-card {
+            background: rgba(17, 17, 17, 0.9); border: 1px solid #333; border-radius: 12px;
+            padding: 25px; margin-bottom: 25px; position: relative;
+            border-left: 4px solid var(--gh-blue); transition: transform 0.1s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); backdrop-filter: blur(5px);
+        }
+        .sitrep-card:hover { border-color: var(--gh-blue); box-shadow: 0 0 30px rgba(0, 234, 255, 0.1); }
+        
+        /* VARIANTS */
+        .sitrep-card.type-alert { border-left-color: var(--gh-red); background: rgba(255, 68, 68, 0.05); }
+        .sitrep-card.type-alert:hover { border-color: var(--gh-red); box-shadow: 0 0 30px rgba(255, 68, 68, 0.1); }
+        
+        .sitrep-card.type-update { border-left-color: var(--gh-yellow); background: rgba(253, 255, 85, 0.02); }
+        .sitrep-card.type-update:hover { border-color: var(--gh-yellow); box-shadow: 0 0 30px rgba(253, 255, 85, 0.1); }
+
+        .sr-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px dashed #333; padding-bottom: 10px; }
+        .sr-title { font-size: 22px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
+        .sr-meta { font-size: 10px; color: #666; font-family: monospace; font-weight: bold; text-transform: uppercase; background: #000; padding: 4px 8px; border-radius: 4px; border: 1px solid #222; }
+        
+        .sr-body { color: #ccc; line-height: 1.6; font-size: 14px; white-space: pre-wrap; font-family: 'Verdana', sans-serif; }
+
+        /* ADMIN CONTROLS */
+        .admin-bar { 
+            display: none; justify-content: flex-end; margin-bottom: 20px; max-width: 800px; margin: 0 auto 20px; padding: 0 20px;
+        }
+        .broadcast-btn {
+            background: var(--gh-blue); color: #000; font-weight: 900; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 234, 255, 0.3); animation: pulseBtn 2s infinite; text-transform: uppercase;
+        }
+        .broadcast-btn:hover { background: #fff; transform: scale(1.05); }
+        @keyframes pulseBtn { 0% { box-shadow: 0 0 10px rgba(0,234,255,0.3); } 50% { box-shadow: 0 0 25px rgba(0,234,255,0.6); } 100% { box-shadow: 0 0 10px rgba(0,234,255,0.3); } }
+
+        .del-btn {
+            position: absolute; top: 20px; right: 20px; background: #000; 
+            color: #444; border: 1px solid #333; font-size: 10px; padding: 6px 10px; 
+            cursor: pointer; opacity: 0; transition: 0.2s; font-weight: bold; border-radius: 4px; z-index: 10;
+        }
+        .sitrep-card:hover .del-btn { opacity: 1; }
+        .del-btn:hover { color: var(--gh-red); border-color: var(--gh-red); background: rgba(255,0,0,0.1); }
+
+        /* MODAL */
+        .gh-modal-content { border-color: var(--gh-blue); box-shadow: 0 0 40px rgba(0, 234, 255, 0.15); }
+
+    </style>
+</head>
+<body>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content" style="padding:0; max-width:100%;">
+            
+            <div class="page-hero">
+                <h1 class="hero-title">System Broadcasts</h1>
+                <div class="hero-sub">The Important Yapp</div>
+            </div>
+
+            <div class="admin-bar" id="adminControls">
+                <button class="broadcast-btn" onclick="openPostModal()">+ New Broadcast</button>
+            </div>
+
+            <div class="feed-container" id="feedList">
+                <div style="text-align:center; color:#666; padding:40px; font-style:italic;">Scanning frequencies...</div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="postModal" class="gh-modal">
+        <div class="gh-modal-content">
+            <h2 style="color:var(--gh-blue); margin-top:0;">Make it Loud</h2>
+            
+            <label style="font-size:12px; color:#888; font-weight:bold; display:block; margin-bottom:5px;">HEADLINE</label>
+            <input type="text" id="postTitle" class="gh-input" placeholder="e.g. WE BROKE IT (BUT FIXED IT)">
+            
+            <label style="font-size:12px; color:#888; font-weight:bold; display:block; margin-bottom:5px;">VIBE CHECK</label>
+            <select id="postType" class="gh-input">
+                <option value="general">CHILL (Blue)</option>
+                <option value="update">PATCH NOTES (Yellow)</option>
+                <option value="alert">CRITICAL (Red)</option>
+            </select>
+
+            <label style="font-size:12px; color:#888; font-weight:bold; display:block; margin-bottom:5px;">THE PAYLOAD</label>
+            <textarea id="postMsg" class="gh-input" style="height:120px; resize:vertical;" placeholder="Tell them what's up..."></textarea>
+
+            <button class="gh-btn btn-primary" onclick="publishBroadcast()">SEND IT 📡</button>
+            <button class="gh-btn" style="background:transparent; color:#888; width:100%; margin-top:5px;" onclick="document.getElementById('postModal').style.display='none'">Nevermind</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        const container = document.getElementById("particleContainer");
+        for(let i=0; i<20; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; container.appendChild(p); }
+
+        let isAdminUser = false;
+
+        auth.onAuthStateChanged(async user => {
+            if(!user) return window.location.href = "login.html";
+            
+            // Check Admin
+            const token = await user.getIdTokenResult();
+            if(token.claims.admin) {
+                isAdminUser = true;
+                document.getElementById("adminControls").style.display = "flex";
+            } else {
+                // Fallback DB check
+                const doc = await db.collection("users").doc(user.uid).get();
+                if(doc.exists && doc.data().role === 'admin') {
+                    isAdminUser = true;
+                    document.getElementById("adminControls").style.display = "flex";
+                }
+            }
+
+            loadFeed();
+        });
+
+        function loadFeed() {
+            db.collection("announcements").orderBy("timestamp", "desc").onSnapshot(snap => {
+                const list = document.getElementById("feedList");
+                list.innerHTML = "";
+                
+                if(snap.empty) {
+                    list.innerHTML = "<div style='text-align:center; color:#444; padding:50px; font-style:italic;'>Radio silence. The admins are sleeping. 💤</div>";
+                    return;
+                }
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const date = d.timestamp ? new Date(d.timestamp.seconds*1000).toLocaleString() : "Unknown Date";
+                    const typeClass = d.type ? `type-${d.type}` : '';
+                    
+                    let deleteBtn = '';
+                    if(isAdminUser) {
+                        deleteBtn = `<button class="del-btn" onclick="deleteBroadcast('${doc.id}')">NUKE IT</button>`;
+                    }
+
+                    const author = d.author || "System";
+
+                    list.innerHTML += `
+                        <div class="sitrep-card tilt-card ${typeClass}">
+                            ${deleteBtn}
+                            <div class="sr-header">
+                                <div class="sr-title">${d.title}</div>
+                                <div class="sr-meta">${date} // ${author}</div>
+                            </div>
+                            <div class="sr-body">${d.message}</div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        /* ADMIN ACTIONS */
+        function openPostModal() { document.getElementById("postModal").style.display = "flex"; }
+
+        async function publishBroadcast() {
+            const title = document.getElementById("postTitle").value.trim();
+            const type = document.getElementById("postType").value;
+            const msg = document.getElementById("postMsg").value.trim();
+
+            if(!title || !msg) return alert("You gotta write something.");
+
+            try {
+                await db.collection("announcements").add({
+                    title: title,
+                    type: type,
+                    message: msg,
+                    author: auth.currentUser.displayName || "Admin",
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                document.getElementById("postModal").style.display = "none";
+                document.getElementById("postTitle").value = "";
+                document.getElementById("postMsg").value = "";
+            } catch(e) {
+                alert("Transmission failed: " + e.message);
+            }
+        }
+
+        async function deleteBroadcast(id) {
+            if(!confirm("Scrub this record? It will be gone forever.")) return;
+            await db.collection("announcements").doc(id).delete();
+        }
+
+        /* 3D TILT EFFECT */
+        document.addEventListener('mousemove', e => {
+            document.querySelectorAll('.tilt-card').forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left; 
+                const y = e.clientY - rect.top;
+                if(x > 0 && x < rect.width && y > 0 && y < rect.height) {
+                    const rotateX = ((y - rect.height/2) / rect.height) * -3;
+                    const rotateY = ((x - rect.width/2) / rect.width) * 3;
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01)`;
+                } else {
+                    card.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale(1)`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Saved Items</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* [BOOKMARKS SPECIFIC STYLES] */
+        .page-hero {
+            text-align: center; margin-bottom: 40px; padding: 40px 20px;
+            background: linear-gradient(180deg, #111 0%, #000 100%);
+            border-bottom: 2px solid var(--gh-blue);
+        }
+        .hero-title { font-size: 32px; font-weight: 900; color: #fff; text-transform: uppercase; margin: 0; letter-spacing: 2px; }
+        .hero-sub { color: #666; font-size: 14px; margin-top: 10px; font-weight: bold; }
+
+        .bookmarks-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px; max-width: 1000px; margin: 0 auto; padding: 20px;
+        }
+
+        .bm-card {
+            background: #111; border: 1px solid #333; border-radius: 12px;
+            padding: 20px; display: flex; flex-direction: column;
+            transition: 0.2s; position: relative; overflow: hidden;
+        }
+        .bm-card:hover { transform: translateY(-5px); border-color: var(--gh-yellow); box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+
+        .bm-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .bm-type { font-size: 10px; color: var(--gh-blue); font-weight: bold; text-transform: uppercase; background: rgba(0, 234, 255, 0.1); padding: 4px 8px; border-radius: 4px; }
+        
+        .bm-title { font-size: 18px; font-weight: bold; color: #fff; margin: 0 0 10px 0; line-height: 1.3; }
+        .bm-preview { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 20px; flex-grow: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+        .bm-media { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; border: 1px solid #333; background: #000; }
+        .bm-avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gh-yellow); margin-bottom: 10px; }
+
+        .server-ip-box { background: #000; padding: 10px; border-radius: 6px; font-family: monospace; color: var(--gh-yellow); border: 1px dashed #333; margin-bottom: 15px; text-align: center; }
+
+        .bm-actions { display: flex; gap: 10px; margin-top: auto; }
+        
+        .btn-view { flex: 1; background: #222; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; font-size: 12px; }
+        .btn-view:hover { background: #fff; color: #000; }
+
+        .btn-unsave { background: rgba(255, 68, 68, 0.1); color: var(--gh-red); border: 1px solid var(--gh-red); padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn-unsave:hover { background: var(--gh-red); color: #fff; }
+
+        .status-msg { text-align: center; padding: 50px; color: #666; font-style: italic; grid-column: 1/-1; }
+    </style>
+</head>
+<body>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+        <div class="content" style="padding:0; max-width:100%;">
+            <div class="page-hero">
+                <h1 class="hero-title">Saved Archives</h1>
+                <div class="hero-sub">YOUR PERSONAL STASH</div>
+            </div>
+            <div class="bookmarks-grid" id="bookmarksContainer">
+                <div class="status-msg">Accessing memory banks...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        const container = document.getElementById("particleContainer");
+        if(container){ for(let i=0; i<20; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; container.appendChild(p); }}
+
+        auth.onAuthStateChanged(async user => {
+            if(!user) return window.location.href = "login.html";
+            loadBookmarks(user.uid);
+        });
+
+        function loadBookmarks(uid) {
+            const grid = document.getElementById("bookmarksContainer");
+            
+            db.collection("users").doc(uid).collection("saved").orderBy("timestamp", "desc").onSnapshot(async snap => {
+                if(snap.empty) {
+                    grid.innerHTML = `<div class="status-msg">Nothing saved yet.<br>Go bookmark some cool stuff.</div>`;
+                    return;
+                }
+
+                grid.innerHTML = "";
+                
+                for(const bookmark of snap.docs) {
+                    const bData = bookmark.data();
+                    const type = bData.type || "post"; 
+                    const id = bookmark.id;
+
+                    // 1. LOCAL DATA TYPES
+                    if (type === 'server') { renderServerCard(grid, id, bData); continue; }
+                    
+                    // 2. REMOTE DATA TYPES
+                    try {
+                        let collection = "posts";
+                        if(type === "product") collection = "products";
+                        if(type === "media") collection = "gallery";
+                        if(type === "user") collection = "users";
+
+                        const contentDoc = await db.collection(collection).doc(id).get();
+                        
+                        if(contentDoc.exists) {
+                            if(type === 'user') renderUserCard(grid, id, contentDoc.data());
+                            else renderContentCard(grid, id, type, contentDoc.data());
+                        } else {
+                            console.warn(`Original ${type} missing: ${id}`);
+                            db.collection("users").doc(uid).collection("saved").doc(id).delete();
+                        }
+                    } catch(e) { console.error("Error loading bookmark:", e); }
+                }
+            });
+        }
+
+        /* RENDERERS */
+        function renderUserCard(container, id, data) {
+            const div = document.createElement("div");
+            div.className = "bm-card";
+            div.innerHTML = `
+                <div class="bm-header"><span class="bm-type">AGENT</span></div>
+                <div style="text-align:center;">
+                    <img src="${data.photoURL || 'assets/GH_Hero.png'}" class="bm-avatar">
+                    <h3 class="bm-title" style="margin-bottom:5px;">${data.name || "Agent"}</h3>
+                    <div class="bm-preview" style="text-align:center;">${data.role || "Member"}</div>
+                </div>
+                <div class="bm-actions">
+                    <a href="profile.html?uid=${id}" class="btn-view">DOSSIER</a>
+                    <button class="btn-unsave" onclick="unsaveItem('${id}')">UNFOLLOW</button>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function renderServerCard(container, id, data) {
+            const div = document.createElement("div");
+            div.className = "bm-card";
+            div.style.borderColor = "var(--gh-yellow)";
+            div.innerHTML = `
+                <div class="bm-header"><span class="bm-type">SERVER</span></div>
+                <h3 class="bm-title">${data.serverName}</h3>
+                <div class="server-ip-box">${data.serverIP}</div>
+                <div class="bm-preview" style="text-align:center;">Type: ${data.serverType}</div>
+                <div class="bm-actions">
+                    <button class="btn-view" onclick="navigator.clipboard.writeText('${data.serverIP}'); alert('IP Copied!')">COPY IP</button>
+                    <button class="btn-unsave" onclick="unsaveItem('${id}')">UNSAVE</button>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function renderContentCard(container, id, type, data) {
+            const div = document.createElement("div");
+            div.className = "bm-card";
+            
+            let title = "Untitled";
+            let body = "No preview available.";
+            let mediaHtml = "";
+            let link = "#";
+
+            // --- DATA MAPPING LOGIC ---
+            if (type === 'product') {
+                title = data.name;
+                body = `$${data.price} - ${data.description}`;
+                link = `shop.html`;
+                if(data.image) mediaHtml = `<img src="${data.image}" class="bm-media">`;
+            } 
+            else if (type === 'media') {
+                title = data.authorName ? `Clip by ${data.authorName}` : "Archived Clip";
+                body = data.caption || "No caption.";
+                link = `gallery.html`;
+                const isVid = data.type && data.type.startsWith('video');
+                mediaHtml = isVid ? `<video src="${data.url}" class="bm-media" muted></video>` : `<img src="${data.url}" class="bm-media">`;
+            } 
+            else if (type === 'post') {
+                // FIXED: Map 'authorName' to title and 'text' to body for POSTS
+                title = data.authorName ? `Post by ${data.authorName}` : "Feed Post";
+                body = data.text || "No text content.";
+                link = `posts.html`;
+                
+                if(data.image) mediaHtml = `<img src="${data.image}" class="bm-media">`;
+            }
+
+            div.innerHTML = `
+                <div class="bm-header"><span class="bm-type">${type.toUpperCase()}</span></div>
+                ${mediaHtml}
+                <h3 class="bm-title">${title}</h3>
+                <div class="bm-preview">${body}</div>
+                <div class="bm-actions">
+                    <a href="${link}" class="btn-view">VISIT</a>
+                    <button class="btn-unsave" onclick="unsaveItem('${id}')">UNSAVE</button>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        async function unsaveItem(id) {
+            if(!confirm("Remove from archives?")) return;
+            const uid = auth.currentUser.uid;
+            await db.collection("users").doc(uid).collection("saved").doc(id).delete();
+        }
+    </script>
+</body>
+</html>

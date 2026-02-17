@@ -1,38 +1,60 @@
 /* ==========================================
-   GH UNIVERSAL HEADER
+   GH UNIVERSAL HEADER – V2 AMBIENCE
 ========================================== */
 
 .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
+    height: 70px;
     background: #111;
     border-bottom: 2px solid #fdff55;
-    padding: 15px 25px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 0 25px;
     box-sizing: border-box;
     z-index: 1000;
+    transition: box-shadow 0.3s ease;
 }
 
+/* Add a subtle glow to the bar itself */
+.navbar:hover {
+    box-shadow: 0 4px 20px rgba(0, 234, 255, 0.15);
+}
+
+/* Spacer to prevent content clipping */
+#header {
+    width: 100%;
+    height: 70px;
+}
+
+/* Brand */
 .navbar .brand {
     font-weight: 700;
     color: #fdff55;
     font-size: 20px;
-    text-shadow: 0 0 8px #fdff55aa;
+    text-shadow: 0 0 8px rgba(253, 255, 85, 0.5);
+    cursor: default;
 }
 
+/* Links */
 .navbar .nav-links a {
     color: #fff;
     margin-left: 20px;
     text-decoration: none;
     font-weight: bold;
     position: relative;
-    transition: 0.25s ease;
+    transition: 0.2s ease;
+    display: inline-block;
 }
 
+/* V2 Hover Effect: Glow + Lift */
 .navbar .nav-links a:hover {
     color: #fdff55;
-    text-shadow: 0 0 12px #fdff55;
+    text-shadow: 0 0 10px #fdff55;
+    transform: translateY(-2px);
 }
 
 /* Yellow underline hover glow */
@@ -42,8 +64,9 @@
     width: 0%;
     background: #fdff55;
     display: block;
-    transition: width 0.25s ease;
+    transition: width 0.2s ease;
     margin-top: 3px;
+    box-shadow: 0 0 8px #fdff55;
 }
 
 .navbar .nav-links a:hover::after {

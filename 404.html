@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GH | Page Not Found</title>
+    
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* [404 SPECIFIC STYLES] */
+        
+        body {
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; text-align: center; overflow: hidden; position: relative;
+        }
+
+        /* GLOW LAYERS */
+        body::before {
+            content: ""; position: absolute; width: 900px; height: 900px; top: -200px; left: -200px;
+            background: radial-gradient(circle, rgba(0, 234, 255, 0.15) 0%, transparent 70%);
+            border-radius: 50%; filter: blur(120px); opacity: 0.7; z-index: 0;
+            animation: pulseGlow 8s ease-in-out infinite alternate;
+        }
+
+        body::after {
+            content: ""; position: absolute; width: 700px; height: 700px; bottom: -200px; right: -200px;
+            background: radial-gradient(circle, rgba(253, 255, 85, 0.1) 0%, transparent 70%);
+            border-radius: 50%; filter: blur(120px); opacity: 0.7; z-index: 0;
+            animation: pulseGlowAlt 9s ease-in-out infinite alternate;
+        }
+
+        .yellowGlow {
+            position: absolute; width: 600px; height: 600px; bottom: 20%; left: 50%;
+            transform: translateX(-50%);
+            background: radial-gradient(circle, rgba(253, 255, 85, 0.15) 0%, transparent 70%);
+            filter: blur(140px); opacity: 0.75; z-index: 0;
+            animation: yellowPulse 7.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes yellowPulse {
+            0% { transform: translateX(-50%) scale(1); opacity: 0.5; }
+            100% { transform: translateX(-50%) scale(1.25); opacity: 0.9; }
+        }
+        @keyframes pulseGlow {
+            0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.3); opacity: 0.9; }
+        }
+        @keyframes pulseGlowAlt {
+            0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.25); opacity: 0.85; }
+        }
+
+        .container { z-index: 3; position: relative; max-width: 600px; padding: 20px; }
+
+        /* FLOATING HERO */
+        .hero {
+            width: 250px; height: auto; margin-bottom: 20px;
+            filter: drop-shadow(0 0 15px rgba(0, 234, 255, 0.4));
+            animation: floatHero 4.5s ease-in-out infinite; border-radius: 12px;
+        }
+        @keyframes floatHero {
+            0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); }
+        }
+
+        h1 { font-size: 2.8rem; font-weight: 900; margin-bottom: 10px; color: var(--gh-blue); text-shadow: 0 0 15px rgba(0, 234, 255, 0.4); text-transform: uppercase; letter-spacing: 2px; }
+        p { font-size: 1.1rem; color: #ccc; margin-bottom: 30px; line-height: 1.5; }
+
+        .subtext { margin-top: 30px; font-size: 0.9rem; color: #666; font-family: monospace; }
+        
+        /* BUTTON OVERRIDES */
+        .btn-home { background: var(--gh-blue); color: #000; box-shadow: 0 0 15px rgba(0, 234, 255, 0.3); }
+        .btn-home:hover { box-shadow: 0 0 25px rgba(0, 234, 255, 0.6); }
+        
+        .btn-login { background: var(--gh-yellow); color: #000; box-shadow: 0 0 15px rgba(253, 255, 85, 0.3); }
+        .btn-login:hover { box-shadow: 0 0 25px rgba(253, 255, 85, 0.6); }
+    </style>
+</head>
+<body>
+
+    <div class="yellowGlow"></div>
+    <div class="particles" id="particleContainer"></div>
+
+    <div class="container">
+        <img id="heroImage" class="hero" alt="GH Hero" src="assets/GH_Hero.png" />
+
+        <h1>Lost in the Hangout?</h1>
+        <p>The page you’re looking for doesn’t exist.<br>Maybe it got yeeted into the void.</p>
+
+        <a href="index.html" class="gh-btn btn-home">Return Home</a>
+        <a id="loginBtn" href="login.html" class="gh-btn btn-login" style="display:none;">Login</a>
+
+        <div class="subtext">Error 404 – Signal Lost</div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="firebase-init.js"></script>
+
+    <script>
+        /* 1. AUTH CHECK */
+        const auth = firebase.auth();
+        const loginBtn = document.getElementById("loginBtn");
+
+        auth.onAuthStateChanged((user) => {
+            if (!user) loginBtn.style.display = "inline-block";
+        });
+
+        /* 2. PARTICLES */
+        const container = document.getElementById("particleContainer");
+        for (let i = 0; i < 40; i++) {
+            const p = document.createElement("div");
+            p.classList.add("particle");
+            p.style.left = Math.random() * 100 + "vw";
+            p.style.top = Math.random() * 100 + "vh";
+            p.style.animationDelay = Math.random() * 10 + "s";
+            p.style.opacity = Math.random() * 0.3 + 0.1;
+            p.style.transform = `scale(${Math.random() * 1.2 + 0.5})`;
+            container.appendChild(p);
+        }
+
+        /* 3. HERO RANDOMIZER */
+        const roll = Math.random();
+        let selectedHero = "GH_Hero.png";
+
+        if (roll <= 0.05) { // 5% Glitch Chance
+            selectedHero = "gh_hero_glitch.png"; 
+        } else {
+            const normalHeroes = [
+                "GH_Hero.png", "gh_hero_fall.png", "gh_hero_winter.png", 
+                "gh_hero_halloween.png", "gh_hero_funny.png"
+            ];
+            selectedHero = normalHeroes[Math.floor(Math.random() * normalHeroes.length)];
+        }
+        document.getElementById("heroImage").src = `assets/${selectedHero}`;
+    </script>
+
+</body>
+</html>

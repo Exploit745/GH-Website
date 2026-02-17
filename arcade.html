@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – The Arcade</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* GATEKEEPER: Hide page until auth clears */
+        body { display: none; }
+
+        /* [ARCADE HUB STYLES] */
+        .arcade-hero {
+            text-align: center; margin-bottom: 50px; padding: 40px 20px;
+            background: radial-gradient(circle, #1a0525 0%, #000 70%);
+            border-bottom: 2px solid var(--gh-purple);
+            position: relative; overflow: hidden;
+        }
+        .arcade-title { 
+            font-size: 48px; font-weight: 900; color: #fff; margin: 0; 
+            text-shadow: 0 0 20px var(--gh-purple); letter-spacing: 4px; text-transform: uppercase;
+        }
+        .arcade-sub { color: var(--gh-blue); font-size: 14px; letter-spacing: 2px; margin-top: 10px; font-weight: bold; text-transform: uppercase; }
+
+        /* BENTO GRID */
+        .hub-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            grid-auto-rows: 220px; 
+            gap: 20px; 
+            max-width: 1200px; 
+            margin: 0 auto 40px; 
+        }
+
+        /* CARDS */
+        .hub-card {
+            background: #111; border: 1px solid #333; border-radius: 16px; 
+            position: relative; overflow: hidden; transition: 0.3s;
+            display: flex; flex-direction: column; justify-content: flex-end; padding: 20px;
+            text-decoration: none;
+        }
+        .hub-card:hover { transform: translateY(-5px); z-index: 2; }
+        
+        .card-bg { 
+            position: absolute; inset: 0; object-fit: cover; opacity: 0.4; 
+            transition: 0.5s; width: 100%; height: 100%; z-index: 0;
+        }
+        .hub-card:hover .card-bg { opacity: 0.7; transform: scale(1.1); }
+        .card-content { position: relative; z-index: 1; pointer-events: none; }
+        
+        .card-title { font-size: 24px; font-weight: 900; color: #fff; text-transform: uppercase; margin: 0; text-shadow: 2px 2px 0 #000; }
+        .card-meta { font-size: 12px; font-weight: bold; color: var(--gh-yellow); background: rgba(0,0,0,0.8); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-bottom: 5px; }
+
+        /* FEATURED: CLICKER (2x2) */
+        .card-clicker { grid-column: span 2; grid-row: span 2; border-color: var(--gh-blue); }
+        .card-clicker:hover { box-shadow: 0 0 30px rgba(0, 234, 255, 0.3); }
+
+        /* MC SERVER (1x1) */
+        .card-mc { border-color: #00ff6a; }
+        .card-mc:hover { box-shadow: 0 0 20px rgba(0, 255, 106, 0.2); }
+
+        /* CLIPS (1x1) */
+        .card-clips { border-color: var(--gh-red); }
+        .card-clips:hover { box-shadow: 0 0 20px rgba(255, 68, 68, 0.2); }
+
+        /* YAPP / POSTS (1x1) */
+        .card-yapp { border-color: var(--gh-yellow); }
+        .card-yapp:hover { box-shadow: 0 0 20px rgba(253, 255, 85, 0.2); }
+
+        /* SOCIAL / DMs (1x2 Vertical) */
+        .card-social { 
+            grid-column: span 1; grid-row: span 2; background: #0a0a0a; 
+            border: 1px solid #333; padding: 0; display: flex; flex-direction: column; 
+            justify-content: flex-start;
+        }
+        .social-header { padding: 15px; border-bottom: 1px solid #333; background: #111; font-weight: bold; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+        .friend-list { overflow-y: auto; flex-grow: 1; padding: 10px; }
+        
+        .friend-row { 
+            display: flex; align-items: center; gap: 10px; padding: 8px; 
+            border-radius: 8px; cursor: pointer; transition: 0.2s; margin-bottom: 5px; 
+        }
+        .friend-row:hover { background: #1a1a1a; }
+        .f-av { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #444; }
+        .f-name { font-size: 13px; font-weight: bold; color: #ccc; }
+        .f-status { width: 8px; height: 8px; border-radius: 50%; background: #444; margin-left: auto; }
+        .f-status.online { background: #00ff6a; box-shadow: 0 0 5px #00ff6a; }
+
+        /* FOOTER BANNER */
+        .soon-footer { max-width: 1200px; margin: 0 auto 50px; text-align: center; color: #666; font-size: 14px; font-style: italic; border-top: 1px dashed #333; padding-top: 20px; }
+
+        @media (max-width: 900px) {
+            .hub-grid { grid-template-columns: 1fr; grid-template-rows: auto; display: flex; flex-direction: column; }
+            .card-clicker, .card-social { height: 300px; }
+            .hub-card { height: 150px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content" style="padding:0; max-width:100%;">
+            
+            <div class="arcade-hero">
+                <h1 class="arcade-title">The Arcade</h1>
+                <div class="arcade-sub">Select your game</div>
+            </div>
+
+            <div class="hub-grid">
+                
+                <a href="clicker.html" class="hub-card card-clicker">
+                    <img src="assets/clicker.png" class="card-bg" style="object-position: center 30%;">
+                    <div class="card-content">
+                        <span class="card-meta">POPULAR</span>
+                        <h2 class="card-title">GH Clicker</h2>
+                        <p style="color:#ccc; font-size:14px;">Idle mining simulation. Build your setup, ascend to godhood.</p>
+                    </div>
+                </a>
+
+                <div class="hub-card card-social">
+                    <div class="social-header">
+                        <span>QUICK COMMS</span>
+                        <a href="inbox.html" style="font-size:10px; color:var(--gh-blue); text-decoration:none;">FULL INBOX ↗</a>
+                    </div>
+                    <div id="friendList" class="friend-list">
+                        <div style="text-align:center; padding:20px; color:#666; font-size:12px;">Scanning friends...</div>
+                    </div>
+                </div>
+
+                <a href="posts.html" class="hub-card card-yapp">
+                    <img src="assets/GH_yapp_logo.png" class="card-bg" style="object-position: center 30%;">
+                    <div class="card-content">
+                        <span class="card-meta">SOCIAL</span>
+                        <h2 class="card-title" style="font-size:20px;">Yapp Feed</h2>
+                    </div>
+                </a>
+
+                <a href="mcservers.html" class="hub-card card-mc">
+                    <img src="assets/mc_grassblock.png" class="card-bg" style="object-position: center 30%;">
+                    <div class="card-content">
+                        <span class="card-meta" id="mcStatusBadge">CHECKING...</span>
+                        <h2 class="card-title" style="font-size:20px;">MC Status</h2>
+                    </div>
+                </a>
+
+                <a href="challenges.html" class="hub-card card-clips">
+                    <img src="assets/cliplogo.png" class="card-bg" style="object-position: center 30%;">
+                    <div class="card-content">
+                        <span class="card-meta">WEEKLY</span>
+                        <h2 class="card-title" style="font-size:20px;">Clips & Bounties</h2>
+                    </div>
+                </a>
+
+                <a href="soundboard.html" class="hub-card" style="border-color:var(--gh-purple);">
+                    <div class="card-content" style="text-align:center; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                        <div style="font-size:40px; margin-bottom:10px;">🔊</div>
+                        <h2 class="card-title" style="font-size:18px;">Sonic Deck</h2>
+                    </div>
+                </a>
+
+                <a href="pixelwar.html" class="hub-card" style="border-color:#ff00ff;">
+                    <div class="card-content" style="text-align:center; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                        <div style="font-size:40px; margin-bottom:10px;">🎨</div>
+                        <h2 class="card-title" style="font-size:18px;">Pixel War</h2>
+                    </div>
+                </a>
+
+                <a href="vibecheck.html" class="hub-card" style="border-color:#fff;">
+                    <div class="card-content" style="text-align:center; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                        <div style="font-size:40px; margin-bottom:10px;">🎰</div>
+                        <h2 class="card-title" style="font-size:18px;">Vibe Check</h2>
+                        <p style="color:#888; font-size:12px; margin:0;">Test your luck.</p>
+                    </div>
+                </a>
+
+                <a href="dinogame.html" class="hub-card" style="border-color:#00ff6a;">
+                    <div class="card-content" style="text-align:center; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                        <div style="font-size:40px; margin-bottom:10px;">🦖</div>
+                        <h2 class="card-title" style="font-size:18px;">Dino Game</h2>
+                        <p style="color:#888; font-size:12px; margin:0;">Run. Jump. Die.</p>
+                    </div>
+                </a>
+
+            </div>
+
+            <div class="soon-footer">
+                More Games Coming Soon...
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        let currentUser = null;
+
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                // UNAUTHORIZED: Redirect
+                window.location.replace("login.html");
+            } else {
+                // AUTHORIZED: Show page & Init Logic
+                console.log("Gatekeeper: Access Granted.");
+                document.body.style.display = "block";
+                
+                currentUser = user;
+                
+                // Initialize Particles
+                const container = document.getElementById("particleContainer");
+                for(let i=0; i<30; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; p.style.animationDelay=Math.random()*10+"s"; container.appendChild(p); }
+
+                // Load Data
+                loadFriends(user.uid);
+                checkServerStatus();
+            }
+        });
+
+        /* FRIENDS LIST */
+        async function loadFriends(uid) {
+            const list = document.getElementById("friendList");
+            const snap = await db.collection("users").doc(uid).collection("friends").where("status", "==", "accepted").get();
+            list.innerHTML = "";
+            if(snap.empty) {
+                list.innerHTML = "<div style='padding:20px; text-align:center; color:#444; font-size:12px;'>No friends online.<br><a href='members.html' style='color:var(--gh-blue)'>Find Squad</a></div>";
+                return;
+            }
+            for(const doc of snap.docs) {
+                const fDoc = await db.collection("users").doc(doc.id).get();
+                if(fDoc.exists) {
+                    const f = fDoc.data();
+                    const uids = [uid, doc.id].sort();
+                    const chatId = uids[0] + "_" + uids[1];
+                    list.innerHTML += `
+                        <div class="friend-row" onclick="openDM('${chatId}')">
+                            <img src="${f.photoURL || 'assets/GH_Hero.png'}" class="f-av">
+                            <div class="f-name">${f.name}</div>
+                            <div class="f-status online"></div>
+                        </div>`;
+                }
+            }
+        }
+
+        async function openDM(chatId) {
+            const ref = db.collection("conversations").doc(chatId);
+            const doc = await ref.get();
+            if(!doc.exists) {
+                await ref.set({ participants: chatId.split('_'), lastMessage: "System: Link Start.", lastUpdated: firebase.firestore.FieldValue.serverTimestamp() });
+            }
+            window.location.href = "inbox.html";
+        }
+
+        function checkServerStatus() {
+            const mainIP = "73.196.12.210:25595"; 
+            fetch("https://api.mcsrvstat.us/3/" + mainIP).then(r=>r.json()).then(d=>{
+                const badge = document.getElementById("mcStatusBadge");
+                if(d.online) { badge.innerText = `ONLINE: ${d.players.online}/${d.players.max}`; badge.style.background = "rgba(0, 255, 106, 0.2)"; badge.style.color = "#00ff6a"; } 
+                else { badge.innerText = "OFFLINE"; badge.style.background = "rgba(255, 68, 68, 0.2)"; badge.style.color = "#ff4444"; }
+            }).catch(()=>{});
+        }
+    </script>
+</body>
+</html>

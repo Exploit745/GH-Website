@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Dino Run</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+    <style>
+        /* GATEKEEPER */
+        body { display: none; }
+
+        /* [DINO RUN ULTIMATE STYLES] */
+        body { overflow: hidden; touch-action: manipulation; user-select: none; background: #000; }
+        
+        /* BACKGROUND ANIMATION */
+        .cyber-grid {
+            position: fixed; top: 0; left: 0; width: 200%; height: 200%;
+            background-image: 
+                linear-gradient(rgba(0, 234, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 234, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);
+            animation: gridScroll 20s linear infinite; z-index: -1;
+        }
+        @keyframes gridScroll { 0% { transform: perspective(500px) rotateX(60deg) translateY(0) translateZ(-200px); } 100% { transform: perspective(500px) rotateX(60deg) translateY(50px) translateZ(-200px); } }
+
+        /* NAV HEADER */
+        .game-nav {
+            position: absolute; top: 20px; left: 20px; z-index: 100;
+            display: flex; gap: 15px;
+        }
+        .nav-btn {
+            background: rgba(0,0,0,0.6); border: 1px solid #444; color: #fff;
+            padding: 8px 15px; border-radius: 6px; text-decoration: none;
+            font-size: 12px; font-weight: bold; text-transform: uppercase;
+            backdrop-filter: blur(5px); transition: 0.2s;
+        }
+        .nav-btn:hover { border-color: var(--gh-yellow); color: var(--gh-yellow); }
+
+        /* GAME CONTAINER */
+        .game-wrapper {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        }
+        
+        #gameCanvas {
+            box-shadow: 0 0 50px rgba(0, 234, 255, 0.1); border-radius: 12px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 50%, #FFE5B4 100%);
+            transition: filter 0.5s; border: 2px solid #333;
+        }
+        
+        /* NIGHT MODE */
+        .dark-mode #gameCanvas {
+            background: linear-gradient(to bottom, #0a0a1e 0%, #1a1a2e 50%, #000 100%);
+            border-color: var(--gh-yellow);
+            box-shadow: 0 0 40px rgba(253, 255, 85, 0.2);
+        }
+
+        /* UI OVERLAYS */
+        .ui-layer {
+            position: absolute; top: 20px; right: 20px; text-align: right;
+            font-family: 'Courier New', monospace; pointer-events: none;
+        }
+        .score-box {
+            font-size: 32px; font-weight: 900; color: #fff;
+            text-shadow: 2px 2px 0px #000;
+        }
+        .hiscore-box { font-size: 14px; color: var(--gh-yellow); font-weight: bold; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; display: inline-block; }
+
+        .combo-popup {
+            position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
+            font-size: 24px; font-weight: 900; color: var(--gh-yellow);
+            text-shadow: 0 0 10px var(--gh-yellow); opacity: 0; pointer-events: none;
+            transition: 0.2s;
+        }
+        .combo-popup.show { opacity: 1; transform: translateX(-50%) scale(1.2); }
+
+        /* SCREENS */
+        .screen-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.85);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 50; backdrop-filter: blur(8px);
+        }
+        
+        .glitch-text {
+            font-size: 60px; font-weight: 900; color: #fff; text-transform: uppercase;
+            text-shadow: 3px 3px 0px var(--gh-blue), -3px -3px 0px var(--gh-red);
+            animation: glitch 2s infinite; margin-bottom: 10px;
+        }
+        @keyframes glitch { 0% { transform: skew(0deg); } 20% { transform: skew(-2deg); } 21% { transform: skew(2deg); } 22% { transform: skew(0deg); } }
+
+        .btn-start {
+            background: var(--gh-blue); color: #000; padding: 15px 40px; font-size: 20px;
+            font-weight: 900; border: none; cursor: pointer; text-transform: uppercase;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            transition: 0.2s; margin-top: 20px;
+        }
+        .btn-start:hover { transform: scale(1.05); background: #fff; box-shadow: 0 0 30px var(--gh-blue); }
+
+        /* LEADERBOARD */
+        .lb-card {
+            background: #111; border: 1px solid #333; border-radius: 12px; padding: 20px;
+            width: 300px; margin-top: 20px; text-align: left;
+        }
+        .lb-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #222; font-size: 13px; color: #ccc; }
+        .lb-row:first-child { color: var(--gh-yellow); font-weight: bold; }
+        .lb-rank { width: 30px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="cyber-grid"></div>
+    
+    <div class="game-nav">
+        <a href="gh_dashboard.html" class="nav-btn">← Dashboard</a>
+        <a href="arcade.html" class="nav-btn">← Arcade</a>
+    </div>
+
+    <div class="game-wrapper" id="gameWrapper">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div class="ui-layer">
+            <div class="hiscore-box">HI: <span id="hiScoreVal">0</span></div>
+            <div class="score-box"><span id="scoreVal">0</span></div>
+        </div>
+
+        <div id="comboDisplay" class="combo-popup">COMBO x2!</div>
+
+        <div id="startScreen" class="screen-overlay">
+            <div class="glitch-text">GH RUNNER</div>
+            <div style="color:#888; font-family:monospace; margin-bottom:20px;">[SPACE] / [TAP] to Jump</div>
+            <button class="btn-start" onclick="startGame()">INITIATE</button>
+        </div>
+
+        <div id="gameOverScreen" class="screen-overlay" style="display:none;">
+            <div class="glitch-text" style="color:var(--gh-red); text-shadow:3px 3px 0 #fff;">SKILL ISSUE</div>
+            <div style="font-size:24px; font-weight:bold; color:#fff;">SCORE: <span id="finalScore">0</span></div>
+            
+            <div class="lb-card">
+                <div style="font-size:12px; color:var(--gh-blue); font-weight:bold; margin-bottom:10px; text-transform:uppercase;">Global Top 5</div>
+                <div id="lbContent">Loading data...</div>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <button class="btn-start" onclick="startGame()">RETRY</button>
+                <button class="btn-start" style="background:transparent; border:1px solid #fff; color:#fff;" onclick="window.location.href='arcade.html'">EXIT</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script> 
+    <script src="firebase-init.js"></script>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // GAME STATE
+        let isRunning = false;
+        let score = 0;
+        let speed = 6;
+        let frame = 0;
+        let obstacles = [];
+        let particles = [];
+        let combo = 0;
+        let darkMode = false;
+        
+        // PLAYER
+        const player = { x: 50, y: 0, w: 40, h: 40, dy: 0, jumpPower: 14, grounded: true };
+        const gravity = 0.8;
+        const groundHeight = 50;
+
+        // ASSETS (Emojis)
+        const OBSTACLES = [
+            { t: '🌵', w: 30, h: 50, yOff: 0 },
+            { t: '🪨', w: 40, h: 30, yOff: 10 },
+            { t: '☢️', w: 35, h: 35, yOff: 5 },
+            { t: '👾', w: 40, h: 40, yOff: 30 }
+        ];
+
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                
+                // Initialize Game UI once visible
+                resize(); 
+                const localHi = localStorage.getItem('gh_dino_hi') || 0;
+                document.getElementById('hiScoreVal').innerText = localHi;
+            }
+        });
+
+        // SETUP CANVAS
+        function resize() {
+            canvas.width = Math.min(window.innerWidth - 40, 900);
+            canvas.height = 400;
+        }
+        window.addEventListener('resize', resize);
+
+        // CONTROLS
+        function jump() {
+            if (player.grounded) {
+                player.dy = -player.jumpPower;
+                player.grounded = false;
+                spawnParticles(player.x, canvas.height - groundHeight, 5, '#fff');
+            }
+        }
+        document.addEventListener('keydown', e => { if (e.code === 'Space' && isRunning) jump(); });
+        canvas.addEventListener('touchstart', e => { e.preventDefault(); if(isRunning) jump(); });
+        canvas.addEventListener('mousedown', () => { if(isRunning) jump(); });
+
+        // MAIN LOOP
+        function loop() {
+            if (!isRunning) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // LOGIC
+            updatePlayer();
+            updateObstacles();
+            updateParticles();
+            
+            // DRAW
+            drawGround();
+            drawPlayer();
+            drawObstacles();
+            drawParticles();
+            
+            // DIFFICULTY
+            score++;
+            document.getElementById('scoreVal').innerText = Math.floor(score/5);
+            if (score % 500 === 0) speed += 0.5;
+            
+            // DARK MODE TRIGGER
+            if(score > 1000 && !darkMode) {
+                darkMode = true;
+                document.getElementById('gameWrapper').classList.add('dark-mode');
+            }
+
+            frame++;
+            requestAnimationFrame(loop);
+        }
+
+        function updatePlayer() {
+            player.dy += gravity;
+            player.y += player.dy;
+            
+            // Ground Collision
+            if (player.y > canvas.height - groundHeight - player.h) {
+                player.y = canvas.height - groundHeight - player.h;
+                player.dy = 0;
+                player.grounded = true;
+            }
+        }
+
+        function updateObstacles() {
+            // Spawn
+            if (frame % Math.floor(1500 / speed) === 0) { 
+                if (Math.random() > 0.3) {
+                    const type = OBSTACLES[Math.floor(Math.random() * OBSTACLES.length)];
+                    obstacles.push({
+                        x: canvas.width,
+                        y: canvas.height - groundHeight - type.h - (type.yOff > 20 ? 40 : 0), 
+                        w: type.w, h: type.h, t: type.t, passed: false
+                    });
+                }
+            }
+
+            // Move & Collide
+            obstacles.forEach((ob, i) => {
+                ob.x -= speed;
+                
+                // Collision Box
+                if (
+                    player.x < ob.x + ob.w - 10 &&
+                    player.x + player.w > ob.x + 10 &&
+                    player.y < ob.y + ob.h - 10 &&
+                    player.y + player.h > ob.y + 10
+                ) {
+                    gameOver();
+                }
+
+                // Pass Logic
+                if (!ob.passed && ob.x + ob.w < player.x) {
+                    ob.passed = true;
+                    combo++;
+                    if(combo > 1) showCombo(combo);
+                }
+
+                if (ob.x + ob.w < 0) obstacles.splice(i, 1);
+            });
+        }
+
+        function spawnParticles(x, y, count, color) {
+            for(let i=0; i<count; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 5, vy: (Math.random() - 0.5) * 5,
+                    life: 1.0, color: color
+                });
+            }
+        }
+
+        function updateParticles() {
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+                if(p.life <= 0) particles.splice(i, 1);
+            });
+        }
+
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 4, 4);
+                ctx.globalAlpha = 1.0;
+            });
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = darkMode ? '#fff' : '#000';
+            ctx.font = "30px Arial";
+            ctx.fillText("🦖", player.x, player.y + 35);
+        }
+
+        function drawObstacles() {
+            ctx.font = "30px Arial";
+            obstacles.forEach(ob => { ctx.fillText(ob.t, ob.x, ob.y + 30); });
+        }
+
+        function drawGround() {
+            ctx.fillStyle = darkMode ? '#00eaff' : '#333';
+            ctx.fillRect(0, canvas.height - groundHeight, canvas.width, 2);
+        }
+
+        function showCombo(c) {
+            const el = document.getElementById('comboDisplay');
+            el.innerText = `COMBO x${c} 🔥`;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 500);
+        }
+
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameOverScreen').style.display = 'none';
+            resetGame();
+            isRunning = true;
+            loop();
+        }
+
+        function resetGame() {
+            score = 0; speed = 6; frame = 0; combo = 0;
+            obstacles = []; particles = [];
+            darkMode = false;
+            document.getElementById('gameWrapper').classList.remove('dark-mode');
+            player.y = canvas.height - groundHeight - player.h;
+        }
+
+        function gameOver() {
+            isRunning = false;
+            const final = Math.floor(score/5);
+            document.getElementById('finalScore').innerText = final;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+            
+            const user = firebase.auth().currentUser;
+            if(user) {
+                const userScoreRef = db.collection('arcade_dino').doc(user.uid);
+                
+                userScoreRef.get().then(doc => {
+                    if (doc.exists) {
+                        if (final > doc.data().score) {
+                            userScoreRef.update({
+                                score: final,
+                                name: user.displayName || "Agent",
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            }).then(() => loadLeaderboard());
+                        } else {
+                            loadLeaderboard(); 
+                        }
+                    } else {
+                        userScoreRef.set({
+                            uid: user.uid,
+                            name: user.displayName || "Agent",
+                            score: final,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        }).then(() => loadLeaderboard());
+                    }
+                });
+            } else {
+                loadLeaderboard();
+            }
+        }
+
+        function loadLeaderboard() {
+            const el = document.getElementById('lbContent');
+            el.innerHTML = "Fetching...";
+            
+            db.collection('arcade_dino').orderBy('score', 'desc').limit(5).get().then(snap => {
+                if(snap.empty) { el.innerHTML = "No scores yet."; return; }
+                let html = "";
+                let rank = 1;
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    let color = rank === 1 ? 'var(--gh-yellow)' : '#ccc';
+                    html += `<div class="lb-row" style="color:${color}"><span class="lb-rank">#${rank}</span><span>${d.name}</span><span>${d.score}</span></div>`;
+                    rank++;
+                });
+                el.innerHTML = html;
+            });
+        }
+
+    </script>
+</body>
+</html>

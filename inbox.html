@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Secret Lair</title>
+    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+    <style>
+        /* INBOX SPECIFIC STYLES (Overrides) */
+        .page-wrap { display: flex; height: calc(100vh - 70px); overflow: hidden; }
+        .comms-container { 
+            display: grid; grid-template-columns: 280px 1fr; width: 100%; max-width: 1400px; 
+            margin: 0 auto; height: 100%; border-right: 1px solid #222; border-left: 1px solid #222;
+        }
+
+        /* SIDEBAR */
+        .comms-sidebar { background: #111; border-right: 1px solid #333; display: flex; flex-direction: column; }
+        .sidebar-header { 
+            padding: 20px; border-bottom: 1px solid #333; font-size: 18px; font-weight: 900; 
+            color: var(--gh-yellow); text-transform: uppercase; letter-spacing: 1px; 
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        /* NEW CHAT BUTTON */
+        .new-chat-btn {
+            background: var(--gh-blue); border: none; border-radius: 50%; width: 30px; height: 30px; 
+            cursor: pointer; font-weight: bold; font-size: 18px; color: #000; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .new-chat-btn:hover { animation: wobble 0.5s infinite; background: #fff; }
+        @keyframes wobble { 0% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } 100% { transform: rotate(0deg); } }
+
+        .nav-tabs { display: flex; padding: 10px; gap: 5px; border-bottom: 1px solid #333; }
+        .nav-tab { flex: 1; background: #222; border: none; color: #888; padding: 10px; cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 11px; transition: 0.2s; text-transform: uppercase; }
+        .nav-tab:hover { color: #fff; background: #333; }
+        .nav-tab.active { background: var(--gh-blue); color: #000; box-shadow: 0 0 10px rgba(0, 234, 255, 0.2); }
+
+        .list-container { flex-grow: 1; overflow-y: auto; padding: 10px; }
+        
+        /* NOTIFICATION ITEMS */
+        .noti-item { background: #1a1a1a; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 3px solid #444; position: relative; transition: 0.2s; cursor: pointer; }
+        .noti-item:hover { background: #222; transform: translateX(5px); }
+        .noti-item.unread { border-left-color: var(--gh-yellow); background: rgba(253, 255, 85, 0.05); }
+        .noti-title { font-weight: bold; font-size: 13px; margin-bottom: 5px; color: #fff; }
+        .noti-msg { font-size: 12px; color: #ccc; line-height: 1.4; }
+        .noti-time { font-size: 10px; color: #666; margin-top: 5px; display: block; }
+        .noti-del { position: absolute; top: 10px; right: 10px; color: #666; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .noti-del:hover { color: var(--gh-red); transform: scale(1.5) rotate(90deg); }
+
+        /* CHAT ITEMS */
+        .chat-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; margin-bottom: 5px; }
+        .chat-row:hover { background: #222; }
+        .chat-row.active { background: rgba(0, 234, 255, 0.1); border: 1px solid var(--gh-blue); box-shadow: inset 0 0 10px rgba(0,234,255,0.1); }
+        .c-av { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #000; border: 2px solid #333; }
+        .c-info { flex: 1; overflow: hidden; }
+        .c-name { font-size: 13px; font-weight: bold; color: #fff; }
+        .c-last { font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; }
+
+        /* MAIN CONTENT AREA */
+        .comms-main { display: flex; flex-direction: column; background: #050505; position: relative; overflow: hidden; }
+        /* CRT Scanline Effect */
+        .comms-main::after {
+            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2; background-size: 100% 2px, 3px 100%; pointer-events: none; opacity: 0.3;
+        }
+
+        .empty-state { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #444; text-align: center; }
+        .empty-icon { font-size: 60px; margin-bottom: 20px; animation: float 3s infinite ease-in-out; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        /* CHAT WINDOW */
+        .chat-header { padding: 15px 20px; border-bottom: 1px solid #333; background: #111; display: flex; align-items: center; gap: 15px; z-index: 5; }
+        .chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; z-index: 5; }
+        
+        .msg { max-width: 70%; padding: 10px 15px; border-radius: 12px; font-size: 14px; line-height: 1.4; position: relative; word-wrap: break-word; }
+        .msg-in { align-self: flex-start; background: #222; border-bottom-left-radius: 2px; }
+        .msg-out { align-self: flex-end; background: var(--gh-blue); color: #000; border-bottom-right-radius: 2px; font-weight: 800; }
+        .msg-meta { font-size: 10px; margin-top: 5px; opacity: 0.6; }
+
+        .chat-input-area { padding: 20px; background: #111; border-top: 1px solid #333; display: flex; gap: 10px; z-index: 5; }
+        .chat-input { flex-grow: 1; background: #000; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 6px; outline: none; }
+        .chat-input:focus { border-color: var(--gh-blue); }
+        .send-btn { background: var(--gh-blue); color: #000; border: none; padding: 0 20px; border-radius: 6px; font-weight: 900; cursor: pointer; text-transform: uppercase; }
+        .send-btn:hover { background: #fff; box-shadow: 0 0 10px #fff; }
+
+        .action-row { padding: 10px 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; background: #161616; }
+        
+        .nuke-btn { 
+            background: rgba(255, 68, 68, 0.1); border: 1px solid var(--gh-red); color: var(--gh-red); 
+            padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; text-transform: uppercase; 
+        }
+        .nuke-btn:hover { background: var(--gh-red); color: #fff; box-shadow: 0 0 10px var(--gh-red); }
+
+        /* MODAL */
+        .modal-box { background: #111; border: 2px solid var(--gh-blue); padding: 25px; width: 300px; border-radius: 12px; text-align: center; }
+        .user-select-row { padding: 12px; border-bottom: 1px solid #333; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: 0.2s; }
+        .user-select-row:hover { background: #222; padding-left: 20px; }
+
+        @media (max-width: 768px) {
+            .comms-container { grid-template-columns: 1fr; }
+            .comms-main { display: none; } 
+            .comms-main.mobile-active { display: flex; position: fixed; inset: 0; z-index: 100; top: 70px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="comms-container">
+            
+            <div class="comms-sidebar">
+                <div class="sidebar-header">
+                    <span>GH_NET <span style="font-size:10px; color:#666;">v4.2</span></span>
+                    <button class="new-chat-btn" onclick="openNewChatModal()" title="Start New Chat">+</button>
+                </div>
+                
+                <div class="nav-tabs">
+                    <button class="nav-tab active" onclick="switchTab('noti')">🚨 Panic</button>
+                    <button class="nav-tab" onclick="switchTab('msgs')">💬 Yapping</button>
+                </div>
+
+                <div id="notiPanel" class="list-container">
+                    <div class="action-row">
+                        <span style="font-size:10px; color:#666; font-weight:bold;">INCOMING PINGS</span>
+                        <button class="nuke-btn" onclick="clearAllNotis()">☢ NUKE ALL</button>
+                    </div>
+                    <div id="notiList">
+                        <div style="padding:30px; color:#444; text-align:center; font-style:italic;">
+                            It's quiet... too quiet. 🌵<br>
+                            (Go touch grass?)
+                        </div>
+                    </div>
+                </div>
+
+                <div id="msgPanel" class="list-container" style="display:none;">
+                    <div id="conversationList">
+                        <div style="padding:30px; color:#444; text-align:center; font-style:italic;">
+                            Radio Silence.<br>
+                            Click (+) to slide into DMs.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="comms-main" id="mainView">
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-icon">📡</div>
+                    <h2 style="color:var(--gh-blue); margin-bottom:5px;">SECURE CHANNEL</h2>
+                    <p style="color:#666; font-size:13px;">Waiting for signal...<br>(Is the wifi working?)</p>
+                </div>
+
+                <div id="chatInterface" style="display:none; height:100%; flex-direction:column;">
+                    <div class="chat-header">
+                        <button onclick="closeChatMobile()" style="background:transparent; border:none; color:#fff; font-size:20px; cursor:pointer; display:none;" id="mobileBackBtn">←</button>
+                        <img id="chatHeaderAv" src="" class="c-av">
+                        <div style="font-weight:bold; font-size:16px;" id="chatHeaderName">User</div>
+                    </div>
+                    
+                    <div id="chatFeed" class="chat-messages"></div>
+                    
+                    <div class="chat-input-area">
+                        <input type="text" id="msgInput" class="chat-input" placeholder="Say something funny..." onkeypress="handleEnter(event)">
+                        <button class="send-btn" onclick="sendMessage()">YEET 🚀</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="newChatModal" class="gh-modal" onclick="closeModal(event)">
+        <div class="modal-box">
+            <h3 style="margin-top:0; color:var(--gh-blue);">INITIATE PROTOCOL</h3>
+            <div style="font-size:12px; color:#666; margin-bottom:15px;">Select a target to message:</div>
+            
+            <div id="friendSelector" style="max-height:300px; overflow-y:auto; text-align:left;">
+                <div style="color:#444; font-size:12px; text-align:center;">Loading homies...</div>
+            </div>
+            
+            <button onclick="document.getElementById('newChatModal').style.display='none'" style="width:100%; background:transparent; border:1px solid #444; color:#888; padding:8px; margin-top:15px; cursor:pointer; border-radius:6px;">ABORT MISSION</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        let currentUser = null;
+        let activeChatId = null;
+
+        auth.onAuthStateChanged(user => {
+            if(!user) return location.href = "login.html";
+            currentUser = user;
+            loadNotifications();
+            loadConversations();
+            loadFriends();
+        });
+
+        /* TABS */
+        function switchTab(tab) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.nav-tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+            
+            if(tab === 'noti') {
+                document.getElementById('notiPanel').style.display = 'block';
+                document.getElementById('msgPanel').style.display = 'none';
+            } else {
+                document.getElementById('notiPanel').style.display = 'none';
+                document.getElementById('msgPanel').style.display = 'block';
+            }
+        }
+
+        /* NOTIFICATIONS */
+        function loadNotifications() {
+            db.collection("notifications")
+              .where("uid", "==", currentUser.uid)
+              .orderBy("timestamp", "desc")
+              .limit(50)
+              .onSnapshot(snap => {
+                  const list = document.getElementById("notiList");
+                  list.innerHTML = "";
+                  if(snap.empty) { 
+                      list.innerHTML = "<div style='padding:30px; color:#444; text-align:center; font-style:italic;'>It's quiet... too quiet. 🌵<br>(Go touch grass?)</div>"; 
+                      return; 
+                  }
+
+                  snap.forEach(doc => {
+                      const d = doc.data();
+                      const time = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleString() : "";
+                      const row = document.createElement("div");
+                      row.className = `noti-item ${d.read ? '' : 'unread'}`;
+                      row.innerHTML = `
+                        <div class="noti-del" onclick="deleteNoti('${doc.id}', event)" title="Delete">✕</div>
+                        <div class="noti-title" style="color:${d.type === 'warning' ? 'var(--gh-red)' : (d.type==='success'?'#00ff6a':'var(--gh-blue)')}">${d.title}</div>
+                        <div class="noti-msg">${d.message}</div>
+                        <span class="noti-time">${time}</span>
+                      `;
+                      row.onclick = () => {
+                          if(d.link && d.link !== '#') location.href = d.link;
+                          markRead(doc.id);
+                      };
+                      list.appendChild(row);
+                  });
+              });
+        }
+
+        function markRead(id) { db.collection("notifications").doc(id).update({ read: true }); }
+        function deleteNoti(id, e) { e.stopPropagation(); db.collection("notifications").doc(id).delete(); }
+        function clearAllNotis() {
+            if(!confirm("ARE YOU SURE?\nThis will NUKE all your alerts.")) return;
+            db.collection("notifications").where("uid", "==", currentUser.uid).get()
+              .then(snap => {
+                  const batch = db.batch();
+                  snap.forEach(doc => batch.delete(doc.ref));
+                  batch.commit();
+              });
+        }
+
+        /* CONVERSATIONS */
+        function loadConversations() {
+            db.collection("conversations")
+              .where("participants", "array-contains", currentUser.uid)
+              .orderBy("lastUpdated", "desc")
+              .onSnapshot(async snap => {
+                  const list = document.getElementById("conversationList");
+                  list.innerHTML = "";
+                  if(snap.empty) { 
+                      list.innerHTML = "<div style='padding:30px; color:#444; text-align:center; font-style:italic;'>Radio Silence.<br>Click (+) to slide into DMs.</div>"; 
+                      return; 
+                  }
+
+                  for (const doc of snap.docs) {
+                      const d = doc.data();
+                      const otherUid = d.participants.find(uid => uid !== currentUser.uid);
+                      let otherUser = { name: "Unknown Agent", photo: "assets/GH_Hero.png" };
+                      
+                      if(otherUid) {
+                          const uDoc = await db.collection("users").doc(otherUid).get();
+                          if(uDoc.exists) {
+                              const uData = uDoc.data();
+                              otherUser = { name: uData.name, photo: uData.photoURL || "assets/GH_Hero.png" };
+                          }
+                      }
+
+                      const div = document.createElement("div");
+                      div.className = "chat-row";
+                      if(activeChatId === doc.id) div.classList.add("active");
+                      div.innerHTML = `
+                        <img src="${otherUser.photo}" class="c-av">
+                        <div class="c-info">
+                            <div class="c-name">${otherUser.name}</div>
+                            <div class="c-last">${d.lastMessage || "New conversation"}</div>
+                        </div>
+                      `;
+                      div.onclick = () => loadChat(doc.id, otherUser);
+                      list.appendChild(div);
+                  }
+              });
+        }
+
+        let unsubscribeChat = null;
+
+        function loadChat(chatId, otherUser) {
+            activeChatId = chatId;
+            document.getElementById("emptyState").style.display = "none";
+            document.getElementById("chatInterface").style.display = "flex";
+            document.getElementById("chatHeaderName").innerText = otherUser.name;
+            document.getElementById("chatHeaderAv").src = otherUser.photo;
+            
+            // Highlight active row
+            document.querySelectorAll('.chat-row').forEach(r => r.classList.remove('active'));
+            // Note: Re-rendering happens on snapshot, so dynamic class adding is tricky here without ID
+
+            if(window.innerWidth <= 768) {
+                document.getElementById("mainView").classList.add("mobile-active");
+                document.getElementById("mobileBackBtn").style.display = "block";
+            }
+
+            if(unsubscribeChat) unsubscribeChat();
+
+            unsubscribeChat = db.collection("conversations").doc(chatId).collection("messages")
+                .orderBy("timestamp", "asc")
+                .limitToLast(50)
+                .onSnapshot(snap => {
+                    const feed = document.getElementById("chatFeed");
+                    feed.innerHTML = "";
+                    snap.forEach(doc => {
+                        const m = doc.data();
+                        const isMe = m.senderId === currentUser.uid;
+                        const date = m.timestamp ? new Date(m.timestamp.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "...";
+                        
+                        feed.innerHTML += `
+                            <div class="msg ${isMe ? 'msg-out' : 'msg-in'}">
+                                ${m.text}
+                                <div class="msg-meta" style="text-align:${isMe?'right':'left'}">${date}</div>
+                            </div>
+                        `;
+                    });
+                    feed.scrollTop = feed.scrollHeight;
+                });
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById("msgInput");
+            const text = input.value.trim();
+            if(!text || !activeChatId) return;
+
+            input.value = "";
+            try {
+                const batch = db.batch();
+                const msgRef = db.collection("conversations").doc(activeChatId).collection("messages").doc();
+                batch.set(msgRef, { text: text, senderId: currentUser.uid, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                const convoRef = db.collection("conversations").doc(activeChatId);
+                batch.update(convoRef, { lastMessage: text, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() });
+                await batch.commit();
+            } catch(e) { console.error(e); }
+        }
+
+        function handleEnter(e) { if(e.key === "Enter") sendMessage(); }
+
+        async function loadFriends() {
+            const snap = await db.collection("users").doc(currentUser.uid).collection("friends").where("status", "==", "accepted").get();
+            const container = document.getElementById("friendSelector");
+            container.innerHTML = "";
+            
+            if(snap.empty) { container.innerHTML = "<div style='padding:20px; color:#444; text-align:center;'>No friends found.<br>Go make some!</div>"; return; }
+
+            for (const doc of snap.docs) {
+                const fDoc = await db.collection("users").doc(doc.id).get();
+                if(fDoc.exists) {
+                    const f = fDoc.data();
+                    const div = document.createElement("div");
+                    div.className = "user-select-row";
+                    div.innerHTML = `<img src="${f.photoURL||'assets/GH_Hero.png'}" style="width:30px; height:30px; border-radius:50%; border:1px solid #444;"> <span>${f.name}</span>`;
+                    div.onclick = () => startChat(fDoc.id);
+                    container.appendChild(div);
+                }
+            }
+        }
+
+        /* FIXED START CHAT FUNCTION */
+        async function startChat(friendUid) {
+            const uids = [currentUser.uid, friendUid].sort();
+            const chatId = uids[0] + "_" + uids[1];
+            
+            const chatRef = db.collection("conversations").doc(chatId);
+
+            try {
+                await chatRef.get();
+            } catch (e) {
+                await chatRef.set({
+                    participants: uids,
+                    lastMessage: "System: Secure Line Established.",
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
+            document.getElementById("newChatModal").style.display = "none";
+            switchTab('msgs');
+        }
+
+        function openNewChatModal() { document.getElementById("newChatModal").style.display = "flex"; }
+        function closeModal(e) { if(e.target.id === 'newChatModal') e.target.style.display = 'none'; }
+        
+        function closeChatMobile() {
+            document.getElementById("mainView").classList.remove("mobile-active");
+            activeChatId = null;
+            if(unsubscribeChat) unsubscribeChat();
+        }
+
+    </script>
+</body>
+</html>

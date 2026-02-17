@@ -4,274 +4,167 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GH – Apply</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
 
     <style>
-        body {
-            margin: 0;
-            background: #000;
-            color: #fff;
-            font-family: Arial, sans-serif;
-        }
-
-        /* ==========================================
-           UNIVERSAL HEADER (Neon Yellow)
-        ========================================== */
-        .navbar {
-            width: 100%;
-            background: #111;
-            border-bottom: 2px solid #fdff55;
-            padding: 15px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-sizing: border-box;
-            position: sticky;
-            top: 0;
-            z-index: 999;
-        }
-
-        .navbar .brand {
-            font-weight: 700;
-            color: #fdff55;
-            font-size: 20px;
-        }
-
-        .navbar .nav-links a {
-            color: #fff;
-            margin-left: 20px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: 0.25s ease;
-        }
-
-        .navbar .nav-links a:hover {
-            color: #fdff55;
-            text-shadow: 0 0 10px #fdff55;
-        }
-
-        .navbar .nav-links a::after {
-            content: "";
-            display: block;
-            height: 2px;
-            width: 0%;
-            background: #fdff55;
-            transition: width 0.25s ease;
-            margin-top: 3px;
-        }
-
-        .navbar .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        /* ==========================================
-           APPLY FORM CONTAINER
-        ========================================== */
+        /* [APPLY SPECIFIC STYLES] */
         .container {
-            max-width: 550px;
-            margin: 60px auto;
-            background: #111;
-            padding: 25px;
-            border-radius: 12px;
-            border: 2px solid #fdff55; /* Yellow primary */
-            box-shadow: 0 0 18px #fdff5525;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            min-height: calc(100vh - 80px); padding: 20px; position: relative; z-index: 1;
         }
 
-        h2 {
-            text-align: center;
-            color: #fdff55;
-            margin-bottom: 20px;
-            font-size: 24px;
-            text-shadow: 0 0 8px #fdff5533;
+        .apply-card {
+            background: #111; border: 2px solid var(--gh-blue); padding: 40px; border-radius: 14px;
+            width: 100%; max-width: 500px; text-align: left;
+            box-shadow: 0 0 20px rgba(0, 234, 255, 0.1);
+            transition: transform 0.3s ease; box-sizing: border-box;
         }
+        .apply-card:hover { transform: translateY(-4px); box-shadow: 0 0 30px rgba(0, 234, 255, 0.2); }
 
-        label {
-            margin-top: 14px;
-            display: block;
-            font-weight: bold;
-            color: #fdff55;
+        .apply-card h2 { text-align: center; margin-top: 0; margin-bottom: 20px; color: var(--gh-blue); text-shadow: 0 0 12px rgba(0, 234, 255, 0.4); }
+
+        .back-btn { 
+            display: inline-block; margin-bottom: 20px; color: #888; text-decoration: none; 
+            font-weight: bold; font-size: 14px; transition: 0.2s; 
         }
+        .back-btn:hover { color: #fff; transform: translateX(-3px); }
 
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            margin-top: 6px;
-            border-radius: 6px;
-            background: #222;
-            border: 1px solid #00eaff33;
-            color: #fff;
-            font-size: 14px;
-        }
-
-        input:focus, textarea:focus {
-            outline: none;
-            border: 1px solid #00eaff;
-            box-shadow: 0 0 8px #00eaff;
-        }
-
-        .submit-btn {
-            margin-top: 25px;
-            width: 100%;
-            padding: 14px;
-            background: #00eaff;
-            color: #000;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 0 14px #00eaff55;
-        }
-
-        .submit-btn:hover {
-            box-shadow: 0 0 18px #00eaff;
-            transform: translateY(-2px);
-        }
-
-        .back-btn {
-            display: inline-block;
-            margin-bottom: 25px;
-            color: #00eaff;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 15px;
-        }
-
-        .back-btn:hover {
-            text-shadow: 0 0 10px #00eaff;
-        }
-
-        /* ==========================================
-           CLOSED MODE
-        ========================================== */
+        /* CLOSED STATE */
         #closedBox {
-            border: 2px solid #fdff55;
-            padding: 30px;
-            text-align: center;
-            border-radius: 12px;
-            background: #111;
-            max-width: 550px;
-            margin: 80px auto;
-            box-shadow: 0 0 18px #fdff5525;
-            display: none;
+            background: #1a0505; border: 2px solid var(--gh-red); padding: 40px; 
+            border-radius: 14px; text-align: center; max-width: 500px; width: 100%;
+            box-shadow: 0 0 30px rgba(255, 68, 68, 0.2); display: none;
         }
+        #closedBox h2 { color: var(--gh-red); margin-top: 0; text-shadow: 0 0 10px rgba(255, 68, 68, 0.4); }
+        #closedBox p { color: #ccc; margin-bottom: 20px; }
 
-        #closedBox h2 {
-            color: #fdff55;
-            text-shadow: 0 0 10px #fdff5533;
-        }
-
-        #closedBox p {
-            opacity: 0.9;
-        }
+        /* FORM SPACING */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; color: var(--gh-yellow); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
     </style>
 </head>
 
 <body>
+    <div class="particles" id="particleContainer"></div>
 
-<!-- UNIVERSAL HEADER -->
-<div class="navbar">
-    <div class="brand">GamersHangout</div>
-    <div class="nav-links">
-        <a href="index.html">Home</a>
-        <a href="login.html">Login</a>
-        <a href="apply.html">Apply</a>
+    <div id="header"></div>
+    <div id="drawer"></div> <div class="container">
+        
+        <div id="closedBox">
+            <h2>Applications Closed</h2>
+            <p>The roster is currently full. Check back later or ping an Admin.</p>
+            <a class="back-btn" href="index.html" style="color:var(--gh-red);">← Return to Base</a>
+        </div>
+
+        <div class="apply-card" id="applyForm" style="display:none;">
+            <a class="back-btn" href="index.html">← Back to Home</a>
+            <h2>Roster Application</h2>
+
+            <div class="form-group">
+                <label>Name / Gamertag</label>
+                <input id="nameInput" type="text" class="gh-input" placeholder="Your name">
+            </div>
+
+            <div class="form-group">
+                <label>Contact Email</label>
+                <input id="emailInput" type="email" class="gh-input" placeholder="you@example.com">
+            </div>
+
+            <div class="form-group">
+                <label>Date of Birth</label>
+                <input id="birthdayInput" type="date" class="gh-input">
+            </div>
+
+            <div class="form-group">
+                <label>Vibe Check</label>
+                <textarea id="relationInput" class="gh-input" rows="3" placeholder="How do you know us? What games do you play?"></textarea>
+            </div>
+
+            <button class="gh-btn btn-primary" style="width:100%; margin-top:10px;" onclick="submitApplication()">Submit Application</button>
+        </div>
+
     </div>
-</div>
 
-<!-- CLOSED STATE BOX -->
-<div id="closedBox">
-    <h2>Apply to Join GH</h2>
-    <p>Applications are currently closed.</p>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script>
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
 
-    <a class="back-btn" href="index.html">← Back to Home</a>
-</div>
-
-<!-- APPLICATION FORM -->
-<div class="container" id="applyForm" style="display:none;">
-
-    <a class="back-btn" href="index.html">← Back to Home</a>
-
-    <h2>Apply to Join GH</h2>
-
-    <label>Email</label>
-    <input id="emailInput" type="email" placeholder="you@example.com">
-
-    <label>Birthday</label>
-    <input id="birthdayInput" type="date">
-
-    <label>How do you know GH?</label>
-    <textarea id="relationInput" placeholder="Online? IRL? Through a member?"></textarea>
-
-    <label>Name</label>
-    <input id="nameInput" type="text" placeholder="Your name">
-
-    <button class="submit-btn" onclick="submitApplication()">Submit</button>
-</div>
-
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBID0q4e18Rgzoj1jdBIznAAaIqNlNSzY8",
-        authDomain: "gh-website-7603c.firebaseapp.com",
-        projectId: "gh-website-7603c",
-        storageBucket: "gh-website-7603c.firebasestorage.app",
-        messagingSenderId: "382290025026",
-        appId: "1:382290025026:web:a2c70de3fd2f42e6c96bdb",
-        measurementId: "G-RM35ZB7826"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    /* ============================================================
-       CHECK APPLICATION STATUS (settings/applications.enabled)
-    ============================================================ */
-    db.collection("settings").doc("applications").get().then(doc => {
-        if (!doc.exists) {
-            db.collection("settings").doc("applications").set({ enabled: true });
-            document.getElementById("applyForm").style.display = "block";
-            return;
+    <script>
+        /* VISUALS */
+        const container = document.getElementById("particleContainer");
+        for (let i = 0; i < 30; i++) {
+            const p = document.createElement("div");
+            p.classList.add("particle");
+            p.style.left = Math.random() * 100 + "vw";
+            p.style.top = Math.random() * 100 + "vh";
+            p.style.animationDelay = Math.random() * 10 + "s";
+            p.style.opacity = Math.random() * 0.4 + 0.1;
+            p.style.transform = `scale(${Math.random() * 1 + 0.5})`;
+            container.appendChild(p);
         }
 
-        const enabled = doc.data().enabled;
-
-        if (enabled === true) {
-            document.getElementById("applyForm").style.display = "block";
-            document.getElementById("closedBox").style.display = "none";
-        } else {
-            document.getElementById("applyForm").style.display = "none";
-            document.getElementById("closedBox").style.display = "block";
-        }
-    });
-
-    /* ============================================================
-       SUBMIT APPLICATION
-    ============================================================ */
-    function submitApplication() {
-        const email = emailInput.value.trim();
-        const birthday = birthdayInput.value;
-        const relation = relationInput.value.trim();
-        const name = nameInput.value.trim();
-
-        if (!email || !birthday || !relation || !name) {
-            alert("Please fill out all fields.");
-            return;
-        }
-
-        db.collection("applications").add({
-            email,
-            birthday,
-            relation,
-            name,
-            status: "pending",
-            timestamp: Date.now()
-        }).then(() => {
-            alert("Application submitted!");
+        /* CHECK STATUS */
+        // Uses global 'db' from firebase-init.js
+        db.collection("site_config").doc("applications").onSnapshot(doc => {
+            let enabled = true;
+            if (doc.exists) enabled = doc.data().enabled;
+            
+            if (enabled) {
+                document.getElementById("applyForm").style.display = "block";
+                document.getElementById("closedBox").style.display = "none";
+            } else {
+                document.getElementById("applyForm").style.display = "none";
+                document.getElementById("closedBox").style.display = "block";
+            }
         });
-    }
-</script>
 
+        /* SUBMIT LOGIC */
+        let applyCooldown = false;
+        function submitApplication() {
+            if (applyCooldown) return alert("Please wait a moment.");
+            
+            const btn = document.querySelector(".gh-btn");
+            const name = document.getElementById("nameInput").value.trim();
+            const email = document.getElementById("emailInput").value.trim();
+            const birthday = document.getElementById("birthdayInput").value;
+            const relation = document.getElementById("relationInput").value.trim();
+
+            if (!name || !email || !birthday || !relation) return alert("Please fill out all fields.");
+
+            applyCooldown = true;
+            btn.disabled = true;
+            btn.innerText = "Submitting...";
+
+            db.collection("applications").add({
+                name, email, birthday, relation, status: "pending", timestamp: Date.now()
+            })
+            .then(() => {
+                alert("Application submitted! We will contact you soon.");
+                btn.innerText = "Submit Application";
+                btn.disabled = false;
+                // Clear form
+                document.getElementById("nameInput").value = "";
+                document.getElementById("emailInput").value = "";
+                document.getElementById("birthdayInput").value = "";
+                document.getElementById("relationInput").value = "";
+                setTimeout(() => { applyCooldown = false; }, 10000);
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Error: " + err.message);
+                btn.innerText = "Submit Application";
+                btn.disabled = false;
+                applyCooldown = false;
+            });
+        }
+    </script>
 </body>
 </html>

@@ -5,357 +5,444 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GH – Dashboard</title>
 
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="header.css">
+  <link rel="stylesheet" href="drawer.css">
+
   <style>
-    body {
-      margin: 0;
-      background: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-    }
+    /* GATEKEEPER */
+    body { display: none; }
 
-    /* =====================================================
-       UNIVERSAL HEADER (unchanged)
-    ===================================================== */
-    .navbar {
-      width: 100%;
-      background: #111;
-      border-bottom: 2px solid #fdff55;
-      padding: 15px 25px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-sizing: border-box;
-      z-index: 1000;
-    }
+    /* [DASHBOARD SPECIFIC STYLES] */
+    
+    /* FX LAYERS */
+    .bg-blob { position: absolute; border-radius: 50%; filter: blur(80px); z-index: -2; opacity: 0.4; animation: float 12s infinite ease-in-out; }
+    .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--gh-blue); }
+    .blob-2 { top: 40%; right: -10%; width: 40vw; height: 40vw; background: rgba(253, 255, 85, 0.2); animation-delay: -5s; }
+    @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(20px, 30px); } }
 
-    .navbar .brand {
-      font-weight: 700;
-      color: #fdff55;
-      font-size: 20px;
-    }
+    /* HEADER */
+    .dashboard-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; border-bottom: 2px solid var(--gh-yellow); padding-bottom: 10px; }
+    .header-left { display: flex; align-items: center; gap: 15px; }
+    .date-display { font-family: monospace; color: var(--gh-blue); font-size: 14px; font-weight:bold; }
 
-    .navbar .nav-links a {
-      color: #fff;
-      margin-left: 20px;
-      text-decoration: none;
-      font-weight: bold;
-      position: relative;
-      transition: 0.2s ease;
+    /* SUPPORT BTN */
+    .support-pill {
+        background: rgba(255, 68, 68, 0.1); border: 1px solid var(--gh-red); color: var(--gh-red);
+        padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;
+        text-transform: uppercase; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+        text-decoration: none; height: 24px;
     }
+    .support-pill:hover { background: var(--gh-red); color: #fff; box-shadow: 0 0 15px var(--gh-red); transform: translateY(-2px); }
 
-    .navbar .nav-links a:hover {
-      color: #fdff55;
-      text-shadow: 0 0 10px #fdff55;
+    /* GRID LAYOUT */
+    .dashboard-grid { display: grid; grid-template-columns: 3fr 1.2fr; gap: 25px; }
+    
+    /* CARD EXTENSIONS */
+    .gh-card { 
+        background: rgba(17, 17, 17, 0.8); backdrop-filter: blur(10px);
+        border: 1px solid #333; border-radius: 16px; padding: 20px; 
+        position: relative; overflow: hidden; display: flex; flex-direction: column; 
+        transition: 0.1s;
     }
+    .gh-card:hover { border-color: var(--gh-yellow); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    
+    .card-head { font-size: 14px; font-weight: 800; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px dashed #333; padding-bottom: 8px; display: flex; justify-content: space-between; }
 
-    .navbar .nav-links a::after {
-      content: "";
-      height: 2px;
-      width: 0%;
-      background: #fdff55;
-      display: block;
-      transition: width 0.2s ease;
-      margin-top: 3px;
+    /* HERO CARD */
+    .hero-card { background: linear-gradient(135deg, #111 0%, #0a1515 100%); border: 2px solid var(--gh-blue); grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 25px; padding: 30px; }
+    .hero-avatar { width: 80px; height: 80px; border-radius: 16px; border: 2px solid #fff; object-fit: cover; box-shadow: 5px 5px 0px var(--gh-blue); transform: rotate(-3deg); transition: 0.3s; }
+    .hero-card:hover .hero-avatar { transform: rotate(3deg) scale(1.1); }
+    .hero-content h2 { margin: 0; font-size: 28px; color: #fff; font-weight:900; }
+    .hero-content p { margin: 5px 0 0; color: #aaa; font-size: 14px; }
+    
+    .hero-actions { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+    
+    .quick-btn { 
+        background: #222; border: 1px solid #444; color: #fff; padding: 10px 20px; border-radius: 8px; 
+        text-decoration: none; font-size: 14px; font-weight: 800; transition: 0.2s; 
+        display: flex; align-items: center; gap: 8px; text-transform: uppercase; position: relative;
     }
+    .quick-btn:hover { background: var(--gh-yellow); color: #000; border-color: var(--gh-yellow); transform: translateY(-3px); }
 
-    .navbar .nav-links a:hover::after {
-      width: 100%;
+    /* QUICK ACTIONS GRID (NEW) */
+    .quick-grid {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
     }
-
-    /* =====================================================
-       DASHBOARD LAYOUT
-    ===================================================== */
-    .main-wrap {
-      display: flex;
-      height: calc(100vh - 70px);
+    .action-tile {
+        background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
+        padding: 15px 5px; text-align: center; color: #ccc; text-decoration: none;
+        font-size: 11px; font-weight: bold; text-transform: uppercase;
+        transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 5px;
     }
-
-    /* CONTENT */
-    .content {
-      flex-grow: 1;
-      padding: 25px;
-      overflow-y: auto;
+    .action-tile:hover {
+        background: var(--gh-blue); color: #000; border-color: var(--gh-blue);
+        transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0, 234, 255, 0.2);
     }
+    .tile-icon { font-size: 20px; margin-bottom: 2px; }
 
-    .card {
-      background: #111;
-      padding: 25px;
-      border-radius: 12px;
-      border: 2px solid #fdff55;
-      margin-bottom: 25px;
-      box-shadow: 0 0 16px #fdff5533;
+    /* UNREAD BADGE */
+    .unread-dot {
+        width: 10px; height: 10px; background: var(--gh-red); border-radius: 50%;
+        position: absolute; top: -3px; right: -3px; border: 2px solid #222;
+        display: none; animation: pulse 2s infinite;
     }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 
-    .card h3 {
-      margin-top: 0;
-      color: #fdff55;
-      text-shadow: 0 0 10px #fdff5522;
-    }
+    /* DAILY INTEL */
+    .intel-card { border-left: 4px solid var(--gh-yellow); }
+    .intel-quote { font-size: 20px; font-style: italic; color: #fff; line-height: 1.4; margin-bottom: 10px; font-weight: bold; }
+    .intel-author { font-size: 12px; color: var(--gh-yellow); font-weight: bold; text-align: right; }
 
-    .announcement-item {
-      margin-bottom: 18px;
-      padding: 12px;
-      border-left: 3px solid #00eaff;
-      background: #151515;
-      border-radius: 6px;
-      box-shadow: 0 0 12px #00eaff22;
-    }
+    /* SHOWCASE */
+    .showcase-card { padding: 0; min-height: 250px; border: 2px solid #444; }
+    .showcase-img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+    .showcase-card:hover .showcase-img { transform: scale(1.05); }
+    .showcase-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(0deg, #000 0%, transparent 100%); padding: 20px; pointer-events: none; }
+    .winner-tag { background: var(--gh-blue); color: #000; font-size: 10px; font-weight: 900; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 5px; transform: rotate(-2deg); }
+    .winner-name { font-size: 24px; font-weight: 900; color: #fff; text-shadow: 3px 3px 0px #000; }
+    .admin-gear { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: #fff; width: 30px; height: 30px; border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 5; border: 1px solid #fff; }
 
-    .announcement-title {
-      font-weight: bold;
-      color: #00eaff;
-      text-shadow: 0 0 6px #00eaff55;
-      font-size: 16px;
-    }
+    /* ANNOUNCEMENTS */
+    .ann-item { padding: 15px; background: #161616; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid var(--gh-blue); transition:0.2s; }
+    .ann-item:hover { transform: translateX(5px); background: #222; }
+    .ann-title { color: #fff; font-weight: 900; font-size: 15px; margin-bottom: 4px; text-transform: uppercase; }
+    .ann-msg { font-size: 13px; color: #ccc; line-height: 1.4; }
+    .ann-date { font-size: 10px; color: #666; margin-top: 5px; display: block; text-align: right; }
 
-    .announcement-message {
-      margin-top: 5px;
-      opacity: .9;
-    }
+    /* FRIENDS LIST */
+    .friend-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+    .friend-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; transition: 0.2s; cursor: pointer; text-decoration: none; color: inherit; background: rgba(255,255,255,0.03); }
+    .friend-row:hover { background: #222; transform: scale(1.02); }
+    .f-avatar { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; background: #000; position: relative; border: 1px solid #444; }
+    .f-status { width: 10px; height: 10px; background: #00ff6a; border-radius: 50%; border: 2px solid #111; position: absolute; bottom: -2px; right: -2px; }
+    .f-name { font-size: 13px; font-weight: bold; }
+    .f-meta { font-size: 11px; color: #666; }
+    .empty-friends { text-align: center; color: #555; padding: 20px 0; font-size: 13px; font-style: italic; }
 
-    .announcement-timestamp {
-      margin-top: 4px;
-      font-size: 12px;
-      opacity: .6;
-    }
+    /* BIRTHDAYS */
+    .bday-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #222; font-size: 13px; }
+    .bday-row:last-child { border: none; }
+    .bday-hl { color: var(--gh-yellow); font-weight: bold; }
 
-    textarea {
-      background: #222;
-      color: #fff;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #00eaff44;
-      width: 100%;
-    }
+    /* DISCORD */
+    .discord-frame { width: 100%; height: 300px; border: none; border-radius: 8px; }
 
-    textarea:focus {
-      outline: none;
-      border-color: #00eaff;
-      box-shadow: 0 0 10px #00eaff;
-    }
-
-    .post-button {
-      margin-top: 10px;
-      background: #00eaff;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      color: #000;
-      box-shadow: 0 0 12px #00eaff55;
-      transition: 0.2s;
-    }
-
-    .post-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 18px #00eaff;
-    }
-
-    .post-box {
-      padding: 12px;
-      border-left: 3px solid #00eaff;
-      margin-bottom: 15px;
-      background: #151515;
-      border-radius: 6px;
-      box-shadow: 0 0 15px #00eaff22;
-    }
-
-    .post-author {
-      color: #00eaff;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-
-    .post-time {
-      color: #bbb;
-      font-size: 12px;
-      margin-bottom: 8px;
+    @media (max-width: 900px) {
+        .dashboard-grid { grid-template-columns: 1fr; }
+        .hero-card { flex-direction: column; text-align: center; }
+        .hero-actions { margin: 20px 0 0; justify-content: center; width: 100%; }
     }
   </style>
 </head>
-
 <body>
 
-<!-- UNIVERSAL HEADER -->
+<div class="bg-blob blob-1"></div>
+<div class="bg-blob blob-2"></div>
+<div class="particles" id="particleContainer"></div> 
 <div id="header"></div>
-<script src="header.js"></script>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="scripts/auth.js"></script>
-
-<div class="main-wrap">
-
-  <!-- UNIVERSAL DRAWER -->
+<div class="page-wrap">
   <div id="drawer"></div>
-  <link rel="stylesheet" href="drawer.css">
-  <script src="drawer.js"></script>
 
-  <!-- CONTENT -->
   <div class="content">
-
-    <!-- PAGE TITLE -->
-    <h1 style="color:#fdff55; margin-top:0; margin-bottom:20px; 
-               text-shadow:0 0 12px #fdff55aa; font-size:32px;">
-      Dashboard
-    </h1>
-
-    <!-- ANNOUNCEMENTS -->
-    <div class="card">
-      <h3>Announcements</h3>
-      <div id="announcementList">Loading announcements...</div>
+    
+    <div class="dashboard-header">
+        <div class="header-left">
+            <h1 class="page-title">Dashboard</h1>
+            <a href="support.html" class="support-pill" title="Need help?">🚑 Support</a>
+        </div>
+        <div class="date-display" id="currentDate">LOADING...</div>
     </div>
 
-    <!-- GH DISCORD WIDGET -->
-    <div class="card">
-      <h3>GH Discord</h3>
+    <div class="dashboard-grid">
+        
+        <div style="display:flex; flex-direction:column; gap:25px;">
+            
+            <div class="gh-card" onclick="window.location.href='tos.html'" style="cursor:pointer; border-left:4px solid var(--gh-red); flex-direction:row; align-items:center; gap:20px;">
+                <div style="background:rgba(255, 68, 68, 0.1); color:var(--gh-red); width:50px; height:50px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px;">⚖️</div>
+                <div>
+                    <div style="font-weight:900; color:#fff; font-size:16px; text-transform:uppercase;">Terms of Service</div>
+                    <div style="color:#888; font-size:12px; margin-top:4px;">Rules, Conduct & Policies</div>
+                </div>
+                <div style="margin-left:auto; color:var(--gh-red); font-weight:bold; font-size:12px;">READ ></div>
+            </div>
 
-      <iframe 
-        src="https://discord.com/widget?id=843915204848517120&theme=dark"
-        width="100%"
-        height="420"
-        allowtransparency="true"
-        frameborder="0"
-        sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
-        style="
-          border-radius: 12px;
-          border: 2px solid #00eaff;
-          box-shadow: 0 0 20px #00eaff55;
-        ">
-      </iframe>
-    </div>
+            <div class="gh-card hero-card tilt-card">
+                <img id="heroAvatar" src="assets/GH_Hero.png" class="hero-avatar">
+                <div class="hero-content">
+                    <h2 id="heroWelcome">Welcome back.</h2>
+                    <p id="heroRank">Clearance: Checking...</p>
+                </div>
+                <div class="hero-actions">
+                    <a href="inbox.html" class="quick-btn" title="Open Inbox">
+                        📡 Comms <div id="msgBadge" class="unread-dot"></div>
+                    </a>
+                    <a href="my_activity.html" class="quick-btn">⚡ My Activity</a>
+                    <a href="profile.html" class="quick-btn">👤 Profile</a>
+                    <a href="suggestions.html" class="quick-btn">💡 Suggestions</a>
+                </div>
+            </div>
 
-    <!-- POSTS -->
-    <div class="card">
-      <h3>Posts</h3>
+            <div class="gh-card tilt-card">
+                <div class="card-head">Quick Actions</div>
+                <div class="quick-grid">
+                    <a href="blog.html" class="action-tile"><span class="tile-icon">📡</span>Blog</a>
+                    <a href="community.html" class="action-tile"><span class="tile-icon">🌍</span>Community</a>
+                    <a href="guide.html" class="action-tile"><span class="tile-icon">📘</span>Guide</a>
+                    <a href="posts.html" class="action-tile"><span class="tile-icon">💬</span>Posts</a>
+                    <a href="shop.html" class="action-tile"><span class="tile-icon">🛒</span>Shop</a>
+                    <a href="zen.html" class="action-tile"><span class="tile-icon">🧘</span>Zen</a>
+                    <a href="index.html" class="action-tile" style="grid-column: 1 / -1; flex-direction:row; justify-content:center;"><span class="tile-icon" style="margin:0 5px 0 0;">🏠</span> Back to Home</a>
+                </div>
+            </div>
 
-      <textarea id="postInput" placeholder="Share something with GH..."></textarea>
+            <div class="gh-card intel-card tilt-card">
+                <div class="card-head">Daily Intel</div>
+                <div class="intel-quote" id="dailyQuote">"Loading..."</div>
+                <div class="intel-author" id="dailyAuthor">- System</div>
+            </div>
 
-      <button onclick="createPost()" class="post-button">Post</button>
+            <div class="gh-card showcase-card tilt-card">
+                <div id="showcaseAdminBtn" class="admin-gear" onclick="openShowcaseModal()">⚙️</div>
+                <img id="showcaseImg" src="" class="showcase-img">
+                <div class="showcase-overlay">
+                    <div class="winner-tag">WEEKLY SHOWCASE</div>
+                    <div class="winner-name" id="showcaseName">Loading...</div>
+                </div>
+            </div>
 
-      <div id="postList" style="margin-top:20px;">Loading posts...</div>
+            <div class="gh-card tilt-card" onclick="window.location.href='announcements.html'" style="cursor:pointer;">
+                <div class="card-head">Sitrep (Announcements)</div>
+                <div id="announcementList">
+                    <div style="padding:20px; color:#666;">Scanning frequencies...</div>
+                </div>
+            </div>
+
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:25px;">
+            
+            <div class="gh-card tilt-card">
+                <div class="card-head">
+                    <span>Comms (Friends)</span>
+                    <a href="members.html" style="font-size:10px; color:var(--gh-blue); text-decoration:none;">+ ADD</a>
+                </div>
+                <div class="friend-list" id="friendList">
+                    <div class="empty-friends">Loading contacts...</div>
+                </div>
+            </div>
+
+            <div class="gh-card tilt-card" onclick="window.location.href='birthdays.html'" style="cursor:pointer;">
+                <div class="card-head">Upcoming Birthdays</div>
+                <div id="birthdayList"></div>
+            </div>
+
+            <div class="gh-card tilt-card" style="padding:0; border:none; overflow:hidden;">
+                <iframe src="https://discord.com/widget?id=843915204848517120&theme=dark" class="discord-frame" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
+            </div>
+
+        </div>
+
     </div>
 
   </div>
 </div>
 
+<div id="adminModal" class="gh-modal">
+    <div class="gh-modal-content">
+        <h2>Update Showcase</h2>
+        <input type="text" id="modalWinnerName" class="gh-input" placeholder="Winner Name">
+        <label style="font-size:12px; color:#888;">Image File</label>
+        <input type="file" id="modalFile" class="gh-input" accept="image/*">
+        <label style="font-size:12px; color:#888;">OR Image URL</label>
+        <input type="text" id="modalUrl" class="gh-input" placeholder="https://...">
+        <button class="gh-btn btn-save" onclick="saveShowcase()">DEPLOY UPDATE</button>
+        <button class="gh-btn" style="background:transparent; color:#888; width:100%; margin-top:5px;" onclick="closeShowcaseModal()">Cancel</button>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="firebase-init.js"></script> 
+<script src="header.js"></script>
+<script src="drawer.js"></script>
+
 <script>
-auth.onAuthStateChanged(async user => {
-  if (!user) return (location.href = "login.html");
+    /* DATE DISPLAY */
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById("currentDate").innerText = new Date().toLocaleDateString('en-US', options);
 
-  const token = await user.getIdTokenResult();
+    /* QUOTES ENGINE */
+    const quotes = [
+        { q: "War... war never changes.", a: "Fallout" },
+        { q: "The cake is a lie.", a: "Portal" },
+        { q: "It's dangerous to go alone! Take this.", a: "Zelda" },
+        { q: "Protocol 3: Protect the Pilot.", a: "Titanfall 2" },
+        { q: "Wake up, Samurai. We have a city to burn.", a: "Cyberpunk 2077" },
+        { q: "Finish him!", a: "Mortal Kombat" },
+        { q: "Hey you, you're finally awake.", a: "Skyrim" }
+    ];
+    const rand = quotes[Math.floor(Math.random() * quotes.length)];
+    document.getElementById("dailyQuote").innerText = `"${rand.q}"`;
+    document.getElementById("dailyAuthor").innerText = `- ${rand.a}`;
+    
+    auth.onAuthStateChanged(async user => {
+        if (!user) {
+            window.location.replace("login.html");
+            return;
+        }
 
-  db.collection("users").doc(user.uid).get().then(doc => {
-    if (doc.exists && doc.data().name)
-      userNameDisplay.textContent = doc.data().name;
-    else
-      userNameDisplay.textContent = user.email;
-  });
+        // --- GATEKEEPER START ---
+        document.body.style.display = "block"; // Reveal page
+        
+        const userDocRef = db.collection("users").doc(user.uid);
+        const uDoc = await userDocRef.get();
 
-  if (token.claims.admin)
-    document.getElementById("adminLink").style.display = "block";
-});
+        // If user doc doesn't exist OR setupComplete is missing -> Redirect
+        if (!uDoc.exists || !uDoc.data().setupComplete) {
+            window.location.href = "welcome.html";
+            return; 
+        }
+        // --- GATEKEEPER END ---
+        
+        // 1. Hero Data
+        const uData = uDoc.data();
+        if(uData.photoURL || user.photoURL) document.getElementById("heroAvatar").src = uData.photoURL || user.photoURL;
+        
+        document.getElementById("heroWelcome").innerText = `Welcome back, ${uData.name || user.displayName || "Agent"}.`;
+        
+        let role = uData.role || "Member";
+        if(role === "admin") document.getElementById("showcaseAdminBtn").style.display = "flex";
+        document.getElementById("heroRank").innerText = `Clearance: ${role.toUpperCase()}`;
 
-/* LOAD ANNOUNCEMENTS */
-function loadAnnouncements() {
-  db.collection("announcements")
-    .orderBy("timestamp", "desc")
-    .onSnapshot(snapshot => {
-      const list = document.getElementById("announcementList");
-
-      if (snapshot.empty) {
-        list.innerHTML = "<p>No announcements yet.</p>";
-        return;
-      }
-
-      list.innerHTML = "";
-
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const ts =
-          typeof data.timestamp === "number"
-            ? new Date(data.timestamp).toLocaleString()
-            : data.timestamp.toDate().toLocaleString();
-
-        const wrap = document.createElement("div");
-        wrap.classList.add("announcement-item");
-
-        wrap.innerHTML = `
-          <div class="announcement-title">${data.title}</div>
-          <div class="announcement-message">${data.message}</div>
-          <div class="announcement-timestamp">${ts}</div>
-        `;
-
-        list.appendChild(wrap);
-      });
+        // 2. Friends List
+        loadFriends(user.uid);
+        
+        // 3. Check for Unread Notis
+        checkUnread(user.uid);
     });
-}
-loadAnnouncements();
 
-/* CREATE POST */
-async function createPost() {
-  const text = document.getElementById("postInput").value.trim();
-  if (!text) return alert("Post can't be empty.");
+    function checkUnread(uid) {
+        db.collection("notifications").where("uid", "==", uid).where("read", "==", false).limit(1).onSnapshot(snap => {
+            document.getElementById("msgBadge").style.display = snap.empty ? "none" : "block";
+        });
+    }
 
-  const user = auth.currentUser;
-  if (!user) return;
+    /* FRIENDS LOADER */
+    function loadFriends(uid) {
+        db.collection("users").doc(uid).collection("friends").where("status", "==", "accepted").onSnapshot(async snap => {
+            const list = document.getElementById("friendList");
+            list.innerHTML = "";
+            if (snap.empty) { 
+                list.innerHTML = `<div class="empty-friends">No active comms.<br><a href="members.html" style="color:var(--gh-blue);">Find Squadmates</a></div>`; 
+                return; 
+            }
 
-  const userDoc = await db.collection("users").doc(user.uid).get();
-  const userName = userDoc.exists ? userDoc.data().name : user.email;
+            const promises = snap.docs.map(d => db.collection("users").doc(d.id).get());
+            const friends = await Promise.all(promises);
 
-  await db.collection("posts").add({
-    authorId: user.uid,
-    authorName: userName,
-    text: text,
-    timestamp: Date.now()
-  });
+            friends.forEach(f => {
+                if(!f.exists) return;
+                const d = f.data();
+                list.innerHTML += `
+                    <a href="profile.html?uid=${f.id}" class="friend-row">
+                        <div style="position:relative;">
+                            <img src="${d.photoURL || 'assets/GH_Hero.png'}" class="f-avatar">
+                            <div class="f-status"></div>
+                        </div>
+                        <div>
+                            <div class="f-name">${d.name || "Agent"}</div>
+                            <div class="f-meta">Online</div>
+                        </div>
+                    </a>`;
+            });
+        });
+    }
 
-  document.getElementById("postInput").value = "";
-}
-
-/* LOAD POSTS */
-function loadPosts() {
-  db.collection("posts")
-    .orderBy("timestamp", "desc")
-    .onSnapshot(snapshot => {
-      const container = document.getElementById("postList");
-
-      if (snapshot.empty) {
-        container.innerHTML = "<p>No posts yet.</p>";
-        return;
-      }
-
-      container.innerHTML = "";
-
-      snapshot.forEach(doc => {
-        const p = doc.data();
-        const ts = new Date(p.timestamp).toLocaleString();
-
-        const div = document.createElement("div");
-        div.className = "post-box";
-
-        div.innerHTML = `
-          <div class="post-author">${p.authorName}</div>
-          <div class="post-time">${ts}</div>
-          <div>${p.text}</div>
-        `;
-
-        container.appendChild(div);
-      });
+    /* ANNOUNCEMENTS */
+    db.collection("announcements").orderBy("timestamp", "desc").limit(3).onSnapshot(snap => {
+        const list = document.getElementById("announcementList");
+        list.innerHTML = "";
+        if(snap.empty) { list.innerHTML = "<div style='padding:20px; color:#666;'>No broadcasts.</div>"; return; }
+        snap.forEach(doc => {
+            const d = doc.data();
+            const date = d.timestamp ? new Date(d.timestamp.seconds*1000).toLocaleDateString() : "Recent";
+            list.innerHTML += `
+                <div class="ann-item">
+                    <div class="ann-title">${d.title}</div>
+                    <div class="ann-msg">${d.message}</div>
+                    <span class="ann-date">${date}</span>
+                </div>`;
+        });
     });
-}
-loadPosts();
 
-/* LOGOUT BUTTON */
-document.getElementById("logout").addEventListener("click", () => {
-  auth.signOut().then(() => (location.href = "login.html"));
-});
+    /* BIRTHDAYS */
+    db.collection("users").get().then(snap => {
+        const list = document.getElementById("birthdayList");
+        const today = new Date();
+        const upcoming = [];
+        snap.forEach(doc => {
+            const d = doc.data();
+            if(!d.birthday) return;
+            const [y, m, day] = d.birthday.split("-");
+            const bDate = new Date(today.getFullYear(), m-1, day);
+            if(bDate < today) bDate.setFullYear(today.getFullYear()+1);
+            const diff = Math.ceil((bDate - today) / (1000 * 60 * 60 * 24));
+            if(diff < 60) upcoming.push({ name: d.name || "Agent", date: bDate });
+        });
+        upcoming.sort((a,b) => a.date - b.date);
+        list.innerHTML = "";
+        if(upcoming.length === 0) list.innerHTML = "<div style='color:#666; font-size:13px;'>No upcoming birthdays.</div>";
+        else upcoming.slice(0,3).forEach(u => {
+            list.innerHTML += `<div class="bday-row"><span class="bday-hl">${u.name}</span><span>${u.date.toLocaleDateString(undefined, {month:'short', day:'numeric'})}</span></div>`;
+        });
+    });
+
+    /* SHOWCASE LOGIC */
+    const showcaseRef = db.collection("system").doc("showcase");
+    showcaseRef.onSnapshot(doc => {
+        if(doc.exists) {
+            const d = doc.data();
+            if(d.imageUrl) { document.getElementById("showcaseImg").src = d.imageUrl; document.getElementById("showcaseImg").style.display="block"; }
+            document.getElementById("showcaseName").innerText = d.winnerName || "TBD";
+        }
+    });
+
+    function openShowcaseModal() { document.getElementById("adminModal").style.display = "flex"; }
+    function closeShowcaseModal() { document.getElementById("adminModal").style.display = "none"; }
+    async function saveShowcase() {
+        const name = document.getElementById("modalWinnerName").value;
+        const file = document.getElementById("modalFile").files[0];
+        const url = document.getElementById("modalUrl").value;
+        if(!name) return alert("Name required.");
+        let finalUrl = url;
+        if(file) {
+            const ref = storage.ref(`showcase/${Date.now()}_${file.name}`);
+            await ref.put(file); finalUrl = await ref.getDownloadURL();
+        }
+        if(!finalUrl) return alert("Image required.");
+        await showcaseRef.set({ winnerName: name, imageUrl: finalUrl });
+        closeShowcaseModal();
+    }
+
+    /* 3D TILT EFFECT */
+    document.addEventListener('mousemove', e => {
+        document.querySelectorAll('.tilt-card').forEach(card => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left; 
+            const y = e.clientY - rect.top;
+            if(x > 0 && x < rect.width && y > 0 && y < rect.height) {
+                const rotateX = ((y - rect.height/2) / rect.height) * -3;
+                const rotateY = ((x - rect.width/2) / rect.width) * 3;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+            } else {
+                card.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale(1)`;
+            }
+        });
+    });
 </script>
-
 </body>
 </html>

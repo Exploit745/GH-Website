@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GH – The Feed</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="header.css">
+  <link rel="stylesheet" href="drawer.css">
+
+  <style>
+    /* GATEKEEPER */
+    body { display: none; }
+
+    /* [FEED SPECIFIC STYLES] */
+
+    /* HEADER */
+    .title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid var(--gh-blue); padding-bottom: 15px; }
+    
+    .yapp-btn {
+      background: var(--gh-yellow); color: #000; font-weight: 900; font-size: 16px;
+      padding: 10px 25px; border-radius: 6px; border: none; cursor: pointer;
+      transition: 0.2s ease; text-transform: uppercase; letter-spacing: 1px;
+      box-shadow: 0 0 15px rgba(253, 255, 85, 0.4);
+    }
+    .yapp-btn:hover { transform: translateY(-3px); box-shadow: 0 0 25px rgba(253, 255, 85, 0.6); background: #fff; }
+
+    /* POST CARD */
+    .post-card {
+      background: linear-gradient(145deg, #111 0%, #0a0a0a 100%);
+      border: 1px solid #333; border-left: 3px solid var(--gh-blue);
+      border-radius: 12px; padding: 25px; margin-bottom: 25px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: transform 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .post-card:hover { transform: translateX(5px); border-color: var(--gh-blue); }
+    
+    .post-header { display: flex; align-items: center; margin-bottom: 15px; }
+    
+    .user-avatar { 
+        width: 50px; height: 50px; border-radius: 50%; object-fit: cover; 
+        border: 2px solid #333; margin-right: 15px; background: #000;
+        cursor: pointer; transition: 0.2s;
+    }
+    .user-avatar:hover { transform: scale(1.1); border-color: var(--gh-yellow); box-shadow: 0 0 15px rgba(253, 255, 85, 0.3); }
+    
+    .user-info { display: flex; flex-direction: column; }
+    .user-name { color: #fff; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
+    .user-name:hover { color: var(--gh-yellow); }
+    
+    .post-time { color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+    
+    .post-text { color: #ddd; font-size: 15px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
+    
+    .post-image { 
+        width: 100%; max-height: 500px; object-fit: contain; border-radius: 8px; 
+        margin-top: 15px; background: #000; border: 1px solid #333; 
+    }
+
+    .post-actions { 
+        display: flex; justify-content: space-between; align-items: center; 
+        margin-top: 20px; padding-top: 15px; border-top: 1px dashed #333; 
+    }
+    
+    .left-actions { display: flex; gap: 10px; }
+
+    .like-btn { 
+        background: transparent; border: 1px solid #333; color: #888; cursor: pointer; 
+        display: flex; align-items: center; gap: 8px; font-size: 13px; transition: 0.2s;
+        padding: 5px 12px; border-radius: 20px; font-weight: bold;
+    }
+    .like-btn:hover { border-color: #ff4444; color: #ff4444; background: rgba(255, 68, 68, 0.1); }
+    .like-btn.liked { color: #ff4444; border-color: #ff4444; background: rgba(255, 68, 68, 0.1); }
+    
+    /* BOOKMARK BTN */
+    .save-btn {
+        background: transparent; border: 1px solid #333; color: #888; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+        border-radius: 50%; transition: 0.2s; font-size: 14px;
+    }
+    .save-btn:hover { border-color: var(--gh-yellow); color: var(--gh-yellow); transform: scale(1.1); }
+    .save-btn.active { color: var(--gh-yellow); border-color: var(--gh-yellow); background: rgba(253, 255, 85, 0.1); }
+
+    .delete-btn { 
+        background: transparent; border: none; color: #444; 
+        cursor: pointer; font-size: 12px; font-weight: bold; text-transform: uppercase;
+        transition: 0.2s;
+    }
+    .delete-btn:hover { color: var(--gh-red); text-decoration: underline; }
+
+    /* MODAL CONTENT OVERRIDES */
+    .drop-zone { 
+        border: 2px dashed #444; color: #888; margin-top: 15px; padding: 20px; 
+        text-align: center; cursor: pointer; border-radius: 6px; transition: 0.2s; font-size: 13px;
+    }
+    .drop-zone:hover { border-color: var(--gh-yellow); color: var(--gh-yellow); background: rgba(253, 255, 85, 0.05); }
+    
+    #previewImg { width: 100%; border-radius: 6px; margin-top: 10px; display: none; max-height: 200px; object-fit: contain; border: 1px solid #333; }
+
+    /* DRAFT BUTTON */
+    .draft-btn {
+        background: transparent; border: 1px dashed var(--gh-blue); color: var(--gh-blue);
+        padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1;
+        transition: 0.2s; font-size: 13px;
+    }
+    .draft-btn:hover { background: rgba(0, 234, 255, 0.1); }
+
+    /* MINI PROFILE (V4.0 Style) */
+    .mp-card { 
+        width: 100%; max-width: 400px; background: #111; 
+        border: 2px solid var(--gh-blue); border-radius: 16px; padding: 30px; text-align: center;
+        box-shadow: 0 0 50px rgba(0, 234, 255, 0.2); animation: slideUp 0.3s ease-out;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+    .mp-avatar { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--gh-yellow); margin-bottom: 15px; object-fit: cover; box-shadow: 0 0 20px rgba(253, 255, 85, 0.2); }
+    .mp-name { color: #fff; font-size: 24px; font-weight: 900; margin: 0; text-transform: uppercase; }
+    .mp-role { font-size: 11px; color: var(--gh-blue); text-transform: uppercase; letter-spacing: 1px; border: 1px solid var(--gh-blue); padding: 4px 10px; border-radius: 20px; display: inline-block; margin-top: 10px; font-weight: bold; }
+    .mp-bio { color: #ccc; font-size: 14px; margin: 20px 0; line-height: 1.5; font-style: italic; }
+    
+    .mp-socials { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px; }
+    .mp-link { 
+        background: #222; color: #fff; padding: 10px; border-radius: 6px; 
+        text-decoration: none; font-size: 12px; display: flex; justify-content: space-between;
+        transition: 0.2s; font-weight: bold; text-transform: uppercase;
+    }
+    .mp-link:hover { background: var(--gh-blue); color: #000; }
+
+    @media (max-width: 768px) {
+        .content { padding: 15px; }
+        .page-title { font-size: 28px; }
+    }
+  </style>
+</head>
+
+<body>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+      <div id="drawer"></div>
+
+      <div class="content">
+        <div class="title-row">
+          <h2 class="page-title">Global Feed</h2>
+          <button class="yapp-btn" onclick="openPostModal()">YAPP</button>
+        </div>
+
+        <div id="postFeed">
+            <div style="text-align:center; padding:40px; color:#666; font-style:italic;">Downloading hot takes...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gh-modal" id="postModal">
+      <div class="gh-modal-content">
+        <h2 style="color:var(--gh-yellow); margin-top:0;">Broadcast</h2>
+        <textarea id="postText" class="gh-input" style="height:120px; resize:none;" placeholder="What's the situation?"></textarea>
+        
+        <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()">
+          [+] ATTACH INTEL (IMAGE)
+          <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFile(this.files[0])">
+        </div>
+        <img id="previewImg">
+        
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="draft-btn" onclick="saveDraft()">💾 SAVE DRAFT</button>
+            <button id="submitPost" style="flex:2; background:var(--gh-blue); color:#000; border:none; padding:12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:16px;" onclick="createPost()">SEND IT</button>
+        </div>
+        <div style="text-align:center; margin-top:10px;">
+            <button onclick="closePostModal()" style="background:transparent; border:none; color:#666; cursor:pointer; font-size:12px; text-decoration:underline;">Abort Transmission</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="gh-modal" id="miniProfileModal">
+        <div class="mp-card">
+            <div id="mpContent">
+                <div style="padding:20px;">Loading Agent Profile...</div>
+            </div>
+            <button onclick="document.getElementById('miniProfileModal').style.display='none'" style="margin-top:20px; background:transparent; border:none; color:#666; cursor:pointer; font-size:12px; font-weight:bold;">CLOSE DOSSIER</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <script src="firebase-init.js"></script>
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+    /* PARTICLES */
+    const container = document.getElementById("particleContainer");
+    if(container) {
+        for (let i = 0; i < 30; i++) {
+            const p = document.createElement("div"); p.classList.add("particle");
+            p.style.left = Math.random() * 100 + "vw"; p.style.top = Math.random() * 100 + "vh";
+            p.style.animationDelay = Math.random() * 10 + "s"; container.appendChild(p);
+        }
+    }
+    let currentFile = null;
+    let savedPosts = new Set();
+
+    /* ---------------- GATEKEEPER & AUTH ---------------- */
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+          window.location.replace("login.html");
+      } else {
+          document.body.style.display = "block";
+          
+          // Load Saved Posts
+          db.collection("users").doc(user.uid).collection("saved").where("type", "==", "post")
+            .onSnapshot(snap => {
+                savedPosts.clear();
+                snap.forEach(doc => savedPosts.add(doc.id));
+                updateSaveButtons();
+            });
+
+          loadFeed(user);
+      }
+    });
+
+    function loadFeed(user) {
+      db.collection("posts").orderBy("timestamp", "desc").onSnapshot(snap => {
+          const feed = document.getElementById("postFeed");
+          feed.innerHTML = "";
+          
+          if(snap.empty) {
+              feed.innerHTML = "<div style='text-align:center; padding:50px; opacity:0.5;'>Radio silence. Be the first to yapp.</div>";
+              return;
+          }
+
+          snap.forEach(async doc => {
+              const p = doc.data();
+              const pid = doc.id;
+              
+              // Admin Check
+              const token = await user.getIdTokenResult();
+              const isAdmin = token.claims.admin;
+              const canDelete = (p.authorId === user.uid) || isAdmin;
+
+              // Like Logic
+              const likes = p.likes || [];
+              const likeCount = likes.length;
+              const isLiked = likes.includes(user.uid);
+              const likeClass = isLiked ? "liked" : "";
+
+              // Save Logic
+              const isSaved = savedPosts.has(pid) ? "active" : "";
+              const safeText = p.text ? p.text.replace(/'/g, "\\'").replace(/"/g, '&quot;') : ""; 
+
+              const div = document.createElement("div");
+              div.className = "post-card";
+              div.innerHTML = `
+                <div class="post-header">
+                    <img src="${p.authorAvatar || 'assets/GH_Hero.png'}" class="user-avatar" onclick="openMiniProfile('${p.authorId}')">
+                    <div class="user-info">
+                        <span class="user-name" onclick="openMiniProfile('${p.authorId}')">${p.authorName}</span>
+                        <span class="post-time">${new Date(p.timestamp).toLocaleString()}</span>
+                    </div>
+                </div>
+                <div class="post-text">${p.text}</div>
+                ${p.image ? `<img class="post-image" src="${p.image}">` : ""}
+                
+                <div class="post-actions">
+                    <div class="left-actions">
+                        <button class="like-btn ${likeClass}" onclick="toggleLike('${pid}')">
+                            <span>❤️</span> ${likeCount > 0 ? likeCount : "Like"}
+                        </button>
+                        <button class="save-btn ${isSaved}" id="save-${pid}" onclick="toggleSave('${pid}', '${safeText}', '${p.authorName}')">
+                            🔖
+                        </button>
+                    </div>
+                    ${canDelete ? `<button class="delete-btn" onclick="deletePost('${pid}')">Delete</button>` : ""}
+                </div>
+              `;
+              feed.appendChild(div);
+          });
+      });
+    }
+
+    /* ---------------- MINI PROFILE LOGIC ---------------- */
+    async function openMiniProfile(uid) {
+        const modal = document.getElementById("miniProfileModal");
+        const content = document.getElementById("mpContent");
+        
+        modal.style.display = "flex";
+        content.innerHTML = "<div style='padding:20px; opacity:0.7;'>Decrypting Identity...</div>";
+
+        try {
+            const doc = await db.collection("users").doc(uid).get();
+            if(!doc.exists) {
+                content.innerHTML = "<div style='padding:20px; color:var(--gh-red);'>USER NOT FOUND</div>";
+                return;
+            }
+            
+            const data = doc.data();
+            const role = data.role ? data.role : "Member";
+            
+            let socialsHtml = "";
+            if(data.socials) {
+                Object.keys(data.socials).forEach(key => {
+                    if(data.socials[key]) {
+                        socialsHtml += `<a href="#" class="mp-link"><span>${key}</span> <span>LINK ↗</span></a>`;
+                    }
+                });
+            }
+            if(!socialsHtml) socialsHtml = "<div style='font-size:12px; color:#666;'>No comms links found.</div>";
+
+            content.innerHTML = `
+                <img src="${data.photoURL || 'assets/GH_Hero.png'}" class="mp-avatar">
+                <h2 class="mp-name">${data.name || "Agent"}</h2>
+                <div class="mp-role">${role}</div>
+                <div class="mp-bio">"${data.bio || "No Bio."}"</div>
+                <div class="mp-socials">${socialsHtml}</div>
+            `;
+
+        } catch(e) {
+            console.error(e);
+            content.innerHTML = "Error accessing dossier.";
+        }
+    }
+
+    window.onclick = function(e) {
+        if(e.target.id == "postModal") closePostModal();
+        if(e.target.id == "miniProfileModal") document.getElementById('miniProfileModal').style.display = 'none';
+    }
+
+    /* ---------------- POST & DRAFT ACTIONS ---------------- */
+    function openPostModal() {
+      document.getElementById("postText").value = "";
+      currentFile = null;
+      document.getElementById("previewImg").style.display = "none";
+      document.getElementById("postModal").style.display = "flex";
+    }
+    function closePostModal() { document.getElementById("postModal").style.display = "none"; }
+
+    function handleFile(f) {
+      if (!f) return;
+      currentFile = f;
+      document.getElementById("previewImg").src = URL.createObjectURL(f);
+      document.getElementById("previewImg").style.display = "block";
+    }
+
+    async function saveDraft() {
+        const text = document.getElementById("postText").value.trim();
+        if(!text) return alert("Can't save nothing.");
+        
+        try {
+            const uid = auth.currentUser.uid;
+            await db.collection("users").doc(uid).collection("drafts").add({
+                text: text,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            alert("Draft Saved to My Activity.");
+            closePostModal();
+        } catch(e) { alert("Draft failed: " + e.message); }
+    }
+
+    async function createPost() {
+      const btn = document.getElementById("submitPost");
+      const text = document.getElementById("postText").value.trim();
+      if (!text && !currentFile) return alert("Post cannot be empty.");
+
+      btn.disabled = true; btn.innerText = "Broadcasting...";
+      const user = auth.currentUser;
+      let imageURL = null;
+
+      try {
+        let authorName = user.displayName;
+        if (!authorName) {
+            const userDoc = await db.collection("users").doc(user.uid).get();
+            if (userDoc.exists) authorName = userDoc.data().name;
+        }
+        if (!authorName) authorName = "Member";
+
+        if (currentFile) {
+          const storageRef = storage.ref(`posts/${Date.now()}_${currentFile.name}`);
+          await storageRef.put(currentFile);
+          imageURL = await storageRef.getDownloadURL();
+        }
+        
+        await db.collection("posts").add({
+          authorName: authorName,
+          authorId: user.uid,
+          authorAvatar: user.photoURL || null, 
+          text: text,
+          image: imageURL,
+          timestamp: Date.now(),
+          likes: []
+        });
+
+        closePostModal();
+      } catch (err) { alert("Error: " + err.message); }
+      btn.disabled = false; btn.innerText = "SEND IT";
+    }
+
+    async function toggleLike(postId) {
+        const user = auth.currentUser;
+        if(!user) return;
+        const postRef = db.collection("posts").doc(postId);
+        const doc = await postRef.get();
+        if(!doc.exists) return;
+
+        const likes = doc.data().likes || [];
+        if(likes.includes(user.uid)) {
+            postRef.update({ likes: firebase.firestore.FieldValue.arrayRemove(user.uid) });
+        } else {
+            postRef.update({ likes: firebase.firestore.FieldValue.arrayUnion(user.uid) });
+        }
+    }
+
+    async function toggleSave(id, text, author) {
+        if(!auth.currentUser) return;
+        const uid = auth.currentUser.uid;
+        const ref = db.collection("users").doc(uid).collection("saved").doc(id);
+
+        if(savedPosts.has(id)) {
+            await ref.delete();
+        } else {
+            await ref.set({
+                type: 'post',
+                content: text.substring(0, 100), 
+                author: author,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+    }
+
+    function updateSaveButtons() {
+        document.querySelectorAll('.save-btn').forEach(btn => {
+            const id = btn.id.replace('save-', '');
+            if(savedPosts.has(id)) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+    }
+
+    async function deletePost(id) {
+      if (!confirm("Remove this broadcast?")) return;
+      await db.collection("posts").doc(id).delete();
+    }
+    </script>
+
+</body>
+</html>

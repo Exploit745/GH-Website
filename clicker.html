@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH Clicker</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* [CLICKER SPECIFIC STYLES] */
+        .arcade-grid { display: grid; grid-template-columns: 350px 1fr; gap: 30px; height: calc(100vh - 140px); }
+        .col-left { display: flex; flex-direction: column; gap: 20px; }
+        .col-right { display: flex; flex-direction: column; gap: 20px; height: 100%; overflow: hidden; }
+
+        /* CLICKER ZONE */
+        .clicker-zone {
+            background: radial-gradient(circle, #1a1a1a 0%, #000 70%);
+            border: 2px solid var(--gh-blue); border-radius: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 40px; position: relative; overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 234, 255, 0.1); flex-grow: 1;
+        }
+        
+        .quick-save-btn {
+            position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5);
+            color: #666; border: 1px solid #333; border-radius: 50%; width: 30px; height: 30px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            font-size: 14px; transition: 0.2s; z-index: 10;
+        }
+        .quick-save-btn:hover { color: var(--gh-blue); border-color: var(--gh-blue); transform: scale(1.1); }
+
+        .admin-game-btn {
+            position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.5);
+            color: var(--gh-red); border: 1px solid var(--gh-red); border-radius: 50%; width: 30px; height: 30px;
+            display: none; align-items: center; justify-content: center; cursor: pointer;
+            font-size: 14px; transition: 0.2s; z-index: 10;
+        }
+        
+        .clicker-btn {
+            width: 200px; height: 200px; border-radius: 50%;
+            background: #000; border: 4px solid var(--gh-blue);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 80px; cursor: pointer; user-select: none;
+            box-shadow: 0 0 50px rgba(0, 234, 255, 0.3); transition: 0.1s;
+            position: relative; z-index: 2;
+        }
+        .clicker-btn:hover { transform: scale(1.05); box-shadow: 0 0 80px rgba(0, 234, 255, 0.5); }
+        .clicker-btn:active { transform: scale(0.95); border-color: var(--gh-yellow); box-shadow: 0 0 100px rgba(253, 255, 85, 0.6); }
+
+        .click-ripple { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--gh-blue); opacity: 0; pointer-events: none; }
+        .clicker-btn:active .click-ripple { animation: ripple 0.4s ease-out; }
+        @keyframes ripple { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
+
+        .floater { position: absolute; font-weight: 900; font-size: 24px; color: var(--gh-yellow); pointer-events: none; animation: floatUp 1s ease-out forwards; z-index: 10; text-shadow: 0 0 10px #000; }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-100px) scale(1.5); opacity: 0; } }
+
+        /* STATS */
+        .stat-display { text-align: center; width: 100%; margin-top: 20px; }
+        .main-score { font-size: 36px; font-weight: 900; color: #fff; font-family: 'Courier New', monospace; text-shadow: 0 0 20px rgba(255,255,255,0.2); word-break: break-all; line-height: 1; }
+        .per-sec { color: var(--gh-blue); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
+
+        .stat-card { padding: 15px; text-align: center; display: flex; flex-direction: column; gap: 15px; }
+        
+        .ascend-btn { 
+            background: linear-gradient(45deg, #ffd700, #b8860b); color: #000; 
+            border: none; padding: 12px; border-radius: 6px; font-weight: 900; 
+            font-size: 14px; cursor: pointer; text-transform: uppercase; 
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.4); transition: 0.2s;
+            display: none; width: 100%; animation: pulseGold 2s infinite; margin-top: 10px;
+        }
+        .ascend-btn:hover { transform: scale(1.05); color: #fff; }
+        @keyframes pulseGold { 0% { box-shadow: 0 0 15px rgba(255,215,0,0.3); } 50% { box-shadow: 0 0 30px rgba(255,215,0,0.6); } 100% { box-shadow: 0 0 15px rgba(255,215,0,0.3); } }
+
+        .shop-access-btn {
+            background: #222; color: var(--gh-yellow); border: 1px solid var(--gh-yellow);
+            padding: 8px; border-radius: 6px; font-weight: bold; font-size: 12px;
+            cursor: pointer; width: 100%; text-transform: uppercase; margin-top: 5px;
+        }
+        .shop-access-btn:hover { background: var(--gh-yellow); color: #000; }
+
+        /* TABS */
+        .arcade-tabs { display: flex; gap: 10px; border-bottom: 2px solid #222; padding-bottom: 10px; margin-bottom: 10px; overflow-x: auto; }
+        .tab-btn { background: transparent; border: 1px solid #333; color: #888; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s; text-transform: uppercase; font-size: 12px; white-space: nowrap; }
+        .tab-btn:hover { color: #fff; background: #222; }
+        .tab-btn.active { background: var(--gh-blue); color: #000; border-color: var(--gh-blue); box-shadow: 0 0 15px rgba(0, 234, 255, 0.3); }
+
+        .scroll-area { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
+        
+        /* SHOP CARDS */
+        .upgrade-card { background: #111; border: 1px solid #333; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
+        .upgrade-card:hover { transform: translateX(5px); background: #161616; }
+        .upgrade-card.affordable { border-color: var(--gh-yellow); box-shadow: inset 0 0 20px rgba(253, 255, 85, 0.05); }
+        .upgrade-card.locked { opacity: 0.5; filter: grayscale(1); pointer-events: none; }
+
+        .up-icon { font-size: 24px; margin-right: 15px; width: 40px; text-align: center; }
+        .up-info h4 { margin: 0; color: #fff; font-size: 14px; }
+        .up-info p { margin: 2px 0 0; color: #888; font-size: 11px; }
+        .up-cost { font-weight: bold; color: var(--gh-yellow); font-family: monospace; }
+        .up-count { background: #333; padding: 2px 8px; border-radius: 10px; font-size: 10px; color: #fff; margin-left: 10px; }
+
+        /* LEADERBOARD */
+        .lb-toggles { display: flex; gap: 5px; margin-bottom: 15px; background: #111; padding: 5px; border-radius: 8px; }
+        .lb-toggle { flex: 1; border: none; background: transparent; color: #666; font-weight: bold; font-size: 11px; padding: 8px; border-radius: 6px; cursor: pointer; text-transform: uppercase; }
+        .lb-toggle.active { background: #222; color: #fff; border: 1px solid #444; }
+        .refresh-btn { background: #222; border: 1px solid #444; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-left: 5px; }
+
+        .lb-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; font-size: 13px; align-items: center; }
+        .lb-rank { width: 30px; font-weight: bold; color: var(--gh-blue); }
+        .lb-name { flex-grow: 1; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .lb-score { font-family: monospace; color: var(--gh-yellow); }
+        .view-profile-btn { background: transparent; border: 1px solid #444; color: #888; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+
+        /* ACHIEVEMENT CARDS */
+        .ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+        .ach-card { background: #111; border: 1px solid #333; padding: 15px; border-radius: 8px; display: flex; gap: 10px; align-items: center; opacity: 0.7; filter: grayscale(1); transition: 0.3s; }
+        .ach-card.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--gh-yellow); background: radial-gradient(circle at top left, #222200 0%, #111 100%); box-shadow: 0 0 15px rgba(253, 255, 85, 0.1); }
+        .ach-icon { font-size: 24px; }
+        .ach-text h4 { margin: 0; color: #fff; font-size: 13px; }
+        .ach-text p { margin: 2px 0 0; color: #888; font-size: 11px; }
+
+        /* MODALS */
+        .gh-modal-content { border-color: var(--gh-yellow); box-shadow: 0 0 50px rgba(253, 255, 85, 0.2); }
+        .prestige-info { background: #222; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left; font-size: 13px; color: #ccc; border: 1px solid #444; }
+        .prestige-stat { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 8px 0; }
+        .prestige-stat:last-child { border: none; }
+        .stat-good { color: #00ff6a; font-weight: bold; }
+        .stat-bad { color: #ff4444; font-weight: bold; }
+
+        /* PRESTIGE SHOP GRID */
+        .p-shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+        .p-card { background: #161616; border: 1px solid #444; border-radius: 8px; padding: 15px; text-align: center; transition:0.2s; position:relative; }
+        .p-card:hover { border-color: var(--gh-yellow); transform: translateY(-3px); }
+        .p-card-icon { font-size: 30px; margin-bottom: 5px; }
+        .p-card h4 { margin: 0; color:#fff; font-size: 13px; }
+        .p-card p { margin: 2px 0 8px; color:#888; font-size: 10px; min-height: 24px; }
+        .p-buy-btn { background: var(--gh-yellow); color: #000; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; width: 100%; }
+        .p-buy-btn:disabled { opacity: 0.5; cursor: not-allowed; background: #444; color: #888; }
+        .p-lvl-badge { position: absolute; top: 5px; right: 5px; background: #333; color: #fff; font-size: 10px; padding: 2px 5px; border-radius: 4px; }
+
+        /* SETTINGS */
+        .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #111; border: 1px solid #333; border-radius: 8px; margin-bottom: 10px; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--gh-blue); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* MINI PROFILE */
+        .mp-card { width: 100%; max-width: 350px; background: #111; border: 2px solid var(--gh-blue); border-radius: 12px; padding: 25px; text-align: center; box-shadow: 0 0 40px rgba(0, 234, 255, 0.2); }
+        .mp-avatar { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--gh-yellow); margin-bottom: 10px; object-fit: cover; }
+        .mp-name { color: #fff; font-size: 20px; font-weight: bold; margin: 0; }
+        .mp-role { color: var(--gh-blue); font-size: 12px; text-transform: uppercase; font-weight: bold; margin-bottom: 10px; }
+        .mp-bio { color: #ccc; font-size: 13px; font-style: italic; margin-bottom: 15px; }
+
+        #gameDisabledOverlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; align-items: center; justify-content: center; flex-direction: column; }
+
+        @media (max-width: 900px) { .arcade-grid { grid-template-columns: 1fr; height: auto; display: block; } .col-left { margin-bottom: 30px; } .col-right { height: 500px; } }
+    </style>
+</head>
+<body>
+
+    <div id="gameDisabledOverlay">
+        <h1 style="color:var(--gh-red); font-size:40px;">SYSTEM LOCKED</h1>
+        <p style="color:#888;">The Arcade is currently offline for maintenance.</p>
+        <a href="gh_dashboard.html" class="gh-btn btn-secondary" style="margin-top:20px;">Return to Dashboard</a>
+    </div>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            
+            <div class="page-header" style="margin-bottom:20px;">
+                <h1 class="page-title">GH Clicker</h1>
+                <div style="font-size:12px; color:#666;">AUTO-SAVE: <span id="saveStatus" style="color:var(--gh-blue);">ACTIVE</span></div>
+            </div>
+
+            <div class="arcade-grid">
+                
+                <div class="col-left">
+                    <div class="clicker-zone">
+                        <button class="quick-save-btn" onclick="forceSave()" title="Quick Save">💾</button>
+                        <button class="admin-game-btn" id="adminGameBtn" onclick="openAdminGameModal()" title="Admin Config">⚙️</button>
+                        <div class="clicker-btn" id="mainBtn">
+                            <div class="click-ripple"></div>
+                            🎮
+                        </div>
+                        <div class="stat-display">
+                            <div class="main-score" id="scoreDisplay">0</div>
+                            <div class="per-sec"><span id="gpsDisplay">0</span> Gamers / Sec</div>
+                            <div class="per-sec" style="color:var(--gh-yellow); font-size:11px; margin-top:5px;"><span id="cpcDisplay">1</span> / Click</div>
+                        </div>
+                    </div>
+
+                    <div class="gh-card stat-card">
+                        <h3 style="margin:0; font-size:14px; color:#888;">LIFETIME STATS</h3>
+                        <div style="display:flex; justify-content:space-around; width:100%;">
+                            <div>
+                                <div style="font-size:18px; font-weight:bold; color:#fff;" id="totalClicks">0</div>
+                                <div style="font-size:10px; color:#666;">CLICKS</div>
+                            </div>
+                            <div>
+                                <div style="font-size:18px; font-weight:bold; color:var(--gh-yellow);" id="prestigeLvl">0</div>
+                                <div style="font-size:10px; color:#666;">PRESTIGE</div>
+                            </div>
+                        </div>
+                        
+                        <button class="shop-access-btn" onclick="openPrestigeShop()">⚡ Prestige Shop</button>
+                        
+                        <button id="prestigeBtn" class="ascend-btn" onclick="openPrestigeModal()">
+                            🏆 ASCEND (Requirement Met)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-right">
+                    <div class="arcade-tabs">
+                        <button class="tab-btn active" onclick="switchTab('shop')">🛒 Shop</button>
+                        <button class="tab-btn" onclick="switchTab('achievements')">🏅 Trophies</button>
+                        <button class="tab-btn" onclick="switchTab('leaderboard')">🏆 Top 10</button>
+                        <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
+                    </div>
+
+                    <div id="tab-shop" class="scroll-area">
+                        <div id="passiveShopList"></div>
+                    </div>
+
+                    <div id="tab-achievements" class="scroll-area" style="display:none;">
+                        <div id="achList" class="ach-grid"></div>
+                    </div>
+
+                    <div id="tab-leaderboard" class="scroll-area" style="display:none;">
+                        <div class="lb-toggles">
+                            <button class="lb-toggle active" id="btn-lb-score" onclick="toggleLb('score')">Top Earners</button>
+                            <button class="lb-toggle" id="btn-lb-clicks" onclick="toggleLb('clicks')">Top Clickers</button>
+                            <button class="lb-toggle" id="btn-lb-prestige" onclick="toggleLb('prestige')">Top Prestige</button>
+                            <button class="refresh-btn" onclick="loadLeaderboard()">↻</button>
+                        </div>
+                        <div id="lbContent">Loading...</div>
+                    </div>
+
+                    <div id="tab-settings" class="scroll-area" style="display:none; padding:10px;">
+                        <div class="gh-card">
+                            <h3 style="color:var(--gh-red); margin-top:0;">Danger Zone</h3>
+                            <button class="gh-btn btn-danger" style="width:100%; margin-bottom:10px;" onclick="hardReset()">☢️ WIPE SAVE</button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="prestigeModal" class="gh-modal">
+        <div class="gh-modal-content" style="text-align:center;">
+            <h2 style="color:var(--gh-yellow); margin-top:0; font-size:28px;">NEURAL RESET</h2>
+            <p style="color:#ccc;">Ascending resets your Gamers but increases your global multiplier.</p>
+            <div class="prestige-info">
+                <div class="prestige-stat"><span>Requirement</span><span id="pReqVal" style="color:var(--gh-blue)">1,000,000</span></div>
+                <div class="prestige-stat"><span>Current Multiplier</span><span id="pCurrentMult">1.0x</span></div>
+                <div class="prestige-stat"><span>New Multiplier</span><span id="pNewMult" class="stat-good">1.1x</span></div>
+                <div class="prestige-stat"><span>Score & Gear</span><span class="stat-bad">RESET (0)</span></div>
+            </div>
+            <hr style="border:0; border-top:1px dashed #444; margin:15px 0;">
+            <button class="gh-btn btn-primary" id="confirmPrestigeBtn" onclick="confirmPrestige()">CONFIRM ASCENSION</button>
+            <button onclick="document.getElementById('prestigeModal').style.display='none'" style="margin-top:15px; background:transparent; border:none; color:#666; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <div id="prestigeShopModal" class="gh-modal">
+        <div class="gh-modal-content" style="max-width:600px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="color:var(--gh-yellow); margin:0;">Prestige Shop</h2>
+                <div style="background:#222; padding:5px 10px; border-radius:4px; font-weight:bold; color:var(--gh-yellow); border:1px solid #444;">
+                    Available: <span id="pShopCurrency">0</span> Levels
+                </div>
+            </div>
+            <p style="font-size:12px; color:#888; margin-bottom:20px;">Sacrifice Prestige Levels for permanent account-wide buffs. This reduces your global multiplier but increases raw power.</p>
+            
+            <div id="prestigeShopList" class="p-shop-grid"></div>
+            
+            <button onclick="document.getElementById('prestigeShopModal').style.display='none'" class="gh-btn btn-secondary" style="width:100%; margin-top:15px;">Close</button>
+        </div>
+    </div>
+
+    <div id="adminGameModal" class="gh-modal">
+        <div class="gh-modal-content">
+            <h2 style="color:var(--gh-red); margin-top:0;">Arcade Config</h2>
+            <div class="settings-row">
+                <span style="font-weight:bold;">Enable Game Global</span>
+                <label class="switch">
+                    <input type="checkbox" id="adminGameToggle" onchange="toggleGameGlobal()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <button onclick="document.getElementById('adminGameModal').style.display='none'" class="gh-btn btn-secondary" style="width:100%;">Close</button>
+        </div>
+    </div>
+
+    <div id="miniProfileModal" class="gh-modal">
+        <div class="mp-card">
+            <div id="mpContent">Loading...</div>
+            <button onclick="document.getElementById('miniProfileModal').style.display='none'" style="margin-top:15px; background:transparent; border:none; color:#666; cursor:pointer;">Close</button>
+        </div>
+    </div>
+
+    <div id="toast" style="position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(50px); opacity:0; background:#111; color:var(--gh-yellow); border:1px solid var(--gh-yellow); padding:10px 30px; border-radius:20px; font-weight:bold; transition:0.3s; z-index:9000; box-shadow:0 0 20px rgba(253,255,85,0.2);">ACHIEVEMENT UNLOCKED</div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        const container = document.getElementById("particleContainer");
+        for(let i=0; i<20; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; p.style.animationDelay=Math.random()*10+"s"; container.appendChild(p); }
+
+        let currentUser = null;
+        let isAdmin = false;
+        let currentLbMode = 'score';
+        let trueUsername = "Agent";
+
+        // Game State
+        let game = { 
+            score: 0, clicks: 0, prestige: 0, upgrades: {}, achievements: [],
+            prestigeUpgrades: { clickPower: 0, autoClick: 0, discount: 0, critChance: 0, critDmg: 0, offline: 0, luck: 0, speed: 0 }
+        };
+
+        // DISCOUNTED PRICES (~20% OFF)
+        const GPS_ITEMS = {
+            mouse: { name: "Gaming Mouse", cost: 20, gps: 0.5, icon: "🖱️" },
+            keyboard: { name: "Mech Keyboard", cost: 130, gps: 5, icon: "⌨️" },
+            headset: { name: "RGB Headset", cost: 660, gps: 20, icon: "🎧" },
+            monitor: { name: "4K Monitor", cost: 2600, gps: 80, icon: "🖥️" },
+            pc: { name: "Gaming Rig", cost: 13000, gps: 250, icon: "💻" },
+            deck: { name: "Stream Deck", cost: 66000, gps: 1000, icon: "🎛️" },
+            server: { name: "Discord Server", cost: 260000, gps: 3500, icon: "🌐" },
+            sponsor: { name: "Sponsor Deal", cost: 1300000, gps: 15000, icon: "🤝" },
+            esports: { name: "Esports Team", cost: 13000000, gps: 120000, icon: "🏆" },
+            studio: { name: "Game Studio", cost: 130000000, gps: 1000000, icon: "🏢" },
+            quantum: { name: "Quantum Rig", cost: 1300000000, gps: 15000000, icon: "⚛️" },
+            colony: { name: "Mars Colony", cost: 66000000000, gps: 500000000, icon: "🚀" },
+            ai: { name: "AI God", cost: 720000000000, gps: 2000000000, icon: "🤖" },
+            dyson: { name: "Dyson Sphere", cost: 8000000000000, gps: 50000000000, icon: "☀️" },
+            reality: { name: "Reality Engine", cost: 800000000000000, gps: 999999999999, icon: "🌀" }
+        };
+
+        // 8 PRESTIGE ITEMS (EXPENSIVE)
+        const PRESTIGE_SHOP = {
+            clickPower: { name: "Raw Strength", desc: "+1 Base Click Power", cost: 2, icon: "💪" },
+            autoClick: { name: "Neural Link", desc: "+5% Passive GPS", cost: 5, icon: "🧠" },
+            discount: { name: "Charisma", desc: "1% Cheaper Shop", cost: 10, max: 50, icon: "🏷️" },
+            critChance: { name: "Precision", desc: "+1% Crit Chance", cost: 15, max: 50, icon: "🎯" },
+            critDmg: { name: "Impact", desc: "+10% Crit Damage", cost: 20, icon: "💥" },
+            offline: { name: "Time Warp", desc: "+1hr Offline Gains", cost: 25, max: 24, icon: "⏳" },
+            luck: { name: "RNGesus", desc: "+0.1x Global Multiplier", cost: 50, icon: "🍀" },
+            speed: { name: "Overclock", desc: "-1% Prestige Requirement", cost: 100, max: 50, icon: "⚡" }
+        };
+
+        const ACHIEVEMENTS = [
+            { id: 'click1', name: 'First Step', desc: 'Click once', icon: '👆', check: g => g.clicks >= 1 },
+            { id: 'click1k', name: 'Click Master', desc: '1,000 Clicks', icon: '🔥', check: g => g.clicks >= 1000 },
+            { id: 'click100k', name: 'Titanium Finger', desc: '100,000 Clicks', icon: '🦾', check: g => g.clicks >= 100000 },
+            { id: 'score1m', name: 'Influencer', desc: '1 Million Gamers', icon: '📈', check: g => g.score >= 1000000 },
+            { id: 'score1b', name: 'Titan', desc: '1 Billion Gamers', icon: '🪐', check: g => g.score >= 1000000000 },
+            { id: 'rich', name: 'Whale', desc: 'Buy 5 Sponsors', icon: '💎', check: g => (g.upgrades.sponsor || 0) >= 5 },
+            { id: 'hoarder', name: 'Hoarder', desc: '100 Total Upgrades', icon: '📦', check: g => Object.values(g.upgrades).reduce((a,b)=>a+b,0) >= 100 },
+            { id: 'prestige', name: 'Ascended', desc: 'Prestige once', icon: '⭐', check: g => g.prestige >= 1 },
+            { id: 'prestige50', name: 'Multiversal', desc: 'Prestige 50 times', icon: '🌌', check: g => g.prestige >= 50 }
+        ];
+
+        let gps = 0;
+        let cpc = 1;
+
+        auth.onAuthStateChanged(async user => {
+            if (!user) return location.href = "login.html";
+            currentUser = user;
+            
+            const uDoc = await db.collection("users").doc(user.uid).get();
+            if(uDoc.exists) trueUsername = uDoc.data().name || user.displayName || "Agent";
+            if(uDoc.data().role === 'admin') { isAdmin = true; document.getElementById('adminGameBtn').style.display = 'flex'; }
+
+            checkGameEnabled();
+            await loadGame();
+            
+            setInterval(gameLoop, 1000); 
+            setInterval(autoSave, 30000);
+            renderShop();
+            renderAchievements();
+            loadLeaderboard();
+        });
+
+        /* --- ADMIN LOGIC --- */
+        function checkGameEnabled() {
+            db.collection('site_config').doc('arcade').onSnapshot(doc => {
+                const enabled = doc.exists ? doc.data().enabled : true;
+                if(!enabled && !isAdmin) document.getElementById('gameDisabledOverlay').style.display = 'flex';
+                else document.getElementById('gameDisabledOverlay').style.display = 'none';
+            });
+        }
+
+        function openAdminGameModal() { document.getElementById('adminGameModal').style.display = 'flex'; }
+        async function toggleGameGlobal() {
+            const enabled = document.getElementById('adminGameToggle').checked;
+            await db.collection('site_config').doc('arcade').set({ enabled: enabled }, { merge: true });
+        }
+
+        /* --- GAME ENGINE --- */
+        function gameLoop() {
+            calculateRates();
+            game.score += gps;
+            updateUI();
+            checkAchievements();
+        }
+
+        function calculateRates() {
+            let totalGPS = 0;
+            for (let key in GPS_ITEMS) totalGPS += (game.upgrades[key] || 0) * GPS_ITEMS[key].gps;
+            
+            // Multiplier: 1.2x per Prestige Level (Reduced from 1.5x)
+            let prestigeMult = Math.pow(1.2, game.prestige);
+            
+            // Prestige Upgrades
+            const passiveBonus = 1 + ((game.prestigeUpgrades?.autoClick || 0) * 0.05);
+            const luckBonus = 1 + ((game.prestigeUpgrades?.luck || 0) * 0.1);
+            
+            gps = totalGPS * prestigeMult * passiveBonus * luckBonus;
+
+            const rawPower = game.prestigeUpgrades?.clickPower || 0;
+            cpc = (1 + rawPower) * prestigeMult; 
+        }
+
+        document.getElementById("mainBtn").addEventListener("mousedown", (e) => {
+            calculateRates();
+            
+            // Crit Logic
+            const critChance = (game.prestigeUpgrades?.critChance || 0) * 0.01;
+            const critDmg = 2 + ((game.prestigeUpgrades?.critDmg || 0) * 0.1);
+            let hit = cpc;
+            let isCrit = false;
+
+            if (Math.random() < critChance) {
+                hit *= critDmg;
+                isCrit = true;
+            }
+
+            game.score += hit;
+            game.clicks++;
+            
+            // Particle
+            const float = document.createElement("div");
+            float.className = "floater";
+            float.innerText = (isCrit ? "CRIT! " : "+") + Math.floor(hit).toLocaleString();
+            float.style.color = isCrit ? "var(--gh-red)" : "var(--gh-yellow)";
+            float.style.left = (e.clientX - 20) + "px";
+            float.style.top = (e.clientY - 40) + "px";
+            if(isCrit) float.style.fontSize = "30px";
+            document.body.appendChild(float);
+            setTimeout(() => float.remove(), 1000);
+            
+            updateUI();
+        });
+
+        function updateUI() {
+            document.getElementById("scoreDisplay").innerText = Math.floor(game.score).toLocaleString();
+            document.getElementById("gpsDisplay").innerText = gps.toLocaleString(undefined, {maximumFractionDigits:1});
+            document.getElementById("cpcDisplay").innerText = cpc.toLocaleString(undefined, {maximumFractionDigits:1});
+            document.getElementById("totalClicks").innerText = game.clicks.toLocaleString();
+            document.getElementById("prestigeLvl").innerText = game.prestige;
+            
+            // Prestige Requirement: (1M * 1.5^P) * (1 - SpeedDiscount)
+            let req = 1000000 * Math.pow(1.5, game.prestige);
+            const discount = (game.prestigeUpgrades?.speed || 0) * 0.01;
+            req = req * (1 - discount);
+
+            const btn = document.getElementById("prestigeBtn");
+            if(game.score >= req) {
+                btn.style.display = "inline-block";
+                btn.innerText = "🏆 ASCEND (READY)";
+            } else {
+                btn.style.display = "none";
+            }
+            
+            updateShopUI(GPS_ITEMS);
+        }
+
+        function getDiscountMult() {
+            const levels = game.prestigeUpgrades?.discount || 0;
+            return 1 - (levels * 0.01);
+        }
+
+        function updateShopUI(list) {
+            const discount = getDiscountMult();
+            for (let key in list) {
+                const count = game.upgrades[key] || 0;
+                const baseCost = Math.floor(list[key].cost * Math.pow(1.15, count));
+                const finalCost = Math.floor(baseCost * discount);
+                
+                const card = document.getElementById(`card-${key}`);
+                if (card) {
+                    const costEl = card.querySelector('.up-cost');
+                    if(costEl) costEl.innerText = finalCost.toLocaleString();
+
+                    if (game.score >= finalCost) { card.classList.remove("locked"); card.classList.add("affordable"); }
+                    else { card.classList.remove("affordable"); }
+                }
+            }
+        }
+
+        function buyItem(key) {
+            const item = GPS_ITEMS[key];
+            const count = game.upgrades[key] || 0;
+            const discount = getDiscountMult();
+            const cost = Math.floor((item.cost * Math.pow(1.15, count)) * discount);
+            
+            if (game.score >= cost) {
+                game.score -= cost;
+                game.upgrades[key] = count + 1;
+                const card = document.getElementById(`card-${key}`);
+                if(card) card.querySelector('.up-count').innerText = count + 1;
+                calculateRates(); updateUI();
+            }
+        }
+
+        function renderShop() {
+            const list = document.getElementById("passiveShopList");
+            list.innerHTML = "";
+            const discount = getDiscountMult();
+            for (let key in GPS_ITEMS) {
+                const item = GPS_ITEMS[key];
+                const count = game.upgrades[key] || 0;
+                const cost = Math.floor((item.cost * Math.pow(1.15, count)) * discount);
+                list.innerHTML += `
+                    <div class="upgrade-card" id="card-${key}" onclick="buyItem('${key}')">
+                        <div style="display:flex; align-items:center;">
+                            <div class="up-icon">${item.icon}</div>
+                            <div class="up-info">
+                                <h4>${item.name} <span class="up-count">${count}</span></h4>
+                                <p>+${item.gps.toLocaleString()} GPS</p>
+                            </div>
+                        </div>
+                        <div class="up-cost">${cost.toLocaleString()}</div>
+                    </div>`;
+            }
+        }
+
+        /* --- PRESTIGE SYSTEM --- */
+        function openPrestigeModal() {
+            let req = 1000000 * Math.pow(1.5, game.prestige);
+            const discount = (game.prestigeUpgrades?.speed || 0) * 0.01;
+            req = req * (1 - discount);
+
+            const curMult = Math.pow(1.2, game.prestige);
+            const nextMult = Math.pow(1.2, game.prestige + 1);
+            
+            document.getElementById("pReqVal").innerText = Math.floor(req).toLocaleString();
+            document.getElementById("pCurrentMult").innerText = curMult.toFixed(2) + "x";
+            document.getElementById("pNewMult").innerText = nextMult.toFixed(2) + "x";
+            document.getElementById("prestigeModal").style.display = "flex";
+        }
+
+        function openPrestigeShop() {
+            document.getElementById("prestigeModal").style.display = "none";
+            document.getElementById("prestigeShopModal").style.display = "flex";
+            renderPrestigeShop();
+        }
+
+        function renderPrestigeShop() {
+            document.getElementById("pShopCurrency").innerText = game.prestige;
+            const container = document.getElementById("prestigeShopList");
+            container.innerHTML = "";
+            
+            for (let key in PRESTIGE_SHOP) {
+                const item = PRESTIGE_SHOP[key];
+                const current = game.prestigeUpgrades[key] || 0;
+                const isMaxed = item.max && current >= item.max;
+                
+                container.innerHTML += `
+                    <div class="p-card">
+                        <div class="p-lvl-badge">Lvl ${current}</div>
+                        <div class="p-card-icon">${item.icon}</div>
+                        <h4>${item.name}</h4>
+                        <p>${item.desc}</p>
+                        <button class="p-buy-btn" onclick="buyPrestigeUpgrade('${key}')" ${isMaxed ? 'disabled' : ''}>
+                            ${isMaxed ? 'MAXED' : `BUY (${item.cost} LVLS)`}
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function buyPrestigeUpgrade(key) {
+            const item = PRESTIGE_SHOP[key];
+            if(game.prestige >= item.cost) {
+                if(item.max && (game.prestigeUpgrades[key] || 0) >= item.max) return;
+                
+                if(confirm(`Spend ${item.cost} Prestige Levels?`)) {
+                    game.prestige -= item.cost;
+                    if(!game.prestigeUpgrades) game.prestigeUpgrades = {};
+                    game.prestigeUpgrades[key] = (game.prestigeUpgrades[key] || 0) + 1;
+                    
+                    renderPrestigeShop();
+                    calculateRates();
+                    autoSave();
+                }
+            } else {
+                alert("Not enough Prestige Levels.");
+            }
+        }
+
+        async function confirmPrestige() {
+            let req = 1000000 * Math.pow(1.5, game.prestige);
+            const discount = (game.prestigeUpgrades?.speed || 0) * 0.01;
+            req = req * (1 - discount);
+
+            if(game.score < req) return alert("Requirement not met!");
+
+            const btn = document.getElementById("confirmPrestigeBtn");
+            btn.innerText = "ASCENDING..."; btn.disabled = true;
+            
+            game.prestige++; 
+            game.score = 0; 
+            game.upgrades = {}; 
+            
+            await autoSave();
+            location.reload();
+        }
+
+        /* --- DATA --- */
+        async function loadGame() {
+            try {
+                const doc = await db.collection("clicker_saves").doc(currentUser.uid).get();
+                if (doc.exists) {
+                    const d = doc.data();
+                    game = { ...game, ...d };
+                    // Default values fix
+                    if(!game.prestigeUpgrades) game.prestigeUpgrades = {};
+                }
+            } catch (e) {}
+            updateUI();
+        }
+
+        async function autoSave() {
+            document.getElementById("saveStatus").innerText = "SAVING...";
+            try {
+                await db.collection("clicker_saves").doc(currentUser.uid).set({
+                    ...game, lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+                    username: trueUsername
+                });
+                document.getElementById("saveStatus").innerText = "ACTIVE";
+            } catch (e) { document.getElementById("saveStatus").innerText = "ERROR"; }
+        }
+
+        function forceSave() { autoSave().then(() => alert("Saved.")); }
+        function hardReset() { if(confirm("Wipe Save?")) db.collection("clicker_saves").doc(currentUser.uid).delete().then(() => location.reload()); }
+        function showToast(msg) { const t = document.getElementById("toast"); t.innerText = msg; t.style.opacity = 1; t.style.transform = "translateX(-50%) translateY(0)"; setTimeout(() => { t.style.opacity = 0; t.style.transform = "translateX(-50%) translateY(50px)"; }, 3000); }
+
+        function checkAchievements() {
+            let changed = false;
+            ACHIEVEMENTS.forEach(ach => {
+                if (!game.achievements.includes(ach.id) && ach.check(game)) {
+                    game.achievements.push(ach.id);
+                    showToast(`🏆 UNLOCKED: ${ach.name}`);
+                    changed = true;
+                    db.collection("notifications").add({ uid: currentUser.uid, type: "success", title: "Arcade Trophy", message: `Unlocked: ${ach.name}`, link: "clicker.html", read: false, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                    renderAchievements();
+                }
+            });
+            if (changed) autoSave();
+        }
+
+        function renderAchievements() {
+            const grid = document.getElementById("achList");
+            grid.innerHTML = "";
+            ACHIEVEMENTS.forEach(ach => {
+                const unlocked = game.achievements.includes(ach.id);
+                grid.innerHTML += `
+                    <div class="ach-card ${unlocked ? 'unlocked' : ''}">
+                        <div class="ach-icon">${ach.icon}</div>
+                        <div class="ach-text"><h4>${ach.name}</h4><p>${ach.desc}</p></div>
+                    </div>`;
+            });
+        }
+
+        function toggleLb(type) {
+            currentLbMode = type;
+            document.querySelectorAll(".lb-toggle").forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-lb-${type}`).classList.add('active');
+            loadLeaderboard();
+        }
+
+        function loadLeaderboard() {
+            const lb = document.getElementById("lbContent");
+            lb.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Scanning...</div>';
+            db.collection("clicker_saves").orderBy(currentLbMode, "desc").limit(10).onSnapshot(snap => {
+                lb.innerHTML = "";
+                let rank = 1;
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    let color = rank===1 ? "var(--gh-yellow)" : "#fff";
+                    let valDisplay = currentLbMode === 'score' ? Math.floor(d.score).toLocaleString() : currentLbMode === 'clicks' ? d.clicks.toLocaleString() : d.prestige;
+                    lb.innerHTML += `<div class="lb-row"><div class="lb-rank" style="color:${color}">#${rank}</div><div class="lb-name">${d.username || "Unknown"} <button class="view-profile-btn" onclick="openMiniProfile('${doc.id}')">👁️</button></div><div class="lb-score">${valDisplay}</div></div>`;
+                    rank++;
+                });
+            });
+        }
+
+        async function openMiniProfile(uid) {
+            const modal = document.getElementById("miniProfileModal");
+            const content = document.getElementById("mpContent");
+            modal.style.display = "flex";
+            content.innerHTML = "Loading...";
+            try {
+                const doc = await db.collection("users").doc(uid).get();
+                if(!doc.exists) { content.innerHTML = "User Not Found"; return; }
+                const d = doc.data();
+                content.innerHTML = `<img src="${d.photoURL || 'assets/GH_Hero.png'}" class="mp-avatar"><h2 class="mp-name">${d.name || "Agent"}</h2><div class="mp-role">${d.role || "Member"}</div><div class="mp-bio">"${d.bio || "No Bio"}"</div>`;
+            } catch(e) { content.innerHTML = "Error."; }
+        }
+
+        function switchTab(t) {
+            document.querySelectorAll(".scroll-area").forEach(el => el.style.display = "none");
+            document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+            document.getElementById(`tab-${t}`).style.display = "block";
+            event.target.classList.add("active");
+            if(t==='leaderboard') loadLeaderboard();
+        }
+    </script>
+</body>
+</html>

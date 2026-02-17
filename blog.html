@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GH — Blog Terminal</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* GATEKEEPER */
+        body { display: none; }
+
+        /* --- LAYOUT SCALER FIX --- */
+        /* Constrains width to prevent "stretched" look on large monitors */
+        .blog-container { 
+            max-width: 900px; 
+            width: 95%;
+            margin: 0 auto; 
+            padding: 40px 0 80px 0;
+        }
+
+        /* PAGE HEADER */
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px;
+            background: linear-gradient(145deg, #111, #080808);
+            border: 1px solid #333;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .page-header::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, var(--gh-blue), var(--gh-yellow), var(--gh-blue));
+        }
+
+        .page-title {
+            font-size: 32px; font-weight: 900; text-transform: uppercase;
+            letter-spacing: 3px; margin: 0 0 10px 0; color: #fff;
+            text-shadow: 0 0 15px rgba(0, 234, 255, 0.4);
+        }
+
+        .page-subtitle { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* ADMIN DECK */
+        .admin-deck {
+            display: none; background: rgba(26, 5, 5, 0.8); border: 1px solid var(--gh-red);
+            border-radius: 12px; padding: 20px; margin-bottom: 30px;
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.1);
+        }
+        .deck-header { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,68,68,0.3); padding-bottom: 10px; margin-bottom: 10px; }
+        .deck-title { color: var(--gh-red); font-weight: 900; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+        
+        .deck-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-box { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,68,68,0.3); border-radius: 6px; padding: 10px; text-align: center; }
+        .stat-val { font-size: 18px; font-weight: 900; color: #fff; font-family: monospace; }
+        .stat-lbl { font-size: 9px; color: #888; text-transform: uppercase; margin-top: 4px; }
+
+        /* CREATE POST */
+        .create-section {
+            background: #111; border: 1px solid #333; border-radius: 12px;
+            padding: 25px; margin-bottom: 30px; transition: 0.3s;
+        }
+        .create-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .create-title { font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: var(--gh-yellow); }
+        
+        .toggle-btn {
+            background: transparent; border: 1px solid var(--gh-yellow); color: var(--gh-yellow);
+            padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase;
+        }
+        .toggle-btn:hover { background: var(--gh-yellow); color: #000; }
+
+        .create-form { display: grid; gap: 15px; }
+        .form-input { 
+            width: 100%; background: #080808; border: 1px solid #333; padding: 12px; 
+            color: #fff; border-radius: 6px; font-size: 14px; box-sizing: border-box;
+        }
+        .form-input:focus { outline: none; border-color: var(--gh-blue); }
+        
+        .submit-btn {
+            width: 100%; background: var(--gh-blue); color: #000; font-weight: 900;
+            padding: 12px; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+            transition: 0.2s;
+        }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 234, 255, 0.4); }
+
+        /* CONTROLS */
+        .controls-bar {
+            display: flex; justify-content: space-between; margin-bottom: 20px;
+            background: #111; padding: 10px 15px; border-radius: 8px; border: 1px solid #333;
+        }
+        .filter-grp { display: flex; gap: 8px; }
+        .filter-btn {
+            background: transparent; border: none; color: #666; font-size: 11px; font-weight: bold;
+            text-transform: uppercase; cursor: pointer; padding: 5px 10px; border-radius: 4px;
+        }
+        .filter-btn.active { background: #222; color: #fff; }
+        .filter-btn:hover { color: #fff; }
+
+        /* BLOG FEED */
+        .blog-grid { display: flex; flex-direction: column; gap: 20px; }
+
+        .blog-card {
+            background: #111; border: 1px solid #333; border-radius: 12px; padding: 25px;
+            display: flex; flex-direction: column; transition: 0.2s;
+        }
+        .blog-card:hover { border-color: #555; transform: translateY(-2px); }
+
+        .card-top { display: flex; align-items: center; margin-bottom: 15px; gap: 12px; }
+        
+        .u-av { 
+            width: 40px; height: 40px; border-radius: 50%; object-fit: cover; 
+            border: 2px solid #333; background: #000; 
+        }
+        .u-initials {
+            width: 40px; height: 40px; border-radius: 50%; background: #222; color: #888;
+            border: 2px solid #333; display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 14px;
+        }
+
+        .u-info h4 { margin: 0; color: #fff; font-size: 14px; font-weight: 800; }
+        .u-info span { font-size: 10px; color: #666; font-family: monospace; text-transform: uppercase; }
+
+        .b-title { font-size: 20px; font-weight: 900; color: #fff; margin-bottom: 10px; line-height: 1.3; }
+        .b-preview { font-size: 14px; color: #ccc; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 20px; }
+
+        .b-actions { display: flex; gap: 10px; padding-top: 15px; border-top: 1px solid #222; margin-top: auto; }
+        .act-btn { 
+            background: #1a1a1a; border: 1px solid #333; color: #888; padding: 6px 14px; 
+            border-radius: 20px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;
+        }
+        .act-btn:hover { border-color: #fff; color: #fff; }
+        .act-btn.liked { color: var(--gh-red); border-color: var(--gh-red); background: rgba(255, 68, 68, 0.1); }
+
+        /* READER MODAL */
+        .reader-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999;
+            display: none; align-items: center; justify-content: center; padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+        .reader-card {
+            width: 100%; max-width: 800px; background: #111; border: 1px solid #333;
+            border-radius: 12px; height: 90vh; display: flex; flex-direction: column;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8); overflow: hidden;
+        }
+        .reader-scroll { padding: 40px; overflow-y: auto; flex-grow: 1; }
+        
+        .r-title { font-size: 32px; font-weight: 900; color: #fff; margin-bottom: 20px; line-height: 1.2; }
+        .r-body { font-size: 16px; line-height: 1.8; color: #ddd; white-space: pre-wrap; margin-bottom: 40px; font-family: sans-serif; }
+        
+        .r-close { 
+            position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; 
+            background: #222; color: #fff; border-radius: 50%; display: flex; 
+            align-items: center; justify-content: center; cursor: pointer; font-weight: bold; border: 1px solid #444; z-index: 10000;
+        }
+        .r-close:hover { background: var(--gh-red); border-color: var(--gh-red); }
+
+        .comments-wrap { margin-top: 40px; border-top: 1px dashed #333; padding-top: 20px; }
+        .comment-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .c-bubble { background: #1a1a1a; padding: 10px 15px; border-radius: 8px; border: 1px solid #333; flex-grow: 1; }
+        .c-name { font-size: 11px; font-weight: bold; color: var(--gh-blue); margin-bottom: 4px; display: block; }
+        .c-text { font-size: 13px; color: #ccc; }
+
+        .loading-spinner { text-align: center; padding: 50px; color: #666; font-family: monospace; text-transform: uppercase; }
+
+        @media(max-width: 700px) {
+            .page-header { padding: 20px; }
+            .page-title { font-size: 24px; }
+            .reader-scroll { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="particles" id="particleContainer"></div>
+<div id="header"></div>
+
+<div class="page-wrap">
+    <div id="drawer"></div>
+
+    <div class="content">
+        <div class="blog-container">
+            
+            <div class="page-header">
+                <h1 class="page-title">Blog Terminal</h1>
+                <div class="page-subtitle">Long-form transmissions</div>
+            </div>
+
+            <div id="adminDeck" class="admin-deck">
+                <div class="deck-header"><span class="deck-title">⚡ Admin Deck</span></div>
+                <div class="deck-stats">
+                    <div class="stat-box"><div class="stat-val" id="statPosts">0</div><div class="stat-lbl">Posts</div></div>
+                    <div class="stat-box"><div class="stat-val" id="statLikes">0</div><div class="stat-lbl">Likes</div></div>
+                    <div class="stat-box"><div class="stat-val" id="statComms">0</div><div class="stat-lbl">Comments</div></div>
+                </div>
+            </div>
+
+            <div class="create-section" id="createSection">
+                <div class="create-header">
+                    <span class="create-title">New Transmission</span>
+                    <button class="toggle-btn" onclick="toggleCreate()">Minimize</button>
+                </div>
+                <div id="createForm" class="create-form">
+                    <input type="text" id="postTitle" class="form-input" placeholder="Title (Max 100)" maxlength="100">
+                    <textarea id="postContent" class="form-input" style="min-height:150px; resize:vertical;" placeholder="Write something... (Max 50,000)" maxlength="50000"></textarea>
+                    <button class="submit-btn" onclick="publishPost()">🚀 Publish</button>
+                </div>
+            </div>
+
+            <div class="controls-bar">
+                <div class="filter-grp">
+                    <button class="filter-btn active" onclick="setSort('new', this)">Newest</button>
+                    <button class="filter-btn" onclick="setSort('old', this)">Oldest</button>
+                </div>
+                <div class="filter-grp">
+                    <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+                    <button class="filter-btn" onclick="setFilter('mine', this)">Mine</button>
+                </div>
+            </div>
+
+            <div id="blogFeed" class="blog-grid">
+                <div class="loading-spinner">Initializing Feed...</div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="readerOverlay" class="reader-overlay">
+    <div class="reader-card">
+        <div class="r-close" onclick="closeReader()">✕</div>
+        <div class="reader-scroll">
+            <div id="readerContent"></div>
+            
+            <div class="comments-wrap">
+                <h4 style="color:#666; margin-bottom:15px; text-transform:uppercase;">Comments</h4>
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <input type="text" id="commentInput" class="form-input" placeholder="Add to the discussion..." style="margin:0;">
+                    <button class="toggle-btn" onclick="postComment()" style="background:var(--gh-blue); color:#000; border:none;">POST</button>
+                </div>
+                <div id="commentsList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="firebase-init.js"></script> 
+<script src="header.js"></script>
+<script src="drawer.js"></script>
+
+<script>
+    /* PARTICLES */
+    const container = document.getElementById("particleContainer");
+    if (container) { for (let i = 0; i < 20; i++) { const p = document.createElement("div"); p.className = "particle"; p.style.left = Math.random() * 100 + "vw"; p.style.top = Math.random() * 100 + "vh"; container.appendChild(p); } }
+
+    let currentUser = null;
+    let isAdmin = false;
+    let currentFilter = 'all';
+    let currentSort = 'new';
+    let activeBlogId = null;
+
+    /* GATEKEEPER */
+    auth.onAuthStateChanged(async user => {
+        if (!user) return window.location.href = "login.html";
+        document.body.style.display = "block";
+        currentUser = user;
+        
+        const token = await user.getIdTokenResult();
+        isAdmin = token.claims.admin;
+        if(isAdmin) {
+            document.getElementById("adminDeck").style.display = "block";
+            loadStats();
+        }
+        
+        loadFeed();
+    });
+
+    /* FEED LOADER */
+    function loadFeed() {
+        let q = db.collection("blogs");
+        if(currentSort === 'new') q = q.orderBy("timestamp", "desc");
+        else q = q.orderBy("timestamp", "asc");
+
+        q.onSnapshot(snap => {
+            const feed = document.getElementById("blogFeed");
+            feed.innerHTML = "";
+            
+            if(snap.empty) { feed.innerHTML = "<div class='loading-spinner'>No transmissions found.</div>"; return; }
+
+            snap.forEach(doc => {
+                const d = doc.data();
+                if(currentFilter === 'mine' && d.authorId !== currentUser.uid) return;
+
+                const date = d.timestamp ? new Date(d.timestamp.seconds*1000).toLocaleDateString() : "Just now";
+                const isLiked = d.likes && d.likes.includes(currentUser.uid);
+                
+                // Avatar Logic with Error Fallback
+                const avatarHtml = d.authorAvatar 
+                    ? `<img src="${d.authorAvatar}" class="u-av" onerror="this.onerror=null; this.replaceWith(createInitials('${d.authorName}'))">`
+                    : createInitials(d.authorName).outerHTML;
+
+                const div = document.createElement("div");
+                div.className = "blog-card";
+                div.innerHTML = `
+                    <div class="card-top">
+                        ${avatarHtml}
+                        <div class="u-info">
+                            <h4>${d.authorName}</h4>
+                            <span>${date}</span>
+                        </div>
+                    </div>
+                    <div class="b-title">${d.title}</div>
+                    <div class="b-preview">${d.content}</div>
+                    <div class="b-actions">
+                        <button class="act-btn ${isLiked?'liked':''}" onclick="toggleLike('${doc.id}')">
+                            ${isLiked?'❤️':'🤍'} ${d.likes ? d.likes.length : 0}
+                        </button>
+                        <button class="act-btn" onclick="openReader('${doc.id}')">📖 Read Full</button>
+                        ${(isAdmin || d.authorId === currentUser.uid) ? `<button class="act-btn" onclick="deletePost('${doc.id}')" style="margin-left:auto; color:var(--gh-red);">🗑️</button>` : ''}
+                    </div>
+                `;
+                
+                // Add click handler to non-button areas
+                div.addEventListener('click', (e) => {
+                    if(e.target.tagName !== 'BUTTON') openReader(doc.id);
+                });
+
+                feed.appendChild(div);
+            });
+        });
+    }
+
+    /* READER MODAL */
+    async function openReader(id) {
+        activeBlogId = id;
+        const overlay = document.getElementById("readerOverlay");
+        const content = document.getElementById("readerContent");
+        
+        overlay.style.display = "flex";
+        content.innerHTML = "<div class='loading-spinner'>Decrypting...</div>";
+        document.getElementById("commentsList").innerHTML = "";
+
+        const doc = await db.collection("blogs").doc(id).get();
+        if(!doc.exists) return closeReader();
+        const d = doc.data();
+
+        const date = d.timestamp ? new Date(d.timestamp.seconds*1000).toLocaleString() : "Just now";
+        
+        // Avatar for Modal
+        let avImg = `<div class="u-initials" style="width:50px; height:50px; font-size:18px;">${d.authorName[0]}</div>`;
+        if(d.authorAvatar) avImg = `<img src="${d.authorAvatar}" class="u-av" style="width:50px; height:50px;" onerror="this.replaceWith(createInitials('${d.authorName}'))">`;
+
+        content.innerHTML = `
+            <div class="card-top" style="margin-bottom:30px;">
+                ${avImg}
+                <div class="u-info">
+                    <h4 style="font-size:18px;">${d.authorName}</h4>
+                    <span>${date}</span>
+                </div>
+            </div>
+            <div class="r-title">${d.title}</div>
+            <div class="r-body">${d.content}</div>
+        `;
+
+        // Render Comments
+        renderComments(d.comments || []);
+    }
+
+    function renderComments(list) {
+        const div = document.getElementById("commentsList");
+        div.innerHTML = "";
+        if(list.length === 0) div.innerHTML = "<div style='color:#444; font-size:12px; font-style:italic;'>No comments yet.</div>";
+        
+        list.forEach(c => {
+            div.innerHTML += `
+                <div class="comment-row">
+                    <div class="c-bubble">
+                        <span class="c-name">${c.authorName}</span>
+                        <span class="c-text">${c.text}</span>
+                    </div>
+                </div>`;
+        });
+    }
+
+    async function postComment() {
+        if(!activeBlogId) return;
+        const txt = document.getElementById("commentInput").value.trim();
+        if(!txt) return;
+
+        const comment = {
+            text: txt,
+            authorId: currentUser.uid,
+            authorName: currentUser.displayName || "Agent",
+            timestamp: new Date()
+        };
+
+        await db.collection("blogs").doc(activeBlogId).update({
+            comments: firebase.firestore.FieldValue.arrayUnion(comment)
+        });
+        
+        document.getElementById("commentInput").value = "";
+        openReader(activeBlogId); // Refresh
+    }
+
+    function closeReader() { 
+        document.getElementById("readerOverlay").style.display = "none"; 
+        activeBlogId = null;
+    }
+
+    /* ACTIONS */
+    async function publishPost() {
+        const title = document.getElementById("postTitle").value.trim();
+        const content = document.getElementById("postContent").value.trim();
+        if(!title || !content) return alert("Empty signal.");
+
+        // Get fresh user data for avatar
+        const uDoc = await db.collection("users").doc(currentUser.uid).get();
+        const uData = uDoc.data();
+
+        await db.collection("blogs").add({
+            title, content,
+            authorId: currentUser.uid,
+            authorName: uData.name || currentUser.displayName || "Agent",
+            authorAvatar: uData.photoURL || currentUser.photoURL || null,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            likes: [], comments: []
+        });
+
+        document.getElementById("postTitle").value = "";
+        document.getElementById("postContent").value = "";
+        toggleCreate(); // Close drawer
+    }
+
+    async function toggleLike(id) {
+        const ref = db.collection("blogs").doc(id);
+        const doc = await ref.get();
+        const likes = doc.data().likes || [];
+        if(likes.includes(currentUser.uid)) {
+            await ref.update({ likes: firebase.firestore.FieldValue.arrayRemove(currentUser.uid) });
+        } else {
+            await ref.update({ likes: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) });
+        }
+    }
+
+    async function deletePost(id) {
+        if(confirm("Delete transmission?")) await db.collection("blogs").doc(id).delete();
+    }
+
+    /* UTILS */
+    function toggleCreate() {
+        const form = document.getElementById("createForm");
+        form.style.display = form.style.display === "none" ? "grid" : "none";
+    }
+
+    function createInitials(name) {
+        const div = document.createElement("div");
+        div.className = "u-initials";
+        div.innerText = name ? name[0].toUpperCase() : "?";
+        return div;
+    }
+
+    function setFilter(f, btn) {
+        currentFilter = f;
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        loadFeed();
+    }
+    function setSort(s, btn) {
+        currentSort = s;
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        loadFeed();
+    }
+
+    async function loadStats() {
+        const snap = await db.collection("blogs").get();
+        document.getElementById("statPosts").innerText = snap.size;
+        let likes = 0, comms = 0;
+        snap.forEach(doc => {
+            const d = doc.data();
+            likes += (d.likes ? d.likes.length : 0);
+            comms += (d.comments ? d.comments.length : 0);
+        });
+        document.getElementById("statLikes").innerText = likes;
+        document.getElementById("statComms").innerText = comms;
+    }
+</script>
+</body>
+</html>

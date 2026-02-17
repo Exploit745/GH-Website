@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Zen Zone</title>
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* GATEKEEPER PRE-LOAD */
+        body { display: none; background: #000; margin: 0; height: 100vh; overflow: hidden; user-select: none; }
+
+        /* ZEN LAYOUT */
+        .zen-wrapper {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100%; width: 100%; position: relative;
+        }
+
+        /* THE BREATHING LOGO */
+        .zen-logo {
+            width: 150px; opacity: 0.8;
+            filter: drop-shadow(0 0 20px var(--gh-blue));
+            animation: breathe 8s infinite ease-in-out;
+        }
+
+        @keyframes breathe {
+            0% { transform: scale(1); filter: drop-shadow(0 0 20px var(--gh-blue)); opacity: 0.5; }
+            50% { transform: scale(1.5); filter: drop-shadow(0 0 60px var(--gh-blue)); opacity: 1; }
+            100% { transform: scale(1); filter: drop-shadow(0 0 20px var(--gh-blue)); opacity: 0.5; }
+        }
+
+        /* TEXT ELEMENTS */
+        .zen-text {
+            font-family: monospace; color: var(--gh-blue); margin-top: 40px;
+            font-size: 14px; letter-spacing: 3px; text-transform: uppercase;
+            opacity: 0.7; animation: fadeText 8s infinite ease-in-out;
+        }
+
+        @keyframes fadeText {
+            0% { content: "Exhale..."; opacity: 0.3; }
+            50% { content: "Inhale..."; opacity: 1; }
+            100% { content: "Exhale..."; opacity: 0.3; }
+        }
+
+        .timer-display {
+            position: absolute; bottom: 50px; font-family: monospace;
+            color: #333; font-size: 18px; letter-spacing: 2px;
+        }
+
+        /* EXIT BUTTON (Subtle) */
+        .exit-node {
+            position: absolute; top: 30px; right: 30px;
+            color: #222; font-size: 12px; cursor: pointer; text-decoration: none;
+            font-family: sans-serif; font-weight: bold; text-transform: uppercase;
+            transition: 0.3s; padding: 10px; border: 1px solid transparent;
+        }
+        .exit-node:hover { color: var(--gh-blue); border-color: var(--gh-blue); }
+
+    </style>
+</head>
+<body>
+
+    <div class="zen-wrapper">
+        <a href="arcade.html" class="exit-node">Exit Trance</a>
+        
+        <img src="assets/GH_Hero.png" class="zen-logo">
+        
+        <div id="breathGuide" class="zen-text">Breathe</div>
+        
+        <div class="timer-display" id="zenTimer">05:00</div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="firebase-init.js"></script> 
+
+    <script>
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                startSession();
+            }
+        });
+
+        /* ZEN LOGIC */
+        function startSession() {
+            // Breathing Text Sync
+            const textEl = document.getElementById("breathGuide");
+            let breathingIn = true;
+            
+            setInterval(() => {
+                textEl.innerText = breathingIn ? "Exhale..." : "Inhale...";
+                breathingIn = !breathingIn;
+            }, 4000); // Syncs with 8s CSS animation (4s in, 4s out)
+
+            // 5 Minute Timer
+            let duration = 5 * 60; 
+            const display = document.getElementById("zenTimer");
+            
+            const timer = setInterval(() => {
+                let minutes = parseInt(duration / 60, 10);
+                let seconds = parseInt(duration % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+
+                if (--duration < 0) {
+                    clearInterval(timer);
+                    display.textContent = "Session Complete";
+                    display.style.color = "var(--gh-blue)";
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

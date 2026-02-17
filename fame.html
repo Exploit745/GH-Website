@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Hall of Fame</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* GATEKEEPER */
+        body { display: none; }
+
+        /* [HALL OF FAME SPECIFIC STYLES] */
+
+        /* GOLD DUST FX */
+        .dust { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; }
+        .speck { position: absolute; width: 2px; height: 2px; background: var(--gh-gold); border-radius: 50%; animation: fall linear infinite; opacity: 0.5; }
+        @keyframes fall { 0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
+
+        /* HEADER & TOOLBAR */
+        .content { align-items: center; } 
+        .fame-toolbar { width: 100%; display: flex; justify-content: flex-end; margin-bottom: 20px; min-height: 40px; }
+
+        .fame-header { margin-bottom: 50px; position: relative; display: inline-block; text-align: center; }
+        .fame-title { 
+            font-size: 48px; font-weight: 900; color: transparent; -webkit-text-stroke: 1px var(--gh-gold); 
+            text-transform: uppercase; margin: 0; letter-spacing: 4px; position: relative; z-index: 2; 
+        }
+        .fame-title::after { content: "HALL OF FAME"; position: absolute; left: 2px; top: 2px; color: var(--gh-gold); opacity: 0.3; filter: blur(2px); z-index: -1; }
+        .fame-subtitle { color: #888; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin-top: 10px; }
+
+        /* ADMIN BTN */
+        .induct-btn { 
+            background: rgba(0,0,0,0.5); border: 1px solid var(--gh-gold); color: var(--gh-gold); 
+            padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; 
+            display: none; transition: 0.2s; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;
+        }
+        .induct-btn:hover { background: var(--gh-gold); color: #000; box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+
+        /* TROPHY GRID */
+        .trophy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; width: 100%; }
+
+        .trophy-card {
+            background: linear-gradient(145deg, #111 0%, #0a0a0a 100%);
+            border: 1px solid #333; border-radius: 12px; padding: 30px;
+            position: relative; transition: 0.3s; display: flex; flex-direction: column; align-items: center;
+            border-top: 3px solid var(--gh-gold); text-align: center;
+        }
+        .trophy-card:hover { transform: translateY(-10px); box-shadow: 0 10px 40px rgba(255, 215, 0, 0.1); border-color: var(--gh-gold); }
+
+        /* WREATH & LOGO */
+        .wreath-container { position: relative; width: 120px; height: 120px; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; }
+        .winner-logo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gh-gold); z-index: 2; background: #000; }
+        .wreath-svg { position: absolute; width: 100%; height: 100%; fill: var(--gh-gold); opacity: 0.8; z-index: 1; animation: spinSlow 60s linear infinite; }
+        @keyframes spinSlow { to { transform: rotate(360deg); } }
+
+        .winner-name { font-size: 24px; font-weight: 900; color: #fff; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px; }
+        .tourny-name { color: var(--gh-gold); font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; }
+        
+        .stat-row { display: flex; gap: 15px; font-size: 13px; color: #888; border-top: 1px solid #222; padding-top: 15px; margin-top: auto; width: 100%; justify-content: center; }
+        .stat-val { color: #fff; font-weight: bold; display: block; }
+
+        .delete-btn { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #444; cursor: pointer; font-size: 16px; display: none; }
+        .delete-btn:hover { color: #ff4444; }
+
+        /* MODAL OVERRIDES (Gold Theme) */
+        .gh-modal-content { border-color: var(--gh-gold) !important; box-shadow: 0 0 50px rgba(255, 215, 0, 0.2) !important; }
+        .gh-input:focus, .gh-select:focus { border-color: var(--gh-gold) !important; }
+        
+        .save-btn { width: 100%; background: var(--gh-gold); color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top:15px; }
+        .save-btn:hover { background: #fff; }
+
+        @media (max-width: 768px) {
+            .fame-title { font-size: 32px; }
+            .fame-toolbar { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dust" id="dustContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            <div class="fame-toolbar">
+                <button id="inductBtn" class="induct-btn" onclick="openModal()">+ INDUCT LEGEND</button>
+            </div>
+            
+            <div class="fame-header">
+                <h1 class="fame-title">Hall of Fame</h1>
+                <div class="fame-subtitle">Honoring the Champions of GH</div>
+            </div>
+
+            <div class="trophy-grid" id="fameGrid">
+                <div style="grid-column: 1/-1; padding: 50px; color: #666;">Polishing trophies...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="inductModal" class="gh-modal">
+        <div class="gh-modal-content">
+            <h2 style="color:var(--gh-gold); margin-top:0;">Induct Winner</h2>
+            
+            <label style="color:var(--gh-gold); font-size:11px; font-weight:bold; letter-spacing:1px; display:block; margin-bottom:5px;">AUTO-FILL DATA (OPTIONAL)</label>
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <select id="fillType" class="gh-select" style="margin-bottom:0;" onchange="toggleSourceSelector()">
+                    <option value="none">-- Manual Entry --</option>
+                    <option value="squad">Active Squad</option>
+                    <option value="user">Registered Agent</option>
+                </select>
+                <select id="sourceSelect" class="gh-select" style="margin-bottom:0; display:none;" onchange="applyAutoFill()">
+                    <option value="">Select...</option>
+                </select>
+            </div>
+            <hr style="border:0; border-top:1px dashed #333; margin-bottom:15px;">
+
+            <label style="color:#888; font-size:11px; font-weight:bold; display:block; margin-bottom:5px;">TOURNAMENT / EVENT NAME</label>
+            <input type="text" id="inEvent" class="gh-input" placeholder="e.g. Winter Valorant Cup">
+            
+            <label style="color:#888; font-size:11px; font-weight:bold; display:block; margin-bottom:5px;">WINNER NAME (Team or Player)</label>
+            <input type="text" id="inWinner" class="gh-input" placeholder="e.g. Neon Vipers">
+
+            <label style="color:#888; font-size:11px; font-weight:bold; display:block; margin-bottom:5px;">LOGO URL (Optional)</label>
+            <input type="text" id="inLogo" class="gh-input" placeholder="https://...">
+
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <label style="color:#888; font-size:11px; font-weight:bold; display:block; margin-bottom:5px;">DATE</label>
+                    <input type="date" id="inDate" class="gh-input">
+                </div>
+                <div style="flex:1;">
+                    <label style="color:#888; font-size:11px; font-weight:bold; display:block; margin-bottom:5px;">PRIZE / REWARD</label>
+                    <input type="text" id="inPrize" class="gh-input" placeholder="$500">
+                </div>
+            </div>
+
+            <button class="save-btn" onclick="saveInductee()">CONSECRATE</button>
+            <button onclick="closeModal()" style="width:100%; background:transparent; border:none; color:#666; margin-top:10px; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        let isAdmin = false;
+        let teamsCache = [];
+        let usersCache = [];
+
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(async user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                
+                // Gold Dust FX
+                const dust = document.getElementById("dustContainer");
+                for(let i=0; i<40; i++){
+                    const s = document.createElement("div"); s.className = "speck";
+                    s.style.left = Math.random()*100+"vw";
+                    s.style.animationDuration = (Math.random()*5+5)+"s";
+                    s.style.animationDelay = Math.random()*5+"s";
+                    dust.appendChild(s);
+                }
+
+                // Admin Check
+                const token = await user.getIdTokenResult();
+                isAdmin = !!token.claims.admin;
+                if(!isAdmin) {
+                    const uDoc = await db.collection("users").doc(user.uid).get();
+                    if(uDoc.exists && uDoc.data().role === 'admin') isAdmin = true;
+                }
+                if(isAdmin) document.getElementById("inductBtn").style.display = "block";
+                
+                // Load Content
+                loadFame();
+            }
+        });
+
+        function loadFame() {
+            db.collection("hall_of_fame").orderBy("date", "desc").onSnapshot(snap => {
+                const grid = document.getElementById("fameGrid");
+                grid.innerHTML = "";
+                if(snap.empty) { grid.innerHTML = "<div style='color:#666; grid-column:1/-1;'>No legends yet.</div>"; return; }
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const logo = d.logo || "assets/GH_Hero.png";
+                    const dateStr = d.date ? new Date(d.date).toLocaleDateString(undefined, {month:'short', year:'numeric'}) : "Unknown";
+                    
+                    const delBtn = isAdmin ? `<button class="delete-btn" style="display:block;" onclick="removeEntry('${doc.id}')">✕</button>` : '';
+
+                    grid.innerHTML += `
+                        <div class="trophy-card">
+                            ${delBtn}
+                            <div class="wreath-container">
+                                <svg class="wreath-svg" viewBox="0 0 100 100"><path d="M50 5 C20 5 5 35 5 60 C5 85 30 95 50 95 C70 95 95 85 95 60 C95 35 80 5 50 5 M50 90 C35 90 10 80 10 60 C10 40 25 10 50 10 C75 10 90 40 90 60 C90 80 65 90 50 90" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5,5"/></svg>
+                                <img src="${logo}" class="winner-logo">
+                            </div>
+                            <div class="tourny-name">${d.event}</div>
+                            <div class="winner-name">${d.winner}</div>
+                            <div class="stat-row">
+                                <div><span class="stat-val">${dateStr}</span>VICTORY</div>
+                                <div style="width:1px; background:#333;"></div>
+                                <div><span class="stat-val" style="color:var(--gh-gold);">${d.prize || "GLORY"}</span>REWARD</div>
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+
+        /* AUTO-FILL LOGIC */
+        async function openModal() { 
+            document.getElementById("inductModal").style.display = "flex";
+            if(teamsCache.length === 0 && usersCache.length === 0) {
+                const [tSnap, uSnap] = await Promise.all([
+                    db.collection('teams').get(),
+                    db.collection('users').get()
+                ]);
+                teamsCache = tSnap.docs.map(d => ({id: d.id, ...d.data()}));
+                usersCache = uSnap.docs.map(d => ({id: d.id, ...d.data()}));
+            }
+        }
+
+        function toggleSourceSelector() {
+            const type = document.getElementById('fillType').value;
+            const sel = document.getElementById('sourceSelect');
+            sel.innerHTML = '<option value="">Select...</option>';
+            
+            if(type === 'none') { sel.style.display = 'none'; return; }
+            
+            sel.style.display = 'block';
+            if(type === 'squad') {
+                teamsCache.forEach(t => sel.innerHTML += `<option value="${t.id}">${t.name} [${t.tag}]</option>`);
+            } else {
+                usersCache.forEach(u => sel.innerHTML += `<option value="${u.id}">${u.name}</option>`);
+            }
+        }
+
+        function applyAutoFill() {
+            const type = document.getElementById('fillType').value;
+            const id = document.getElementById('sourceSelect').value;
+            if(!id) return;
+
+            if(type === 'squad') {
+                const t = teamsCache.find(x => x.id === id);
+                if(t) {
+                    document.getElementById('inWinner').value = t.name;
+                    document.getElementById('inLogo').value = t.logo || '';
+                }
+            } else {
+                const u = usersCache.find(x => x.id === id);
+                if(u) {
+                    document.getElementById('inWinner').value = u.name;
+                    document.getElementById('inLogo').value = u.photoURL || '';
+                }
+            }
+        }
+
+        /* ACTIONS */
+        async function saveInductee() {
+            const event = document.getElementById("inEvent").value;
+            const winner = document.getElementById("inWinner").value;
+            const logo = document.getElementById("inLogo").value;
+            const date = document.getElementById("inDate").value;
+            const prize = document.getElementById("inPrize").value;
+
+            if(!event || !winner || !date) return alert("Event, Winner, and Date required.");
+
+            try {
+                await db.collection("hall_of_fame").add({
+                    event, winner, logo, date, prize,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Legend Inducted.");
+                closeModal();
+            } catch(e) { alert("Error: " + e.message); }
+        }
+
+        async function removeEntry(id) {
+            if(confirm("Remove this legend?")) await db.collection("hall_of_fame").doc(id).delete();
+        }
+
+        function closeModal() { document.getElementById("inductModal").style.display = "none"; }
+    </script>
+</body>
+</html>

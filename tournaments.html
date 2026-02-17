@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Tournaments</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* GATEKEEPER */
+        body { display: none; }
+
+        /* [TOURNAMENT SPECIFIC STYLES] */
+
+        /* OFFLINE OVERLAY */
+        #offlineOverlay {
+            display: none; text-align: center; padding: 100px 20px; 
+            background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed #444;
+        }
+        #bracketWrapper { display: block; }
+
+        /* ADMIN PREVIEW BANNER */
+        .admin-banner {
+            background: var(--gh-red); color: #fff; text-align: center; font-weight: bold; 
+            font-size: 12px; padding: 5px; margin-bottom: 20px; border-radius: 4px; display: none;
+        }
+
+        /* HEADER OVERRIDES */
+        .page-header { text-align: center; margin-bottom: 50px; position: relative; display: flex; flex-direction: column; align-items: center; }
+        .page-subtitle { color: var(--gh-blue); font-size: 14px; letter-spacing: 2px; margin-top: 5px; text-transform: uppercase; }
+
+        /* HALL OF FAME BUTTON */
+        .hof-btn {
+            background: linear-gradient(45deg, #ffd700, #ffaa00);
+            color: #000; border: none; padding: 10px 30px; margin-top: 20px;
+            font-weight: 900; font-size: 14px; border-radius: 30px; cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .hof-btn:hover { transform: scale(1.1); box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); color: #000; background: #fff; }
+
+        /* ADMIN GEAR */
+        .admin-gear {
+            position: absolute; top: 0; right: 0; font-size: 24px; cursor: pointer;
+            background: rgba(0,0,0,0.5); border: 1px solid #444; border-radius: 50%;
+            width: 40px; height: 40px; display: none; align-items: center; justify-content: center;
+            transition: 0.2s; z-index: 100;
+        }
+        .admin-gear:hover { transform: rotate(90deg); color: var(--gh-yellow); border-color: var(--gh-yellow); }
+
+        /* PRIZE POOL */
+        .prize-box {
+            background: linear-gradient(90deg, transparent, #111, transparent);
+            border-top: 1px solid #333; border-bottom: 1px solid #333;
+            padding: 20px; text-align: center; margin-bottom: 50px;
+        }
+        .prize-amount { font-size: 24px; color: var(--gh-yellow); font-weight: 800; text-shadow: 0 0 15px rgba(253, 255, 85, 0.4); }
+
+        /* BRACKET LAYOUT */
+        .bracket-container { display: flex; justify-content: center; gap: 40px; padding: 20px; overflow-x: auto; }
+        .round-column { display: flex; flex-direction: column; justify-content: space-around; gap: 40px; min-width: 250px; }
+        .round-title { text-align: center; color: #666; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 2px; }
+
+        /* MATCH CARD */
+        .match-card {
+            background: #111; border: 1px solid #333; border-radius: 8px; 
+            padding: 10px; position: relative; transition: 0.2s; min-height: 80px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .match-card:hover { border-color: #555; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        .match-card.active { border-color: var(--gh-blue); box-shadow: 0 0 15px rgba(0, 234, 255, 0.1); }
+
+        .match-card::after { content: ""; position: absolute; right: -20px; top: 50%; width: 20px; height: 2px; background: #333; }
+        .round-column:last-child .match-card::after { display: none; } 
+
+        .team-slot {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 5px 8px; border-radius: 4px; font-size: 13px; font-weight: bold;
+        }
+        .team-slot.winner { color: var(--gh-yellow); text-shadow: 0 0 10px rgba(253, 255, 85, 0.2); }
+        .team-slot.loser { color: #444; text-decoration: line-through; }
+        .team-score { background: #222; padding: 2px 6px; border-radius: 4px; font-size: 11px; min-width: 20px; text-align: center; color:#fff; }
+
+        /* ADMIN CONTROLS */
+        .admin-card-btn {
+            position: absolute; top: -10px; right: -5px; background: #333; color: #fff;
+            border: 1px solid #555; border-radius: 4px; font-size: 10px; cursor: pointer; padding: 2px 6px;
+            display: none; z-index: 10;
+        }
+        .admin-card-btn:hover { background: var(--gh-blue); color: #000; border-color: var(--gh-blue); }
+        .match-card:hover .admin-card-btn { display: block; }
+
+        /* WINNER CARD */
+        .champion-card {
+            border: 2px solid var(--gh-yellow); background: radial-gradient(circle, #222200 0%, #000 100%);
+            transform: scale(1.1); box-shadow: 0 0 30px rgba(253, 255, 85, 0.2);
+        }
+
+        /* MODAL OVERRIDES (Gold Theme) */
+        .gh-modal-content { border-color: var(--gh-yellow); box-shadow: 0 0 50px rgba(253, 255, 85, 0.2); }
+        .gh-label { color:#888; font-size:12px; font-weight:bold; margin-bottom:5px; display:block; }
+        
+        .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .score-name { flex: 1; font-weight: bold; }
+        .score-input { width: 60px; text-align: center; }
+
+        @media (max-width: 900px) { .bracket-container { justify-content: flex-start; padding-bottom: 50px; } }
+    </style>
+</head>
+<body>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            <div class="page-header">
+                <div id="adminGear" class="admin-gear" onclick="openAdminModal()">⚙️</div>
+                <h1 class="page-title" id="displayTitle">Tournament</h1>
+                <div class="page-subtitle" id="displaySeason">Season 1</div>
+                
+                <button class="hof-btn" onclick="window.location.href='fame.html'">
+                    🏆 Hall of Fame 🏆
+                </button>
+            </div>
+
+            <div id="adminBanner" class="admin-banner">⚠ ADMIN VIEW (TOURNAMENT IS OFFLINE FOR PUBLIC)</div>
+
+            <div id="offlineOverlay">
+                <div style="font-size:40px; margin-bottom:10px;">🚫</div>
+                <h2 style="margin:0; color:#888;">No Active Operations</h2>
+                <p style="color:#666;">The tournament grid is currently offline. Check back later.</p>
+            </div>
+
+            <div id="bracketWrapper">
+                <div class="prize-box">
+                    <div style="font-size:12px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Current Prize Pool</div>
+                    <div class="prize-amount" id="displayPrize">Loading...</div>
+                </div>
+
+                <div id="loading" style="text-align:center; color:#666;">Loading Bracket...</div>
+
+                <div class="bracket-container" id="bracketContainer" style="display:none;">
+                    <div class="round-column" id="round1"><div class="round-title">Quarter Finals</div></div>
+                    <div class="round-column" id="round2"><div class="round-title">Semi Finals</div></div>
+                    <div class="round-column" id="round3"><div class="round-title">Grand Finals</div></div>
+                    <div class="round-column" id="round4">
+                        <div class="round-title">Champion</div>
+                        <div class="match-card champion-card" id="championSlot">
+                            <div style="text-align:center; padding:10px;">
+                                <div style="font-size:30px;">👑</div>
+                                <div id="championName" style="color:var(--gh-yellow); font-weight:900;">TBD</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminModal" class="gh-modal">
+        <div class="gh-modal-content">
+            <h2 style="color:var(--gh-yellow); margin-top:0;">Tournament Command</h2>
+            
+            <label class="gh-label">STATUS</label>
+            <select id="editStatus" class="gh-select">
+                <option value="active">Active (Visible to All)</option>
+                <option value="offline">Offline (Hidden)</option>
+            </select>
+
+            <label class="gh-label">TOURNAMENT TITLE</label>
+            <input type="text" id="editTitle" class="gh-input">
+
+            <label class="gh-label">SEASON SUBTITLE</label>
+            <input type="text" id="editSeason" class="gh-input">
+
+            <label class="gh-label">PRIZE POOL TEXT</label>
+            <input type="text" id="editPrize" class="gh-input">
+
+            <hr style="border:0; border-top:1px dashed #333; margin:20px 0;">
+            
+            <label class="gh-label">FORCE TEAM PLACEMENT</label>
+            <div id="matchEditor" style="max-height: 200px; overflow-y: auto; padding-right: 5px;"></div>
+
+            <button class="gh-btn btn-primary" onclick="saveTournamentSettings()">Save All Changes</button>
+            <button class="gh-btn btn-danger" onclick="resetTournament()">⚠ Reset Bracket</button>
+            <button class="gh-btn" style="background:transparent; color:#888;" onclick="closeModal('adminModal')">Cancel</button>
+        </div>
+    </div>
+
+    <div id="matchModal" class="gh-modal">
+        <div class="gh-modal-content" style="border-color:var(--gh-blue) !important; box-shadow: 0 0 50px rgba(0,234,255,0.2) !important;">
+            <h2 style="color:var(--gh-blue); margin-top:0;">Match Control</h2>
+            <div id="matchIdDisplay" style="color:#666; font-size:12px; margin-bottom:15px;">MATCH ID: --</div>
+
+            <div class="score-row">
+                <div class="score-name" id="mmTeam1">Team 1</div>
+                <input type="number" id="mmScore1" class="gh-input score-input" placeholder="0">
+                <button class="gh-btn" style="width:auto; padding:5px 10px; font-size:12px;" onclick="setMatchWinner('team1')">Win</button>
+            </div>
+
+            <div class="score-row">
+                <div class="score-name" id="mmTeam2">Team 2</div>
+                <input type="number" id="mmScore2" class="gh-input score-input" placeholder="0">
+                <button class="gh-btn" style="width:auto; padding:5px 10px; font-size:12px;" onclick="setMatchWinner('team2')">Win</button>
+            </div>
+
+            <button class="gh-btn btn-primary" style="background:var(--gh-blue); color:#000;" onclick="updateMatchScoresOnly()">Update Scores Only</button>
+            <button class="gh-btn" style="background:transparent; color:#888;" onclick="closeModal('matchModal')">Cancel</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        let isAdmin = false;
+        let allTeams = [];
+        let currentMatchId = null; 
+        let tournamentActive = true;
+
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(async user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                
+                // Initialize Visuals
+                const container = document.getElementById("particleContainer");
+                if(container){
+                    for(let i=0; i<30; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; p.style.animationDelay=Math.random()*10+"s"; container.appendChild(p); }
+                }
+
+                // Check Admin
+                const token = await user.getIdTokenResult();
+                isAdmin = !!token.claims.admin;
+                if(isAdmin) {
+                    document.getElementById("adminGear").style.display = "flex";
+                    loadAllTeams(); 
+                }
+                
+                // Load Content
+                initBracket();
+                loadTournamentInfo();
+            }
+        });
+
+        /* LOAD CONFIG */
+        function loadTournamentInfo() {
+            db.collection("system").doc("tournament_config").onSnapshot(doc => {
+                if(doc.exists) {
+                    const d = doc.data();
+                    tournamentActive = (d.status === "active");
+                    handleVisibility();
+
+                    document.getElementById("displayTitle").innerText = d.title || "Tournament";
+                    document.getElementById("displaySeason").innerText = d.season || "Season 1";
+                    document.getElementById("displayPrize").innerText = d.prize || "TBD";
+                    
+                    document.getElementById("editTitle").value = d.title || "";
+                    document.getElementById("editSeason").value = d.season || "";
+                    document.getElementById("editPrize").value = d.prize || "";
+                    document.getElementById("editStatus").value = d.status || "active";
+                }
+            });
+        }
+
+        function handleVisibility() {
+            const wrapper = document.getElementById("bracketWrapper");
+            const overlay = document.getElementById("offlineOverlay");
+            const banner = document.getElementById("adminBanner");
+
+            if(tournamentActive) {
+                wrapper.style.display = "block"; overlay.style.display = "none"; banner.style.display = "none";
+            } else {
+                if(isAdmin) {
+                    wrapper.style.display = "block"; overlay.style.display = "none"; banner.style.display = "block";
+                } else {
+                    wrapper.style.display = "none"; overlay.style.display = "block"; banner.style.display = "none";
+                }
+            }
+        }
+
+        /* BRACKET DATA */
+        const matches = [
+            { id: "m1", next: "m5", round: 1, team1: "TBD", team2: "TBD", score1: 0, score2: 0, winner: null },
+            { id: "m2", next: "m5", round: 1, team1: "TBD", team2: "TBD", score1: 0, score2: 0, winner: null },
+            { id: "m3", next: "m6", round: 1, team1: "TBD", team2: "TBD", score1: 0, score2: 0, winner: null },
+            { id: "m4", next: "m6", round: 1, team1: "TBD", team2: "TBD", score1: 0, score2: 0, winner: null },
+            { id: "m5", next: "m7", round: 2, team1: "TBD", team2: "TBD", score1: 0, score2: 0, winner: null }, 
+            { id: "m6", next: "m7", round: 2, team1: "TBD", team2: "TBD", score1: 0, score2: 0, winner: null }, 
+            { id: "m7", next: "win", round: 3, team1: "TBD", team2: "TBD", score1: 0, score2: 0, winner: null } 
+        ];
+
+        /* LOAD BRACKET */
+        async function initBracket() {
+            const snap = await db.collection("tournament_matches").get();
+            if(snap.empty && isAdmin) resetTournament();
+
+            db.collection("tournament_matches").onSnapshot(snap => {
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("bracketContainer").style.display = "flex";
+                
+                let matchData = {};
+                snap.forEach(doc => matchData[doc.id] = doc.data());
+                renderBracket(matchData);
+                if(isAdmin) renderAdminEditor(matchData);
+            });
+        }
+
+        function renderBracket(data) {
+            document.getElementById("round1").innerHTML = '<div class="round-title">Quarter Finals</div>';
+            document.getElementById("round2").innerHTML = '<div class="round-title">Semi Finals</div>';
+            document.getElementById("round3").innerHTML = '<div class="round-title">Grand Finals</div>';
+
+            Object.keys(data).sort().forEach(key => {
+                const m = data[key];
+                const roundDiv = document.getElementById("round" + m.round);
+                if(!roundDiv) return;
+
+                const w1 = m.winner === "team1" ? "winner" : (m.winner ? "loser" : "");
+                const w2 = m.winner === "team2" ? "winner" : (m.winner ? "loser" : "");
+                
+                const safeT1 = (m.team1 || "").replace(/'/g, "\\'");
+                const safeT2 = (m.team2 || "").replace(/'/g, "\\'");
+
+                const adminBtn = isAdmin ? `
+                    <button class="admin-card-btn" onclick="openMatchModal('${key}', '${safeT1}', '${safeT2}', ${m.score1}, ${m.score2})">EDIT</button>
+                ` : '';
+
+                roundDiv.innerHTML += `
+                    <div class="match-card ${m.winner ? '' : 'active'}">
+                        ${adminBtn}
+                        <div class="team-slot ${w1}"><span>${m.team1}</span> <span class="team-score">${m.score1}</span></div>
+                        <div class="team-slot ${w2}"><span>${m.team2}</span> <span class="team-score">${m.score2}</span></div>
+                    </div>`;
+
+                if(m.id === "m7" && m.winner) {
+                    const champ = m.winner === "team1" ? m.team1 : m.team2;
+                    document.getElementById("championName").innerText = champ;
+                }
+            });
+        }
+
+        /* --- ADMIN: MATCH MODAL (Scores) --- */
+        function openMatchModal(id, t1, t2, s1, s2) {
+            currentMatchId = id;
+            document.getElementById("matchIdDisplay").innerText = "MATCH ID: " + id.toUpperCase();
+            document.getElementById("mmTeam1").innerText = t1;
+            document.getElementById("mmTeam2").innerText = t2;
+            document.getElementById("mmScore1").value = s1;
+            document.getElementById("mmScore2").value = s2;
+            document.getElementById("matchModal").style.display = "flex";
+        }
+
+        async function updateMatchScoresOnly() {
+            if(!currentMatchId) return;
+            const s1 = parseInt(document.getElementById("mmScore1").value) || 0;
+            const s2 = parseInt(document.getElementById("mmScore2").value) || 0;
+            await db.collection("tournament_matches").doc(currentMatchId).update({ score1: s1, score2: s2 });
+            closeModal('matchModal');
+        }
+
+        async function setMatchWinner(winKey) {
+            if(!currentMatchId) return;
+            const s1 = parseInt(document.getElementById("mmScore1").value) || 0;
+            const s2 = parseInt(document.getElementById("mmScore2").value) || 0;
+            
+            const mDoc = await db.collection("tournament_matches").doc(currentMatchId).get();
+            const mData = mDoc.data();
+            const teamName = winKey === 'team1' ? mData.team1 : mData.team2;
+
+            if(teamName === "TBD") return alert("Cannot advance empty slot.");
+            if(!confirm(`Declare ${teamName} winner with score ${s1}-${s2}?`)) return;
+
+            await db.collection("tournament_matches").doc(currentMatchId).update({ 
+                winner: winKey, score1: s1, score2: s2 
+            });
+
+            if(mData.next && mData.next !== "win") {
+                const nextRef = db.collection("tournament_matches").doc(mData.next);
+                const isTopSeed = (currentMatchId === "m1" || currentMatchId === "m3" || currentMatchId === "m5");
+                if(isTopSeed) await nextRef.update({ team1: teamName });
+                else await nextRef.update({ team2: teamName });
+            }
+            closeModal('matchModal');
+        }
+
+        /* --- ADMIN: GLOBAL SETTINGS (Teams) --- */
+        async function loadAllTeams() {
+            const snap = await db.collection("teams").get();
+            allTeams = [];
+            snap.forEach(doc => allTeams.push(doc.data().name));
+        }
+
+        function renderAdminEditor(matchData) {
+            const container = document.getElementById("matchEditor");
+            container.innerHTML = "";
+            
+            ["m1", "m2", "m3", "m4", "m5", "m6", "m7"].forEach(mid => {
+                const m = matchData[mid];
+                if(!m) return;
+                
+                const getOptions = (currentVal) => {
+                    let opts = `<option value="TBD">TBD</option>`;
+                    allTeams.forEach(t => {
+                        opts += `<option value="${t}" ${t === currentVal ? 'selected' : ''}>${t}</option>`;
+                    });
+                    return opts;
+                };
+
+                container.innerHTML += `
+                    <div style="background:#222; padding:10px; margin-bottom:10px; border-radius:6px; border:1px solid #333;">
+                        <div style="color:#aaa; font-size:11px; font-weight:bold; margin-bottom:5px;">MATCH ${mid.toUpperCase()}</div>
+                        <div style="display:flex; gap:10px;">
+                            <select id="sel_${mid}_1" class="gh-select" style="margin:0; font-size:12px;">${getOptions(m.team1)}</select>
+                            <span style="align-self:center; font-weight:bold;">VS</span>
+                            <select id="sel_${mid}_2" class="gh-select" style="margin:0; font-size:12px;">${getOptions(m.team2)}</select>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function saveTournamentSettings() {
+            const t = document.getElementById("editTitle").value;
+            const s = document.getElementById("editSeason").value;
+            const p = document.getElementById("editPrize").value;
+            const stat = document.getElementById("editStatus").value;
+
+            await db.collection("system").doc("tournament_config").set({ 
+                title: t, season: s, prize: p, status: stat 
+            });
+
+            const batch = db.batch();
+            ["m1", "m2", "m3", "m4", "m5", "m6", "m7"].forEach(mid => {
+                const t1El = document.getElementById(`sel_${mid}_1`);
+                const t2El = document.getElementById(`sel_${mid}_2`);
+                if(t1El && t2El) {
+                    batch.update(db.collection("tournament_matches").doc(mid), { 
+                        team1: t1El.value, team2: t2El.value 
+                    });
+                }
+            });
+
+            await batch.commit();
+            alert("Settings Saved!");
+            closeModal('adminModal');
+        }
+
+        async function resetTournament() {
+            if(!confirm("DANGER: This will wipe all scores and progress. Are you sure?")) return;
+            const batch = db.batch();
+            matches.forEach(m => {
+                const ref = db.collection("tournament_matches").doc(m.id);
+                batch.set(ref, m);
+            });
+            document.getElementById("championName").innerText = "TBD";
+            await batch.commit();
+            alert("Bracket Reset.");
+            closeModal('adminModal');
+        }
+
+        function openAdminModal() { document.getElementById("adminModal").style.display = "flex"; }
+        function closeModal(id) { document.getElementById(id).style.display = "none"; }
+    </script>
+</body>
+</html>

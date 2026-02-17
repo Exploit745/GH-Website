@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Vibe Check</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+    <style>
+        .vibe-wrapper { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            min-height: 65vh; text-align: center; perspective: 1000px;
+            user-select: none; -webkit-user-select: none; /* Prevents highlighting */
+        }
+
+        /* INDUSTRIAL LEVER */
+        .lever-housing {
+            width: 140px; height: 220px; 
+            background: linear-gradient(135deg, #1a1a1a, #000);
+            border: 4px solid #444; border-radius: 15px;
+            position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 20px #000;
+            display: flex; justify-content: center; margin-bottom: 60px;
+        }
+        
+        /* The Track */
+        .lever-track {
+            width: 16px; height: 160px; background: #000; border-radius: 10px;
+            margin-top: 30px; box-shadow: inset 0 0 10px #000; position: relative;
+        }
+
+        /* The Handle */
+        .lever-handle {
+            width: 100px; height: 60px; 
+            background: repeating-linear-gradient(
+                45deg,
+                #FFD700,
+                #FFD700 10px,
+                #000 10px,
+                #000 20px
+            );
+            border-radius: 8px; border: 2px solid #fff;
+            position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+            cursor: pointer; transition: 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 10;
+            display: flex; align-items: center; justify-content: center;
+            touch-action: none; /* Prevents mobile scrolling while pulling */
+        }
+        
+        /* Grip Texture */
+        .lever-handle::after {
+            content: 'PULL'; font-size: 10px; font-weight: 900; color: #fff; 
+            background: #000; padding: 2px 5px; border-radius: 4px; pointer-events: none;
+        }
+
+        /* ACTIVE STATE (Pulled Down) */
+        .lever-handle.active {
+            top: 100px; /* Slides down track */
+            box-shadow: 0 0 20px var(--gh-red); border-color: var(--gh-red);
+        }
+
+        /* RESULT CARD */
+        .vibe-card {
+            background: #111; border: 2px solid var(--gh-blue); padding: 30px;
+            border-radius: 16px; opacity: 0; transform: translateY(20px) scale(0.9);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 450px; width: 90%;
+            box-shadow: 0 0 40px rgba(0, 234, 255, 0.1);
+        }
+        .vibe-card.show { opacity: 1; transform: translateY(0) scale(1); }
+        
+        .vibe-icon { font-size: 40px; margin-bottom: 10px; animation: bounce 1s infinite; }
+        .vibe-title { font-size: 36px; font-weight: 900; margin: 0 0 10px 0; text-transform: uppercase; text-shadow: 0 0 15px currentColor; }
+        .vibe-desc { font-size: 16px; color: #ccc; font-style: italic; line-height: 1.4; border-top: 1px solid #333; padding-top: 10px; margin-top: 10px; }
+
+        /* STATUS INDICATORS */
+        .status-light {
+            position: absolute; top: 10px; right: 10px; width: 10px; height: 10px;
+            border-radius: 50%; background: #333; box-shadow: inset 0 0 5px #000;
+            transition: 0.3s;
+        }
+        .status-light.ready { background: #00ff6a; box-shadow: 0 0 10px #00ff6a; }
+        .status-light.busy { background: #ff4444; box-shadow: 0 0 10px #ff4444; }
+
+        /* CONTENT SHAKE (Applied to .content, NOT body) */
+        .shake-content { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+        
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+    <div class="page-wrap">
+        <div id="drawer"></div>
+        <div class="content" id="mainContent">
+            
+            <div class="vibe-wrapper">
+                <h1 style="margin-bottom:10px; text-transform:uppercase; letter-spacing:2px;">Vibe Check MK-II</h1>
+                <p style="color:#666; font-size:12px; margin-bottom:50px;">PULL LEVER TO SCAN SOUL</p>
+                
+                <div class="lever-housing">
+                    <div class="status-light ready" id="statusLight"></div>
+                    <div class="lever-track">
+                        <div class="lever-handle" id="lever" 
+                             onmousedown="startPull(event)" 
+                             ontouchstart="startPull(event)"
+                             draggable="false"></div>
+                    </div>
+                </div>
+
+                <div class="vibe-card" id="resultCard">
+                    <div class="vibe-icon" id="vIcon">🎲</div>
+                    <div class="vibe-title" id="vTitle">SCANNING...</div>
+                    <div class="vibe-desc" id="vDesc">Analyzing browser history...</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        const container = document.getElementById("particleContainer");
+        for(let i=0; i<15; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; container.appendChild(p); }
+
+        /* THE VIBE MATRIX */
+        const VIBE_DATA = {
+            IMMACULATE: { color: "#FFD700", icon: "✨", quotes: [
+                "You are basically the Lead Dev today.",
+                "RNGesus has smiled upon you.",
+                "Go buy a lottery ticket immediately.",
+                "Main Character Energy detected."
+            ]},
+            CAFFEINATED: { color: "#ff4444", icon: "☕", quotes: [
+                "Vibrating at 400Hz.",
+                "You can smell colors right now.",
+                "Sleep is for the weak. Code is forever.",
+                "Heart rate: 200 BPM. Status: Optimal."
+            ]},
+            ERROR_404: { color: "#888", icon: "🤖", quotes: [
+                "Your aura could not be located.",
+                "Head empty, no thoughts.",
+                "Rebooting personality driver...",
+                "Wifi signal lost in brain."
+            ]},
+            SUSPICIOUS: { color: "#a32cc4", icon: "🤨", quotes: [
+                "Why are you clicking this so much?",
+                "I saw you faking tasks in Electrical.",
+                "Bombastic Side Eye.",
+                "Check your browser history."
+            ]},
+            MID: { color: "#555", icon: "😐", quotes: [
+                "It is what it is.",
+                "NPC Energy detected.",
+                "Could be worse, could be better.",
+                "You exist. Congratulations."
+            ]},
+            GLITCHED: { color: "#00ff6a", icon: "👾", quotes: [
+                "Y0u br0ke th3 maTr1x.",
+                "R̷u̶n̵ ̶w̷h̵i̶l̷e̸ ̴y̶o̶u̴ ̷c̶a̶n̸.",
+                "System failure. User too powerful.",
+                "Binary code leaking from ears."
+            ]},
+            CHILL: { color: "#00eaff", icon: "🧊", quotes: [
+                "Vibes are frosty.",
+                "Low stress, high success.",
+                "Smooth operator.",
+                "Just floating through the void."
+            ]}
+        };
+
+        let isPulling = false;
+
+        function startPull(e) {
+            // Prevent drag ghosting and page refresh
+            if(e.cancelable) e.preventDefault(); 
+            e.stopPropagation();
+
+            if(isPulling) return;
+            isPulling = true;
+
+            const lever = document.getElementById("lever");
+            const card = document.getElementById("resultCard");
+            const light = document.getElementById("statusLight");
+            const content = document.getElementById("mainContent"); // Target content, not body
+
+            // 1. Reset UI
+            card.classList.remove("show");
+            light.className = "status-light busy";
+            
+            // 2. Physical Action
+            lever.classList.add("active");
+            content.classList.add("shake-content"); // Shake just the content wrapper
+
+            // 3. Optional Audio placeholder
+            // try { new Audio('assets/sounds/clank.mp3').play(); } catch(e) {}
+
+            // 4. Processing Delay (The Suspense)
+            setTimeout(() => {
+                // Pick Random Vibe Category
+                const keys = Object.keys(VIBE_DATA);
+                const randomKey = keys[Math.floor(Math.random() * keys.length)];
+                const result = VIBE_DATA[randomKey];
+
+                // Pick Random Quote within Category
+                const randomQuote = result.quotes[Math.floor(Math.random() * result.quotes.length)];
+
+                // Apply to UI
+                document.getElementById("vIcon").innerText = result.icon;
+                document.getElementById("vTitle").innerText = randomKey.replace("_", " ");
+                document.getElementById("vTitle").style.color = result.color;
+                document.getElementById("vDesc").innerText = `"${randomQuote}"`;
+                document.getElementById("resultCard").style.borderColor = result.color;
+                document.getElementById("resultCard").style.boxShadow = `0 0 30px ${result.color}40`;
+
+                // Show Result
+                card.classList.add("show");
+                
+                // Reset Lever & Shake
+                lever.classList.remove("active");
+                content.classList.remove("shake-content");
+                light.className = "status-light ready";
+                isPulling = false;
+
+            }, 800); // 0.8s delay
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GH – Settings</title>
+    
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="header.css" />
+    <link rel="stylesheet" href="drawer.css" />
+
+    <style>
+        /* [SETTINGS SPECIFIC STYLES] */
+
+        /* CARDS */
+        .gh-card {
+            background: #111; padding: 25px; border-radius: 12px;
+            border: 2px solid var(--gh-blue); margin-bottom: 25px;
+            box-shadow: 0 0 15px rgba(0, 234, 255, 0.1);
+            transition: transform 0.2s;
+        }
+        .gh-card:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 234, 255, 0.2); }
+        .gh-card h2 { margin-top: 0; color: var(--gh-yellow); margin-bottom: 20px; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* AVATAR UPLOAD */
+        .avatar-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+        .avatar-preview {
+            width: 120px; height: 120px; border-radius: 50%; object-fit: cover;
+            border: 3px solid var(--gh-yellow); box-shadow: 0 0 20px #fdff5544;
+            cursor: pointer; transition: 0.2s; background: #000;
+        }
+        .avatar-preview:hover { opacity: 0.8; transform: scale(1.05); }
+        .avatar-hint { font-size: 12px; color: #888; margin-top: 8px; }
+
+        /* PASSWORD TOGGLE */
+        .password-row { position: relative; }
+        .password-toggle { 
+            position: absolute; right: 15px; top: 50%; transform: translateY(-50%); 
+            cursor: pointer; font-size: 18px; color: #888; 
+        }
+        .password-toggle:hover { color: var(--gh-blue); }
+
+        /* TOGGLES (New for S1) */
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px dashed #222; padding-bottom: 10px; }
+        .toggle-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .toggle-info { display: flex; flex-direction: column; }
+        .toggle-label { font-size: 14px; font-weight: bold; color: #fff; }
+        .toggle-desc { font-size: 11px; color: #666; margin-top: 2px; }
+
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--gh-blue); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* SUPPORT INFO ROW */
+        .sys-info-row {
+            margin-top: 20px; border-top: 1px solid #333; padding-top: 15px; 
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 12px; color: #666; font-family: monospace;
+        }
+        .uid-pill { cursor: pointer; transition: 0.2s; }
+        .uid-pill:hover { color: var(--gh-blue); text-decoration: underline; }
+
+        /* DANGER ZONE */
+        .danger-card { border-color: #ff4444; }
+        .danger-card h2 { color: #ff4444; }
+        
+        /* MODAL OVERRIDES */
+        .modal-card { background: #111; border: 2px solid #ff4444; border-radius: 12px; padding: 25px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(255, 68, 68, 0.4); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 5000; backdrop-filter: blur(5px); }
+
+        /* FORM HELPERS */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; color: #ccc; font-size: 14px; }
+
+        /* TOAST NOTIFICATION */
+        #toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#111; color:#00eaff; border:1px solid #00eaff; padding:10px 20px; border-radius:20px; opacity:0; pointer-events:none; transition:0.3s; z-index:6000; font-weight: bold; }
+
+        @media (max-width: 768px) {
+            .content { padding: 15px; }
+            .gh-card { padding: 20px; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            <h1 class="page-title">Settings</h1>
+
+            <div class="gh-card">
+                <h2>Public Profile</h2>
+                
+                <div class="avatar-section">
+                    <img id="avatarPreview" src="assets/GH_Hero.png" class="avatar-preview" onclick="document.getElementById('avatarInput').click()" title="Change Avatar">
+                    <div class="avatar-hint">Tap image to upload</div>
+                    <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(this)">
+                </div>
+
+                <div class="form-group">
+                    <label>Display Name</label>
+                    <input id="nameInput" type="text" class="gh-input" placeholder="Your Gamer Tag">
+                </div>
+                <div class="form-group">
+                    <label>Birthday</label>
+                    <input id="birthdayInput" type="date" class="gh-input">
+                </div>
+                <button class="gh-btn btn-primary" style="width:100%;" onclick="saveProfile()">Save Profile</button>
+            </div>
+
+            <div class="gh-card">
+                <h2>Privacy & Notifications</h2>
+                
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <span class="toggle-label">Public Profile</span>
+                        <span class="toggle-desc">Allow others to see your card in Members.</span>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="prefPublic" onchange="savePref('publicProfile', this.checked)"><span class="slider"></span></label>
+                </div>
+
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <span class="toggle-label">Show Birthday</span>
+                        <span class="toggle-desc">Display your day on the calendar.</span>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="prefBday" onchange="savePref('showBirthday', this.checked)"><span class="slider"></span></label>
+                </div>
+
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <span class="toggle-label">Dashboard Pings</span>
+                        <span class="toggle-desc">Red dot alerts for new content.</span>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="prefPush" onchange="savePref('pushNotis', this.checked)"><span class="slider"></span></label>
+                </div>
+
+                <div class="toggle-row">
+                    <div class="toggle-info">
+                        <span class="toggle-label">Email Alerts</span>
+                        <span class="toggle-desc">Important system updates only.</span>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="prefEmail" onchange="savePref('emailNotis', this.checked)"><span class="slider"></span></label>
+                </div>
+            </div>
+
+            <div class="gh-card">
+                <h2>Security</h2>
+                <div class="form-group">
+                    <label>Update Email</label>
+                    <input id="emailInput" type="email" class="gh-input" placeholder="New Email Address">
+                </div>
+                <button class="gh-btn btn-secondary" style="width:100%; margin-bottom:20px;" onclick="changeEmail()">Update Email</button>
+                
+                <div class="form-group">
+                    <label>Change Password</label>
+                    <div class="password-row">
+                        <input id="passwordInput" type="password" class="gh-input" placeholder="New Password">
+                        <span id="togglePass" class="password-toggle">👁</span>
+                    </div>
+                </div>
+                <button class="gh-btn btn-primary" style="width:100%;" onclick="changePassword()">Update Password</button>
+            </div>
+
+            <div class="gh-card">
+                <h2>Support & System</h2>
+                <p style="color:#aaa; font-size:14px; margin-bottom:20px;">
+                    Encountering bugs? Need to check the rules? Launch the Support Console.
+                </p>
+                <button class="gh-btn" style="background:var(--gh-blue); color:#000; width:100%; box-shadow: 0 0 10px rgba(0,234,255,0.2);" onclick="window.location.href='support.html'">
+                    Open Support Console
+                </button>
+                
+                <div class="sys-info-row">
+                    <span>App Version: v4.2.0 (S1 Patch)</span>
+                    <span id="uidDisplay" class="uid-pill" title="Click to Copy" onclick="copyUid()">UID: Loading...</span>
+                </div>
+            </div>
+
+            <div class="gh-card danger-card">
+                <h2>Danger Zone</h2>
+                <p style="color:#888; font-size:13px; margin-bottom:15px;">Once you delete your account, there is no going back. Please be certain.</p>
+                <button class="gh-btn btn-danger" style="width:100%;" onclick="openDangerZone()">Delete Account</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dangerOverlay" class="modal-overlay">
+        <div class="modal-card">
+            <h2 style="color:#ff4444; margin-top:0;">Are you sure?</h2>
+            <p style="color:#ccc; margin-bottom:20px;">This action is permanent.</p>
+            <div style="display:flex; gap:10px;">
+                <button class="gh-btn btn-secondary" style="flex:1;" onclick="closeDangerZone()">Cancel</button>
+                <button class="gh-btn btn-danger" style="flex:1;" onclick="confirmDelete()">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast">Saved!</div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        /* VISUALS */
+        const container = document.getElementById("particleContainer");
+        if(container){
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElement("div");
+                p.classList.add("particle");
+                p.style.left = Math.random() * 100 + "vw";
+                p.style.top = Math.random() * 100 + "vh";
+                p.style.animationDelay = Math.random() * 10 + "s";
+                p.style.opacity = Math.random() * 0.4 + 0.1;
+                p.style.transform = `scale(${Math.random() * 1 + 0.5})`;
+                container.appendChild(p);
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById("toast");
+            t.innerText = msg; t.style.opacity = 1; t.style.transform = "translateX(-50%) translateY(0)";
+            setTimeout(() => { t.style.opacity = 0; t.style.transform = "translateX(-50%) translateY(20px)"; }, 3000);
+        }
+
+        /* FIREBASE LOGIC */
+        auth.onAuthStateChanged(async user => {
+            if (!user) return (window.location.href = "login.html");
+            
+            // Load Auth Data
+            document.getElementById("emailInput").value = user.email;
+            document.getElementById("avatarPreview").src = user.photoURL || "assets/GH_Hero.png";
+            document.getElementById("uidDisplay").innerText = "UID: " + user.uid;
+
+            // Load Firestore Data
+            const doc = await db.collection("users").doc(user.uid).get();
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById("nameInput").value = data.name || user.displayName || "";
+                document.getElementById("birthdayInput").value = data.birthday || "";
+                
+                // Load Prefs
+                document.getElementById("prefPublic").checked = data.publicProfile !== false; // Default true
+                document.getElementById("prefBday").checked = data.showBirthday !== false; // Default true
+                document.getElementById("prefPush").checked = data.pushNotis !== false; // Default true
+                document.getElementById("prefEmail").checked = data.emailNotis || false; // Default false
+            }
+        });
+
+        /* COPY UID */
+        function copyUid() {
+            const text = document.getElementById("uidDisplay").innerText.replace("UID: ", "");
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("UID Copied");
+            });
+        }
+
+        /* AVATAR UPLOAD */
+        async function handleAvatarUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const user = auth.currentUser;
+            const ref = storage.ref(`avatars/${user.uid}`);
+            
+            showToast("Uploading...");
+            
+            try {
+                await ref.put(file);
+                const url = await ref.getDownloadURL();
+                
+                // Update Auth Profile
+                await user.updateProfile({ photoURL: url });
+                
+                // Update Firestore User Doc
+                await db.collection("users").doc(user.uid).set({ photoURL: url }, { merge: true });
+                
+                // Update UI
+                document.getElementById("avatarPreview").src = url;
+                showToast("Avatar Updated!");
+            } catch (err) {
+                alert("Upload Failed: " + err.message);
+            }
+        }
+
+        /* SAVE PREFERENCES (AUTO) */
+        async function savePref(key, value) {
+            const user = auth.currentUser;
+            if(!user) return;
+            
+            const update = {};
+            update[key] = value;
+            
+            try {
+                await db.collection("users").doc(user.uid).set(update, { merge: true });
+                showToast("Saved");
+            } catch(e) { console.error(e); }
+        }
+
+        /* SAVE PROFILE */
+        async function saveProfile() {
+            const user = auth.currentUser;
+            const name = document.getElementById("nameInput").value.trim();
+            const bday = document.getElementById("birthdayInput").value;
+
+            if(!name) return alert("Name is required");
+
+            try {
+                // Update Auth
+                if(name !== user.displayName) {
+                    await user.updateProfile({ displayName: name });
+                }
+
+                // Update Firestore
+                await db.collection("users").doc(user.uid).set({
+                    name: name,
+                    birthday: bday,
+                    email: user.email // Sync email just in case
+                }, { merge: true });
+
+                showToast("Profile Saved!");
+            } catch (err) { alert(err.message); }
+        }
+
+        /* CHANGE PASSWORD */
+        async function changePassword() {
+            const user = auth.currentUser;
+            const newPass = document.getElementById("passwordInput").value;
+            
+            if (newPass.length < 6) return alert("Password must be at least 6 chars.");
+
+            try {
+                await user.updatePassword(newPass);
+                showToast("Password Updated!");
+                document.getElementById("passwordInput").value = "";
+            } catch (err) {
+                if (err.code === 'auth/requires-recent-login') {
+                    alert("Security Check: Please Log Out and Log In again to change your password.");
+                } else {
+                    alert("Error: " + err.message);
+                }
+            }
+        }
+
+        /* CHANGE EMAIL */
+        async function changeEmail() {
+            const user = auth.currentUser;
+            const newEmail = document.getElementById("emailInput").value.trim();
+            if(!newEmail) return;
+
+            try {
+                await user.updateEmail(newEmail);
+                await db.collection("users").doc(user.uid).update({ email: newEmail });
+                showToast("Email Updated!");
+            } catch (err) {
+                if (err.code === 'auth/requires-recent-login') {
+                    alert("Security Check: Please Log Out and Log In again to change your email.");
+                } else {
+                    alert("Error: " + err.message);
+                }
+            }
+        }
+
+        /* PASSWORD VISIBILITY */
+        document.getElementById("togglePass").onclick = () => {
+            const inp = document.getElementById("passwordInput");
+            inp.type = inp.type === "password" ? "text" : "password";
+        };
+
+        /* DANGER ZONE */
+        function openDangerZone() { document.getElementById("dangerOverlay").style.display = "flex"; }
+        function closeDangerZone() { document.getElementById("dangerOverlay").style.display = "none"; }
+
+        async function confirmDelete() {
+            const user = auth.currentUser;
+            try {
+                await db.collection("users").doc(user.uid).delete(); // Delete Data
+                await user.delete(); // Delete Auth
+                alert("Account Deleted.");
+                window.location.href = "login.html";
+            } catch (err) {
+                if (err.code === 'auth/requires-recent-login') {
+                    alert("Security Check: Please Log Out and Log In again to delete your account.");
+                } else {
+                    alert("Error: " + err.message);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

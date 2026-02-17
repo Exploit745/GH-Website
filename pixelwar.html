@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – Pixel War</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+    <style>
+        /* GATEKEEPER */
+        body { display: none; }
+
+        .war-container { display: flex; flex-direction: column; align-items: center; padding: 20px; position: relative; }
+        
+        /* ADMIN BTN */
+        .war-admin-btn {
+            position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.5);
+            color: var(--gh-red); border: 1px solid var(--gh-red); width: 35px; height: 35px;
+            border-radius: 50%; display: none; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 18px; transition: 0.2s; z-index: 10;
+        }
+        .war-admin-btn:hover { background: var(--gh-red); color: #fff; transform: rotate(90deg); }
+
+        /* THE GRID (32x32) */
+        .pixel-grid {
+            display: grid; grid-template-columns: repeat(32, 1fr); 
+            gap: 1px; /* Grid lines visible */
+            background: #333; /* Color of the grid lines */
+            border: 4px solid var(--gh-blue);
+            width: 100%; max-width: 600px; aspect-ratio: 1;
+            box-shadow: 0 0 40px rgba(0, 234, 255, 0.15);
+            position: relative; overflow: hidden; cursor: crosshair;
+        }
+        .pixel { background: #000; transition: 0.05s; }
+        .pixel:hover { transform: scale(1.3); z-index: 10; box-shadow: 0 0 5px rgba(0,0,0,0.5); border: 1px solid #fff; }
+
+        /* LOCK OVERLAY */
+        .grid-lock-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 20;
+            display: none; align-items: center; justify-content: center; flex-direction: column;
+            color: var(--gh-red); font-weight: 900; font-size: 24px; text-transform: uppercase;
+            border: 2px solid var(--gh-red); text-shadow: 0 0 10px var(--gh-red);
+            backdrop-filter: blur(2px);
+        }
+
+        /* PALETTE */
+        .palette { 
+            display: flex; gap: 8px; margin: 20px 0; background: #111; 
+            padding: 10px 15px; border-radius: 50px; border: 1px solid #333; 
+            flex-wrap: wrap; justify-content: center; max-width: 600px;
+        }
+        .p-color { 
+            width: 25px; height: 25px; border-radius: 50%; cursor: pointer; 
+            border: 2px solid transparent; transition: 0.2s; position: relative;
+        }
+        .p-color:hover { transform: scale(1.2); z-index: 2; }
+        .p-color.active { border-color: #fff; box-shadow: 0 0 15px currentColor; transform: scale(1.3); z-index: 2; }
+
+        /* COOLDOWN */
+        .cooldown-wrap { width: 100%; max-width: 600px; margin-bottom: 15px; }
+        #cooldownBar { width: 0%; height: 4px; background: var(--gh-red); margin-top: 5px; transition: width 1s linear; }
+        
+        /* TOGGLES */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--gh-blue); }
+        input:checked + .slider:before { transform: translateX(20px); }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+    <div class="page-wrap">
+        <div id="drawer"></div>
+        <div class="content">
+            <div style="text-align:center;">
+                <h1 style="margin-bottom:5px; text-transform:uppercase; letter-spacing:1px;">GH Pixel War</h1>
+                <p style="color:#666; font-size:12px;">32x32 Expanded Zone. 60s Global Cooldown.</p>
+            </div>
+
+            <div class="war-container">
+                <button class="war-admin-btn" id="adminBtn" onclick="openAdminPanel()">⚙️</button>
+
+                <div class="pixel-grid" id="gridDisplay">
+                    <div class="grid-lock-overlay" id="lockScreen">
+                        <div>🔒 WARZONE LOCKED</div>
+                        <div style="font-size:12px; color:#fff; margin-top:5px; letter-spacing:1px;">ADMINS ARE CLEANING UP</div>
+                    </div>
+                </div>
+
+                <div class="palette">
+                    <div class="p-color active" style="background:#000000" onclick="setColor('#000000', this)"></div>
+                    <div class="p-color" style="background:#FFFFFF" onclick="setColor('#FFFFFF', this)"></div>
+                    <div class="p-color" style="background:#808080" onclick="setColor('#808080', this)"></div>
+                    
+                    <div class="p-color" style="background:#ff4444" onclick="setColor('#ff4444', this)"></div> <div class="p-color" style="background:#ffa500" onclick="setColor('#ffa500', this)"></div> <div class="p-color" style="background:#fdff55" onclick="setColor('#fdff55', this)"></div> <div class="p-color" style="background:#00ff6a" onclick="setColor('#00ff6a', this)"></div> <div class="p-color" style="background:#00eaff" onclick="setColor('#00eaff', this)"></div> <div class="p-color" style="background:#0000FF" onclick="setColor('#0000FF', this)"></div> <div class="p-color" style="background:#800080" onclick="setColor('#800080', this)"></div> <div class="p-color" style="background:#ff69b4" onclick="setColor('#ff69b4', this)"></div> </div>
+
+                <div class="cooldown-wrap">
+                    <div id="statusText" style="text-align:center; font-weight:bold; font-size:12px; color:#fff;">CONNECTING...</div>
+                    <div style="background:#111; height:4px; width:100%; margin-top:5px;"><div id="cooldownBar"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="warAdminModal" class="gh-modal">
+        <div class="gh-modal-content">
+            <h2 style="color:var(--gh-red); margin-top:0;">War Room Control</h2>
+            
+            <div style="background:#111; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #333;">
+                <h4 style="margin:0 0 10px 0; color:#888;">GAME STATE</h4>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:#fff; font-weight:bold;">Lock Grid</span>
+                    <label class="switch">
+                        <input type="checkbox" id="adminLockToggle" onchange="toggleLock()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="background:#111; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #333;">
+                <h4 style="margin:0 0 10px 0; color:#888;">NUCLEAR OPTIONS</h4>
+                <button class="gh-btn" onclick="fillGrid()" style="width:100%; margin-bottom:10px; background:var(--gh-blue); color:#000;">🎨 FILL GRID (Selected Color)</button>
+                <button class="gh-btn btn-danger" onclick="nukeGrid()" style="width:100%;">☢️ NUKE GRID (RESET BLACK)</button>
+            </div>
+
+            <div style="background:#111; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #333;">
+                <h4 style="margin:0 0 10px 0; color:#888;">DATA & TIMER</h4>
+                <button class="gh-btn btn-secondary" onclick="snapshotGrid()" style="width:100%; margin-bottom:10px;">💾 SNAPSHOT (Download JSON)</button>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="wipeTimerInput" class="gh-input" placeholder="Mins" style="margin:0;">
+                    <button class="gh-btn" onclick="setWipeTimer()">ARM TIMER</button>
+                </div>
+                <div id="timerStatus" style="font-size:12px; color:var(--gh-yellow); margin-top:5px;"></div>
+            </div>
+
+            <button class="gh-btn btn-secondary" onclick="document.getElementById('warAdminModal').style.display='none'" style="margin-top:20px; width:100%;">Close</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(async user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                
+                // Initialize Visuals
+                const container = document.getElementById("particleContainer");
+                for(let i=0; i<20; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; container.appendChild(p); }
+
+                // Initialize Grid Logic
+                currentUser = user; 
+                initGrid();
+                
+                // Admin Check
+                const token = await user.getIdTokenResult();
+                if(token.claims.admin || (await db.collection('users').doc(user.uid).get()).data().role === 'admin') {
+                    document.getElementById('adminBtn').style.display = 'flex';
+                }
+                
+                // Load State
+                checkCooldown();
+                syncFirestore();
+            }
+        });
+
+        // CONFIG
+        const GRID_SIZE = 1024; // 32x32
+        const ROW_SIZE = 32;
+        const COOLDOWN_MS = 60000; // 60s
+        
+        let selectedColor = "#000000";
+        let currentUser = null;
+        let isLocked = false;
+        let currentPixels = new Array(GRID_SIZE).fill("#000000");
+
+        const SASS_ALERTS = [
+            "Nice try, cheater.", "Cooldown is server-sided (in spirit).", 
+            "Go drink some water.", "Touch grass, then click.", 
+            "Refreshing the page won't help.", "Patience is a virtue, you have none."
+        ];
+
+        /* INIT GRID */
+        function initGrid() {
+            const gridEl = document.getElementById("gridDisplay");
+            for(let i=0; i<GRID_SIZE; i++) {
+                const p = document.createElement("div");
+                p.className = "pixel";
+                p.id = "px-" + i;
+                p.onclick = () => paintPixel(i);
+                gridEl.appendChild(p);
+            }
+        }
+
+        function setColor(c, el) {
+            selectedColor = c;
+            document.querySelectorAll('.p-color').forEach(x => x.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        /* FIRESTORE SYNC */
+        function syncFirestore() {
+            db.collection("system").doc("pixelwar").onSnapshot(doc => {
+                if(doc.exists) {
+                    const data = doc.data();
+                    isLocked = data.locked || false;
+                    
+                    // Toggle Lock UI
+                    const overlay = document.getElementById("lockScreen");
+                    const lockToggle = document.getElementById("adminLockToggle");
+                    if(isLocked) { overlay.style.display = "flex"; lockToggle.checked = true; } 
+                    else { overlay.style.display = "none"; lockToggle.checked = false; }
+
+                    // Sync Pixels
+                    if(data.pixels) {
+                        currentPixels = data.pixels; 
+                        data.pixels.forEach((color, idx) => {
+                            if(idx < GRID_SIZE) {
+                                const p = document.getElementById("px-" + idx);
+                                if(p && p.style.backgroundColor !== color) p.style.backgroundColor = color;
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        /* CORE PAINT LOGIC */
+        async function paintPixel(idx) {
+            if(!currentUser) return alert("Login to paint.");
+            if(isLocked) return alert("Warzone is locked.");
+            
+            // ANTI-CHEESE: Local Storage Check
+            const lastPaint = localStorage.getItem('gh_pixel_last_paint');
+            const now = Date.now();
+            
+            if(lastPaint && (now - lastPaint < COOLDOWN_MS)) {
+                const remaining = Math.ceil((COOLDOWN_MS - (now - lastPaint))/1000);
+                const sass = SASS_ALERTS[Math.floor(Math.random() * SASS_ALERTS.length)];
+                alert(`${sass} (${remaining}s)`);
+                runCooldownBar(COOLDOWN_MS - (now - lastPaint));
+                return;
+            }
+
+            // Valid Paint
+            localStorage.setItem('gh_pixel_last_paint', now);
+            runCooldownBar(COOLDOWN_MS);
+
+            // Optimistic Update
+            document.getElementById("px-" + idx).style.backgroundColor = selectedColor;
+
+            try {
+                const docRef = db.collection("system").doc("pixelwar");
+                await db.runTransaction(async (t) => {
+                    const doc = await t.get(docRef);
+                    if(doc.exists && doc.data().locked) throw "LOCKED";
+
+                    let pixels = doc.exists ? doc.data().pixels : new Array(GRID_SIZE).fill("#000000");
+
+                    // Expand array if old version
+                    if(pixels.length < GRID_SIZE) {
+                        const diff = GRID_SIZE - pixels.length;
+                        pixels = pixels.concat(new Array(diff).fill("#000000"));
+                    }
+
+                    pixels[idx] = selectedColor;
+                    t.set(docRef, { pixels }, { merge: true });
+                });
+            } catch(e) { 
+                console.error("Paint failed", e);
+                if(e === "LOCKED") alert("Grid was just locked!");
+            }
+        }
+
+        /* COOLDOWN SYSTEM */
+        function checkCooldown() {
+            const lastPaint = localStorage.getItem('gh_pixel_last_paint');
+            if(!lastPaint) {
+                document.getElementById("statusText").innerText = "READY TO PAINT";
+                document.getElementById("statusText").style.color = "var(--gh-blue)";
+                return;
+            }
+            
+            const diff = Date.now() - lastPaint;
+            if(diff < COOLDOWN_MS) {
+                runCooldownBar(COOLDOWN_MS - diff);
+            } else {
+                document.getElementById("statusText").innerText = "READY TO PAINT";
+                document.getElementById("statusText").style.color = "var(--gh-blue)";
+            }
+        }
+
+        function runCooldownBar(duration) {
+            const bar = document.getElementById("cooldownBar");
+            const txt = document.getElementById("statusText");
+            
+            const pct = (duration / COOLDOWN_MS) * 100;
+            
+            bar.style.transition = "none";
+            bar.style.width = pct + "%";
+            void bar.offsetWidth;
+
+            bar.style.transition = `width ${duration}ms linear`;
+            bar.style.width = "0%";
+            
+            txt.innerText = "WEAPON COOLING DOWN...";
+            txt.style.color = "var(--gh-red)";
+
+            setTimeout(() => {
+                txt.innerText = "READY TO PAINT";
+                txt.style.color = "var(--gh-blue)";
+            }, duration);
+        }
+
+        /* ADMIN CONTROL */
+        function openAdminPanel() { document.getElementById('warAdminModal').style.display = 'flex'; }
+
+        async function toggleLock() {
+            const locked = document.getElementById('adminLockToggle').checked;
+            await db.collection("system").doc("pixelwar").set({ locked: locked }, { merge: true });
+        }
+
+        async function nukeGrid() {
+            if(!confirm("NUKE: Wipe everything to black?")) return;
+            const empty = new Array(GRID_SIZE).fill("#000000");
+            await db.collection("system").doc("pixelwar").set({ pixels: empty }, { merge: true });
+            document.getElementById('warAdminModal').style.display = 'none';
+        }
+
+        async function fillGrid() {
+            if(!confirm(`FILL: Paint entire grid ${selectedColor}?`)) return;
+            const filled = new Array(GRID_SIZE).fill(selectedColor);
+            await db.collection("system").doc("pixelwar").set({ pixels: filled }, { merge: true });
+            document.getElementById('warAdminModal').style.display = 'none';
+        }
+
+        function snapshotGrid() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentPixels));
+            const node = document.createElement('a');
+            node.setAttribute("href", dataStr);
+            node.setAttribute("download", "pixel_war_snap_" + Date.now() + ".json");
+            document.body.appendChild(node);
+            node.click();
+            node.remove();
+        }
+
+        function setWipeTimer() {
+            const mins = document.getElementById('wipeTimerInput').value;
+            if(!mins) return;
+            document.getElementById('timerStatus').innerText = `Auto-Nuke in ${mins} mins...`;
+            setTimeout(() => { nukeGrid(); }, mins * 60000);
+        }
+    </script>
+</body>
+</html>

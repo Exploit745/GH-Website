@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GH – MC Servers</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="drawer.css">
+
+    <style>
+        /* GATEKEEPER */
+        body { display: none; }
+
+        /* [SERVER SPECIFIC STYLES] */
+
+        /* FX OVERLAY */
+        .static-overlay { position: fixed; inset: 0; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAABZJREFUeNpi2r9//38gYGAEESAAEGAAasgJOgzOKCoAAAAASUVORK5CYII='); opacity: 0.03; pointer-events: none; z-index: -1; }
+
+        /* HERO HEADER */
+        .uplink-header { text-align: center; margin-bottom: 50px; position: relative; display: flex; flex-direction: column; align-items: center; }
+        
+        .hero-img { 
+            width: 150px; margin-bottom: 20px; filter: drop-shadow(0 0 20px rgba(0, 234, 255, 0.3)); 
+            animation: floatHero 6s ease-in-out infinite; 
+        }
+        @keyframes floatHero { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        .uplink-title { 
+            font-size: 48px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 2px; margin: 0; 
+            text-shadow: 4px 4px 0px #000; -webkit-text-stroke: 1px #fff;
+        }
+        
+        /* SERVER GRID */
+        .server-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; }
+
+        /* SERVER NODE CARD */
+        .server-node {
+            background: #111; border: 2px solid #333; border-radius: 16px; padding: 25px;
+            position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            display: flex; flex-direction: column;
+        }
+        
+        /* Dynamic Status Borders */
+        .server-node.online { border-color: #00ff6a; box-shadow: 0 0 20px rgba(0, 255, 106, 0.1); }
+        .server-node.offline { border-color: var(--gh-red); opacity: 0.8; }
+        
+        /* 3D Hover Effect */
+        .server-node:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 15px 40px rgba(0,0,0,0.5); }
+
+        /* PIN BUTTON */
+        .pin-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(0,0,0,0.6); color: #444; border: 1px solid #333;
+            width: 30px; height: 30px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; cursor: pointer;
+            transition: 0.2s; z-index: 10; font-size: 14px;
+        }
+        .pin-btn:hover { color: var(--gh-yellow); border-color: var(--gh-yellow); background: #111; }
+        .pin-btn.active { color: var(--gh-yellow); border-color: var(--gh-yellow); background: rgba(253, 255, 85, 0.1); box-shadow: 0 0 10px rgba(253, 255, 85, 0.2); }
+
+        /* Card Internals */
+        .node-header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; border-bottom: 1px dashed #333; padding-bottom: 20px; }
+        .node-icon { width: 70px; height: 70px; border-radius: 12px; background: #000; border: 2px solid #333; object-fit: cover; }
+        .node-meta h3 { margin: 0; font-size: 24px; font-weight: 900; color: #fff; text-transform: uppercase; font-style: italic; }
+        .node-meta span { font-size: 12px; color: var(--gh-yellow); font-family: monospace; letter-spacing: 1px; font-weight: bold; background: #222; padding: 2px 6px; border-radius: 4px; }
+
+        .node-status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #080808; padding: 10px 15px; border-radius: 8px; border: 1px solid #222; }
+        .status-badge { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; box-shadow: 0 0 0 rgba(0,0,0,0); }
+        
+        /* Live States */
+        .online .pulse-dot { background: #00ff6a; animation: pulseGreen 2s infinite; box-shadow: 0 0 10px #00ff6a; }
+        .offline .pulse-dot { background: var(--gh-red); }
+        @keyframes pulseGreen { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 106, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(0, 255, 106, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 255, 106, 0); } }
+
+        .player-count { font-family: monospace; color: #ccc; font-size: 14px; font-weight: bold; }
+
+        .node-actions { margin-top: auto; display: grid; grid-template-columns: 1fr auto auto; gap: 10px; }
+        .copy-ip-btn { 
+            background: var(--gh-blue); color: #000; border: none; padding: 12px; 
+            border-radius: 6px; font-weight: 900; text-transform: uppercase; cursor: pointer; 
+            font-size: 14px; letter-spacing: 1px; transition: 0.2s; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+        .copy-ip-btn:hover { background: #fff; box-shadow: 0 0 15px var(--gh-blue); transform: scale(1.02); }
+        
+        .admin-icon-btn { 
+            background: #222; border: 1px solid #444; color: #fff; width: 45px; 
+            border-radius: 6px; cursor: pointer; font-size: 18px; display: none; /* Hidden unless admin */
+            align-items: center; justify-content: center;
+        }
+        .btn-edit:hover { border-color: var(--gh-yellow); color: var(--gh-yellow); }
+        .btn-del:hover { border-color: var(--gh-red); color: var(--gh-red); background: rgba(255,0,0,0.1); }
+
+        /* ADMIN BAR */
+        .admin-bar { text-align: center; margin-bottom: 30px; display: none; }
+        .deploy-btn { 
+            background: var(--gh-yellow); border: none; color: #000; 
+            padding: 12px 30px; border-radius: 30px; font-weight: 900; cursor: pointer; 
+            text-transform: uppercase; font-size: 14px; letter-spacing: 1px; transition: 0.2s;
+            box-shadow: 0 0 15px rgba(253, 255, 85, 0.4);
+        }
+        .deploy-btn:hover { background: #fff; transform: scale(1.05); }
+
+        /* TOAST */
+        .toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(50px);
+            background: #111; border: 1px solid var(--gh-blue); color: var(--gh-blue); 
+            padding: 12px 30px; border-radius: 30px; font-weight: bold; opacity: 0; 
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 9999;
+            box-shadow: 0 0 20px rgba(0, 234, 255, 0.2); pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* MODAL OVERRIDES */
+        .gh-modal-content { border-color: var(--gh-yellow) !important; box-shadow: 0 0 40px rgba(253, 255, 85, 0.15) !important; }
+        .gh-input { font-family: monospace; }
+        
+        @media (max-width: 768px) {
+            .content { padding: 20px; }
+            .uplink-title { font-size: 32px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="static-overlay"></div>
+    <div class="particles" id="particleContainer"></div>
+
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            
+            <div class="uplink-header">
+                <img src="assets/GH_Hero.png" class="hero-img">
+                <h1 class="uplink-title">MC Servers</h1>
+            </div>
+
+            <div class="admin-bar" id="adminBar">
+                <button class="deploy-btn" id="adminAddServer">+ Add Server</button>
+            </div>
+
+            <div class="server-grid" id="serverContainer">
+                <div style="color:#666; text-align:center; grid-column:1/-1;">Connecting to satellite...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="serverModal" class="gh-modal">
+        <div class="gh-modal-content">
+            <h2 id="modalTitle" style="color:var(--gh-yellow); margin-top:0;">Add Server</h2>
+            
+            <label style="font-size:12px; color:#888; display:block; margin-bottom:5px;">SERVER NAME</label>
+            <input type="text" id="mServerName" class="gh-input" placeholder="e.g. Survival World">
+            
+            <label style="font-size:12px; color:#888; display:block; margin-bottom:5px;">IP ADDRESS</label>
+            <input type="text" id="mServerIP" class="gh-input" placeholder="e.g. play.myserver.com">
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                <div>
+                    <label style="font-size:12px; color:#888; display:block; margin-bottom:5px;">TYPE</label>
+                    <select id="mServerType" class="gh-input">
+                        <option value="JAVA">JAVA</option>
+                        <option value="BEDROCK">BEDROCK</option>
+                        <option value="CROSSPLAY">CROSSPLAY</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:12px; color:#888; display:block; margin-bottom:5px;">VERSION</label>
+                    <input type="text" id="mServerVersion" class="gh-input" placeholder="1.21">
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="gh-btn btn-secondary" onclick="closeModal()">CANCEL</button>
+                <button class="gh-btn btn-primary" style="background:var(--gh-yellow); color:#000;" onclick="saveServer()">CONFIRM</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">IP COPIED TO CLIPBOARD</div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script>
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        let isAdmin = false;
+        let editingIndex = null; 
+        let serverList = [];
+        let savedServers = new Set(); 
+
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(async user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                
+                // Initialize Effects
+                const container = document.getElementById("particleContainer");
+                if(container){
+                    for(let i=0; i<25; i++){
+                        const p = document.createElement("div"); p.classList.add("particle");
+                        p.style.left = Math.random()*100+"vw"; p.style.top = Math.random()*100+"vh";
+                        p.style.animationDelay = Math.random()*10+"s"; container.appendChild(p);
+                    }
+                }
+
+                // Check Admin & Load Data
+                const token = await user.getIdTokenResult();
+                if (token.claims.admin) {
+                    isAdmin = true;
+                    document.getElementById("adminBar").style.display = "block";
+                }
+                loadSavedServers(user.uid);
+                initServerList();
+            }
+        });
+
+        /* 2. LOAD SAVED SERVERS */
+        function loadSavedServers(uid) {
+            db.collection("users").doc(uid).collection("saved").where("type", "==", "server")
+                .onSnapshot(snap => {
+                    savedServers.clear();
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        savedServers.add(d.serverIP); 
+                    });
+                    renderServers(); 
+                });
+        }
+
+        /* 3. FIRESTORE LOGIC */
+        function initServerList() {
+            db.collection('settings').doc('server_list').onSnapshot(doc => {
+                if (!doc.exists) {
+                    if (isAdmin) createDefaultList();
+                    else {
+                        serverList = [{ name: "A&S: Forever", ip: "73.196.12.210:25595", type: "JAVA", ver: "1.21.10" }];
+                        renderServers();
+                    }
+                } else {
+                    serverList = doc.data().list || [];
+                    renderServers();
+                }
+            });
+        }
+
+        function createDefaultList() {
+            const defaultData = [
+                { name: "A&S: Forever", ip: "73.196.12.210:25595", type: "JAVA", ver: "1.21.10" }
+            ];
+            db.collection('settings').doc('server_list').set({ list: defaultData });
+        }
+
+        function pushToDB() {
+            db.collection('settings').doc('server_list').set({ list: serverList })
+                .catch(err => alert("Error saving: " + err.message));
+        }
+
+        /* 4. RENDER LOGIC */
+        const API = "https://api.mcsrvstat.us/3/";
+
+        function renderServers() {
+            const container = document.getElementById("serverContainer");
+            container.innerHTML = "";
+
+            serverList.forEach((server, index) => {
+                const adminBtns = isAdmin ? `
+                    <button class="admin-icon-btn btn-edit" style="display:flex" onclick="editServer(${index})">✎</button>
+                    <button class="admin-icon-btn btn-del" style="display:flex" onclick="deleteServer(${index})">🗑</button>
+                ` : '';
+
+                const isSaved = savedServers.has(server.ip);
+                const pinClass = isSaved ? 'active' : '';
+                const pinHtml = `<div class="pin-btn ${pinClass}" onclick="toggleSave(${index})">⭐</div>`;
+
+                const html = `
+                    <div class="server-node" id="node-${index}" data-address="${server.ip}">
+                        ${pinHtml}
+                        <div class="node-header">
+                            <img src="assets/mc/default.png" class="node-icon">
+                            <div class="node-meta">
+                                <h3 class="s-name">${server.name}</h3>
+                                <span class="s-ver">${server.type} • ${server.ver}</span>
+                            </div>
+                        </div>
+                        <div class="node-status-row">
+                            <div class="status-badge status-text">
+                                <div class="pulse-dot"></div> Pinging...
+                            </div>
+                            <div class="player-count">--/--</div>
+                        </div>
+                        <div class="node-actions">
+                            <button class="copy-ip-btn" onclick="copyIP('${server.ip}')">COPY IP</button>
+                            ${adminBtns}
+                        </div>
+                    </div>`;
+                container.innerHTML += html;
+                pingServer(server.ip, index);
+            });
+        }
+
+        /* 5. SAFE SAVE FUNCTION */
+        async function toggleSave(index) {
+            if(!auth.currentUser) return;
+            const uid = auth.currentUser.uid;
+            const server = serverList[index];
+            const docId = server.ip.replace(/[\.\:\/]/g, "_"); // Sanitize ID
+            const ref = db.collection("users").doc(uid).collection("saved").doc(docId);
+
+            if(savedServers.has(server.ip)) {
+                await ref.delete();
+            } else {
+                await ref.set({
+                    type: 'server',
+                    serverIP: server.ip,
+                    serverName: server.name,
+                    serverType: server.type,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        }
+
+        function pingServer(ip, index) {
+            fetch(API + ip)
+            .then(r => r.json())
+            .then(d => {
+                const card = document.getElementById(`node-${index}`);
+                if (!card) return;
+                const statusBadge = card.querySelector(".status-text");
+                const countEl = card.querySelector(".player-count");
+                const icon = card.querySelector(".node-icon");
+
+                if (d.icon) icon.src = d.icon;
+                
+                if (d.online) {
+                    card.classList.add("online");
+                    statusBadge.innerHTML = `<div class="pulse-dot"></div> ONLINE`;
+                    statusBadge.style.color = "#00ff6a";
+                    countEl.innerText = `${d.players.online}/${d.players.max}`;
+                } else {
+                    card.classList.add("offline");
+                    statusBadge.innerHTML = `<div class="pulse-dot"></div> OFFLINE`;
+                    statusBadge.style.color = "var(--gh-red)";
+                    countEl.innerText = "--/--";
+                }
+            })
+            .catch(() => {});
+        }
+
+        function copyIP(ip) {
+            navigator.clipboard.writeText(ip);
+            const t = document.getElementById("toast");
+            t.innerText = "IP COPIED";
+            t.classList.add("show");
+            setTimeout(() => t.classList.remove("show"), 2000);
+        }
+
+        /* 6. ADMIN FUNCTIONS */
+        const modal = document.getElementById("serverModal");
+        
+        document.getElementById("adminAddServer").addEventListener("click", () => {
+            editingIndex = null;
+            document.getElementById("modalTitle").innerText = "Add Server";
+            document.getElementById("mServerName").value = "";
+            document.getElementById("mServerIP").value = "";
+            document.getElementById("mServerVersion").value = "";
+            modal.style.display = "flex";
+        });
+
+        function editServer(index) {
+            editingIndex = index;
+            const s = serverList[index];
+            document.getElementById("modalTitle").innerText = "Edit Node";
+            document.getElementById("mServerName").value = s.name;
+            document.getElementById("mServerIP").value = s.ip;
+            document.getElementById("mServerType").value = s.type;
+            document.getElementById("mServerVersion").value = s.ver;
+            modal.style.display = "flex";
+        }
+
+        function closeModal() { modal.style.display = "none"; }
+
+        function deleteServer(index) {
+            if(confirm("Terminate this node?")) {
+                serverList.splice(index, 1);
+                pushToDB();
+            }
+        }
+
+        function saveServer() {
+            const name = document.getElementById("mServerName").value;
+            const ip = document.getElementById("mServerIP").value;
+            const type = document.getElementById("mServerType").value;
+            const ver = document.getElementById("mServerVersion").value;
+
+            if(!name || !ip) return alert("Missing Data.");
+
+            const newServer = { name, ip, type, ver };
+
+            if (editingIndex !== null) {
+                serverList[editingIndex] = newServer;
+            } else {
+                serverList.push(newServer);
+            }
+            
+            pushToDB();
+            closeModal();
+        }
+
+        document.addEventListener('mousemove', e => {
+            document.querySelectorAll('.server-node').forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left; 
+                const y = e.clientY - rect.top;
+                if(x>0 && x<rect.width && y>0 && y<rect.height) {
+                    card.style.transform = `perspective(1000px) rotateX(${((y-rect.height/2)/rect.height)*-2}deg) rotateY(${((x-rect.width/2)/rect.width)*2}deg) scale(1.02)`;
+                } else {
+                    card.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale(1)`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

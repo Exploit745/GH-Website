@@ -1,26 +1,25 @@
 <div class="drawer">
-
-    <!-- Logo -->
     <img src="assets/GH_Hero.png" class="drawer-logo" alt="GH Logo">
 
-    <!-- Welcome -->
     <div class="welcome-text">Welcome,</div>
-    <div id="drawerUserName">(loading...)</div>
-
-    <!-- Links -->
-    <a href="gh_dashboard.html" class="drawer-link">Dashboard</a>
-    <a href="posts.html" class="drawer-link">Posts</a>
-    <a href="members.html" class="drawer-link">Members</a>
-    <a href="settings.html" class="drawer-link">Settings</a>
-
-    <!-- Admin-only -->
-    <a href="admin.html" id="drawerAdminLink" class="drawer-link" style="display:none;">
-        Admin Panel
-    </a>
-
-    <!-- Logout -->
-    <div class="drawer-logout-container">
-        <button id="drawerLogout" class="drawer-logout">Log Out</button>
+    
+    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px;">
+        <div id="drawerUserName" style="font-weight:bold; color:#fff;">Loading...</div>
+        <a href="admin.html" id="drawerAdminLink" style="display:none; text-decoration:none; font-size:16px; cursor:pointer;" title="Admin Access">
+            🛡️
+        </a>
     </div>
+
+    <a href="gh_dashboard.html" id="nav-dashboard" class="drawer-link">Dashboard</a>
+    
+    <a href="members.html" id="nav-members" class="drawer-link">Members</a>
+    
+    <a href="arcade.html" id="nav-arcade" class="drawer-link" style="color:var(--gh-blue); font-weight:bold;">The Arcade</a>
+    
+    <a href="roadmap.html" id="nav-roadmap" class="drawer-link">Roadmap</a>
+
+    <a href="profile.html" id="nav-profile" class="drawer-link">Profile</a>
+
+    <a href="#" id="drawerLogout" class="drawer-link" style="color:#ff4444; border-color:rgba(255, 68, 68, 0.3); margin-top:10px;">Log Out</a>
 
 </div>

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GH – Arcade</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="header.css">
+  <link rel="stylesheet" href="drawer.css">
+
+  <style>
+    /* GATEKEEPER */
+    body { display: none; }
+
+    /* [ARCADE SPECIFIC STYLES] */
+
+    /* HEADER OVERRIDES */
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 2px solid var(--gh-blue); padding-bottom: 15px; }
+    .page-title { 
+        font-size: 36px; font-weight: 800; color: var(--gh-blue); text-transform: uppercase; 
+        letter-spacing: 2px; text-shadow: 0 0 20px rgba(0, 234, 255, 0.3); margin: 0; 
+        transform: rotate(-1deg);
+    }
+    
+    .admin-btn { 
+        background: #222; color: var(--gh-yellow); border: 2px dashed var(--gh-yellow); 
+        padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; display: none; 
+        transition: 0.2s;
+    }
+    .admin-btn:hover { background: var(--gh-yellow); color: #000; transform: scale(1.05) rotate(2deg); }
+
+    /* CHALLENGE CARD */
+    .bounty-card {
+        background: linear-gradient(135deg, #111 0%, #1a1a1a 100%); 
+        border: 2px solid var(--gh-yellow); border-radius: 20px;
+        padding: 40px; text-align: center; position: relative; overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin-bottom: 50px;
+    }
+    
+    /* "NEW" Badge Animation */
+    .badge-pop {
+        position: absolute; top: 20px; right: 20px; background: var(--gh-red); color: #fff;
+        padding: 5px 15px; font-weight: 900; font-style: italic; transform: rotate(5deg);
+        box-shadow: 3px 3px 0 #000; animation: bounce 2s infinite; font-size: 12px;
+    }
+    @keyframes bounce { 0%, 100% { transform: translateY(0) rotate(5deg); } 50% { transform: translateY(-5px) rotate(5deg); } }
+
+    .bounty-label { 
+        font-size: 14px; color: #000; background: var(--gh-yellow); display: inline-block;
+        padding: 5px 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+        border-radius: 8px; margin-bottom: 20px; box-shadow: 0 0 15px var(--gh-yellow);
+    }
+    .bounty-title { font-size: 48px; font-weight: 900; color: #fff; margin: 0 0 15px 0; text-transform: uppercase; line-height: 1; }
+    .bounty-desc { font-size: 18px; color: #ccc; max-width: 600px; margin: 0 auto 30px; line-height: 1.5; font-style: italic; }
+    
+    /* GOOFY TIMER */
+    .timer-box { 
+        display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; 
+        background: #000; display: inline-flex; padding: 15px 30px; border-radius: 12px;
+        border: 1px solid #333;
+    }
+    .time-unit { text-align: center; }
+    .time-val { font-size: 28px; font-weight: 900; color: var(--gh-blue); font-family: 'Courier New', monospace; }
+    .time-label { font-size: 10px; color: #666; text-transform: uppercase; font-weight: bold; }
+
+    .submit-btn {
+        background: var(--gh-blue); border: none; color: #000;
+        padding: 15px 40px; font-size: 18px; font-weight: 900; text-transform: uppercase;
+        border-radius: 12px; cursor: pointer; transition: 0.2s; letter-spacing: 1px;
+        box-shadow: 0 5px 0 #008ba3;
+    }
+    .submit-btn:hover { transform: translateY(2px); box-shadow: 0 3px 0 #008ba3; }
+    .submit-btn:active { transform: translateY(5px); box-shadow: none; }
+    
+    /* ADMIN MANAGE BUTTON (On active card) */
+    .manage-btn {
+        position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.6);
+        color: #888; border: 1px solid #444; padding: 5px 10px; border-radius: 6px;
+        cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s;
+    }
+    .manage-btn:hover { background: var(--gh-yellow); color: #000; border-color: var(--gh-yellow); }
+
+    /* THE FLEX ZONE (Grid) */
+    .submissions-area { margin-top: 50px; }
+    .section-title { font-size: 28px; color: #fff; font-weight: 900; font-style: italic; margin-bottom: 25px; text-align: center; text-shadow: 3px 3px 0 #000; }
+    
+    .sub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    
+    .sub-card { 
+        background: #151515; border: 1px solid #333; padding: 15px; border-radius: 12px; 
+        position: relative; transition: 0.2s; display: flex; flex-direction: column;
+    }
+    .sub-card:hover { transform: rotate(1deg) scale(1.02); border-color: var(--gh-blue); box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+
+    .sub-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .sub-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gh-yellow); }
+    .sub-name { font-weight: bold; font-size: 15px; color: #fff; }
+    .sub-note { font-size: 13px; color: #aaa; margin-bottom: 15px; font-style: italic; flex-grow: 1; }
+    
+    .sub-link { 
+        background: #222; color: #fff; padding: 10px; text-align: center; text-decoration: none; 
+        border-radius: 8px; font-size: 12px; font-weight: bold; transition: 0.2s; display: block;
+    }
+    .sub-link:hover { background: var(--gh-blue); color: #000; }
+
+    /* ADMIN DELETE SUB BUTTON */
+    .sub-delete-btn {
+        position: absolute; top: -10px; right: -10px; width: 24px; height: 24px;
+        background: var(--gh-red); color: #fff; border-radius: 50%;
+        display: flex; justify-content: center; align-items: center;
+        font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        z-index: 10; border: 2px solid #fff;
+    }
+    .sub-delete-btn:hover { transform: scale(1.1); }
+
+    /* MODAL OVERRIDES */
+    .gh-modal-content { border-radius: 20px; box-shadow: 0 0 50px rgba(0, 234, 255, 0.2) !important; transform: rotate(-1deg); }
+    .control-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    
+    @media (max-width: 768px) {
+        .bounty-title { font-size: 32px; }
+        .content { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+    <div class="particles" id="particleContainer"></div>
+    <div id="header"></div>
+
+    <div class="page-wrap">
+        <div id="drawer"></div>
+
+        <div class="content">
+            <div class="page-header">
+                <h1 class="page-title">Weekly Shenanigans</h1>
+                <button id="adminBtn" class="admin-btn" onclick="openAdminModal()">+ Drop a Challenge</button>
+            </div>
+
+            <div id="activeBountyContainer">
+                <div style="text-align:center; color:#666; padding:50px; font-style:italic;">Loading the chaos...</div>
+            </div>
+
+            <div class="submissions-area" id="submissionsArea" style="display:none;">
+                <h2 class="section-title">✨ The Flex Zone ✨</h2>
+                <div id="subsGrid" class="sub-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="submitModal" class="gh-modal">
+        <div class="gh-modal-content">
+            <h2 style="color:var(--gh-blue); margin-top:0; font-size:28px; text-transform:uppercase; font-style:italic;">Prove It</h2>
+            <p style="color:#aaa; font-size:14px; margin-bottom:20px;">Pics or it didn't happen. Drop that Medal.tv / YouTube link.</p>
+            
+            <input type="text" id="subLink" class="gh-input" placeholder="https://...">
+            <textarea id="subNotes" class="gh-input" placeholder="Yap about your clip here..." rows="2"></textarea>
+            
+            <button class="submit-btn" style="width:100%;" onclick="submitEntry()">Yeet It</button>
+            <button onclick="closeModals()" style="width:100%; background:transparent; border:none; color:#666; margin-top:15px; cursor:pointer; font-weight:bold;">Nevermind</button>
+        </div>
+    </div>
+
+    <div id="adminModal" class="gh-modal">
+        <div class="gh-modal-content" style="border-color:var(--gh-yellow) !important; box-shadow: 0 0 50px rgba(253, 255, 85, 0.2) !important;">
+            <h2 style="color:var(--gh-yellow); margin-top:0;">Cook Up a Challenge</h2>
+            <input type="text" id="newTitle" class="gh-input" placeholder="Title (e.g. 360 No Scope)">
+            <textarea id="newDesc" class="gh-input" placeholder="The Rules..." rows="3"></textarea>
+            <label style="color:#888; font-size:12px; font-weight:bold; margin-bottom:5px; display:block;">TIME LIMIT (HOURS)</label>
+            <input type="number" id="newDuration" class="gh-input" placeholder="e.g. 168 (1 week)">
+            
+            <button class="submit-btn" style="width:100%; background:var(--gh-yellow); color:#000; box-shadow: 0 5px 0 #b3b600;" onclick="createBounty()">Publish Chaos</button>
+            <button onclick="closeModals()" style="width:100%; background:transparent; border:none; color:#666; margin-top:15px; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <div id="manageModal" class="gh-modal">
+        <div class="gh-modal-content" style="border-color: #fff !important; box-shadow: 0 0 50px rgba(255,255,255,0.2) !important;">
+            <h2 style="color:#fff; margin-top:0;">Mission Control</h2>
+            <p style="color:#aaa; font-size:13px; margin-bottom:20px;">Admin Override Tools</p>
+            
+            <div class="control-row">
+                <button class="submit-btn" style="background:#444; color:#fff; font-size:14px; box-shadow:none;" onclick="endBountyEarly()">🛑 End Now</button>
+                <button class="submit-btn" style="background:#222; color:#fff; border:1px solid #444; font-size:14px; box-shadow:none;" onclick="extendBounty()">⏳ +24 Hours</button>
+            </div>
+            
+            <button class="submit-btn" style="width:100%; background:var(--gh-red); color:#fff; font-size:14px; box-shadow:none; margin-top:10px;" onclick="deleteBounty()">🗑️ NUKE EVENT</button>
+
+            <button onclick="closeModals()" style="width:100%; background:transparent; border:none; color:#666; margin-top:15px; cursor:pointer;">Close</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-init.js"></script> 
+    <script src="header.js"></script>
+    <script src="drawer.js"></script>
+
+    <script>
+        let currentBountyId = null;
+        let currentBountyDeadline = null;
+        let isAdmin = false;
+
+        /* --- GATEKEEPER PROTOCOL --- */
+        auth.onAuthStateChanged(async user => {
+            if (!user) {
+                window.location.replace("login.html");
+            } else {
+                document.body.style.display = "block";
+                
+                // Initialize Particles
+                const container = document.getElementById("particleContainer");
+                if(container) {
+                    for(let i=0; i<30; i++){ const p=document.createElement("div"); p.className="particle"; p.style.left=Math.random()*100+"vw"; p.style.top=Math.random()*100+"vh"; p.style.animationDelay=Math.random()*10+"s"; container.appendChild(p); }
+                }
+
+                // Admin Check
+                const token = await user.getIdTokenResult();
+                isAdmin = !!token.claims.admin;
+                if(!isAdmin) {
+                    const uDoc = await db.collection("users").doc(user.uid).get();
+                    if(uDoc.exists && uDoc.data().role === 'admin') isAdmin = true;
+                }
+
+                if(isAdmin) document.getElementById("adminBtn").style.display = "block";
+                
+                // Load Content
+                loadActiveBounty();
+            }
+        });
+
+        /* 1. LOAD THE CHAOS */
+        function loadActiveBounty() {
+            db.collection("challenges").orderBy("created", "desc").limit(1).onSnapshot(snap => {
+                const container = document.getElementById("activeBountyContainer");
+                
+                if(snap.empty) {
+                    container.innerHTML = `
+                        <div class="bounty-card" style="border-color:#333; opacity:0.8;">
+                            <h2 style="color:#666; margin-bottom:10px;">Mods are asleep 😴</h2>
+                            <p style="color:#444">No active challenges. Go touch grass.</p>
+                        </div>`;
+                    return;
+                }
+
+                snap.forEach(doc => {
+                    const b = doc.data();
+                    currentBountyId = doc.id;
+                    currentBountyDeadline = b.deadline ? b.deadline.toDate() : new Date();
+                    
+                    const manageBtn = isAdmin ? `<button class="manage-btn" onclick="openManageModal()">⚙️ Manage Chaos</button>` : '';
+
+                    container.innerHTML = `
+                        <div class="bounty-card">
+                            ${manageBtn}
+                            <div class="badge-pop">FRESH!</div>
+                            <span class="bounty-label">DO THIS THING</span>
+                            <h1 class="bounty-title">${b.title}</h1>
+                            <div class="bounty-desc">${b.description}</div>
+                            
+                            <div class="timer-box" id="timerBox">
+                                <div class="time-unit"><div class="time-val" id="t-d">00</div><div class="time-label">DAYS</div></div>
+                                <div class="time-unit"><div class="time-val" id="t-h">00</div><div class="time-label">HRS</div></div>
+                                <div class="time-unit"><div class="time-val" id="t-m">00</div><div class="time-label">MIN</div></div>
+                            </div>
+
+                            <button class="submit-btn" onclick="openSubmitModal()">Prove It</button>
+                        </div>
+                    `;
+                    startTimer(currentBountyDeadline);
+                    loadSubmissions(doc.id);
+                });
+            });
+        }
+
+        /* 2. PANIC CLOCK */
+        function startTimer(endTime) {
+            const update = () => {
+                const now = new Date().getTime();
+                const dist = endTime - now;
+                
+                if(dist < 0) {
+                    if(document.getElementById("timerBox")) document.getElementById("timerBox").innerHTML = "<div style='color:var(--gh-red); font-weight:900; font-size:24px; transform:rotate(-5deg);'>💀 TOO SLOW 💀</div>";
+                    return;
+                }
+
+                const days = Math.floor(dist / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+
+                if(document.getElementById("t-d")) {
+                    document.getElementById("t-d").innerText = days;
+                    document.getElementById("t-h").innerText = hours;
+                    document.getElementById("t-m").innerText = minutes;
+                }
+            };
+            setInterval(update, 1000);
+            update();
+        }
+
+        /* 3. THE FEED */
+        function loadSubmissions(bountyId) {
+            document.getElementById("submissionsArea").style.display = "block";
+            db.collection("challenge_submissions").where("challengeId", "==", bountyId).onSnapshot(snap => {
+                const grid = document.getElementById("subsGrid");
+                grid.innerHTML = "";
+                if(snap.empty) { 
+                    grid.innerHTML = "<div style='grid-column:1/-1; text-align:center; color:#444; font-style:italic;'>It's empty. Be the main character and submit something.</div>"; 
+                    return; 
+                }
+                
+                snap.forEach(doc => {
+                    const s = doc.data();
+                    const deleteBtn = isAdmin ? `<div class="sub-delete-btn" onclick="deleteSub('${doc.id}')">✕</div>` : '';
+
+                    grid.innerHTML += `
+                        <div class="sub-card">
+                            ${deleteBtn}
+                            <div class="sub-card-header">
+                                <img src="${s.userPhoto || 'assets/GH_Hero.png'}" class="sub-avatar">
+                                <div class="sub-name">${s.userName}</div>
+                            </div>
+                            <div class="sub-note">"${s.notes || 'No yap provided.'}"</div>
+                            <a href="${s.link}" target="_blank" class="sub-link">WATCH CLIP 📺</a>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        /* 4. ACTIONS & MODALS */
+        function openSubmitModal() { document.getElementById("submitModal").style.display = "flex"; }
+        function openAdminModal() { document.getElementById("adminModal").style.display = "flex"; }
+        function openManageModal() { document.getElementById("manageModal").style.display = "flex"; }
+        
+        function closeModals() { 
+            document.querySelectorAll('.gh-modal').forEach(m => m.style.display = "none");
+        }
+
+        async function submitEntry() {
+            if(!auth.currentUser) return alert("Login first, ghost.");
+            const link = document.getElementById("subLink").value;
+            const notes = document.getElementById("subNotes").value;
+            if(!link) return alert("We need a link, genius.");
+            
+            try {
+                await db.collection("challenge_submissions").add({
+                    challengeId: currentBountyId,
+                    userId: auth.currentUser.uid,
+                    userName: auth.currentUser.displayName || "Agent",
+                    userPhoto: auth.currentUser.photoURL,
+                    link: link, notes: notes,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                closeModals();
+                alert("We got it. Good luck.");
+            } catch(e) { alert("Error: " + e.message); }
+        }
+
+        /* --- ADMIN CONTROLS --- */
+        async function createBounty() {
+            const title = document.getElementById("newTitle").value;
+            const desc = document.getElementById("newDesc").value;
+            const hours = document.getElementById("newDuration").value;
+            
+            if(!title || !hours) return alert("Fill it out.");
+            const deadline = new Date();
+            deadline.setHours(deadline.getHours() + parseInt(hours));
+
+            try {
+                await db.collection("challenges").add({
+                    title: title, description: desc,
+                    created: firebase.firestore.FieldValue.serverTimestamp(),
+                    deadline: deadline
+                });
+                closeModals();
+                alert("Chaos Activated.");
+            } catch(e) { alert("Error: " + e.message); }
+        }
+
+        async function deleteSub(id) {
+            if(confirm("Delete this submission?")) {
+                await db.collection("challenge_submissions").doc(id).delete();
+            }
+        }
+
+        async function endBountyEarly() {
+            if(!currentBountyId) return;
+            if(confirm("End this event right now?")) {
+                await db.collection("challenges").doc(currentBountyId).update({ deadline: new Date() });
+                closeModals();
+            }
+        }
+
+        async function extendBounty() {
+            if(!currentBountyId) return;
+            const newTime = new Date(currentBountyDeadline.getTime() + (24 * 60 * 60 * 1000));
+            await db.collection("challenges").doc(currentBountyId).update({ deadline: newTime });
+            alert("Extended by 24h.");
+            closeModals();
+        }
+
+        async function deleteBounty() {
+            if(!currentBountyId) return;
+            if(confirm("DANGER: Permanently delete this event and all its history?")) {
+                await db.collection("challenges").doc(currentBountyId).delete();
+                closeModals();
+                alert("Event Nuked.");
+            }
+        }
+        
+        window.onclick = function(e) { if(e.target.className === 'gh-modal') closeModals(); }
+    </script>
+</body>
+</html>
